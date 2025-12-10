@@ -1,0 +1,159 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// Declare Deno global for TypeScript
+declare const Deno: {
+  env: {
+    get(name: string): string | undefined;
+  };
+};
+
+
+
+
+// AWS V4 Signature helper functions
+async function sha256(message: string): Promise<ArrayBuffer> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(message);
+  return await crypto.subtle.digest('SHA-256', data);
+}
+
+function hex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+async function hmac(key: ArrayBuffer | Uint8Array, message: string): Promise<ArrayBuffer> {
+  const encoder = new TextEncoder();
+  const keyBuffer = key instanceof Uint8Array ? new Uint8Array(key) : new Uint8Array(key);
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyBuffer,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  return await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(message));
+}
+
+async function getSignatureKey(key: string, dateStamp: string, regionName: string, serviceName: string): Promise<ArrayBuffer> {
+  const encoder = new TextEncoder();
+  const kDate = await hmac(encoder.encode('AWS4' + key), dateStamp);
+  const kRegion = await hmac(kDate, regionName);
+  const kService = await hmac(kRegion, serviceName);
+  const kSigning = await hmac(kService, 'aws4_request');
+  return kSigning;
+}
+
+// LaTeX character escaping function to prevent compilation errors
+function escapeLatex(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/\\/g, '\\textbackslash{}')
+    .replace(/&/g, '\\&')
+    .replace(/%/g, '\\%')
+    .replace(/\$/g, '\\$')
+    .replace(/#/g, '\\#')
+    .replace(/_/g, '\\_')
+    .replace(/\{/g, '\\{')
+    .replace(/\}/g, '\\}')
+    .replace(/~/g, '\\textasciitilde{}')
+    .replace(/\^/g, '\\textasciicircum{}');
+}
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// Initialize Supabase clients
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+// Client for user authentication (anon key)
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Client for internal operations (service role key) - bypasses RLS
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+// All usage tracking removed - unlimited access for authenticated users
+
+
+
+serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { profile, jobDescription, jobTitle, companyName, language = 'english', generationMode = 'polished' } = await req.json();
+
+    // Get user from auth header
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authorization required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get user info using Supabase auth
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authorization' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('✅ Generating cover letter for authenticated user:', user.id.slice(-8));
+
+
+
+    const awsAccessKeyId = Deno.env.get('AWS_ACCESS_KEY_ID');
+    const awsSecretAccessKey = Deno.env.get('AWS_SECRET_ACCESS_KEY');
+
+    if (!awsAccessKeyId || !awsSecretAccessKey) {
+      throw new Error('AWS credentials are not configured');
+    }
+
+    // AWS Bedrock configuration
+    const region = "us-east-1";
+
+    // Select model based on generation mode
+    const modelId = generationMode === 'fast'
+      ? "us.meta.llama3-1-8b-instruct-v1:0"
+      : "anthropic.claude-3-sonnet-20240229-v1:0"; const endpoint = `https://bedrock-runtime.${region}.amazonaws.com/model/${modelId}/invoke`;    // Language configuration
+    const languageConfig = {
+      english: {
+        name: 'English',
+        instruction: 'Write the entire cover letter in English.',
+        greeting: 'Dear',
+        closing: 'Sincerely'
+      },
+      french: {
+        name: 'French',
+        instruction: 'Write the entire cover letter in French. Use proper French business letter format, formal language, and appropriate French business expressions.',
+        greeting: 'Madame, Monsieur',
+        closing: 'Cordialement'
+      }
+    };
+
+    const selectedLanguage = languageConfig[language as keyof typeof languageConfig] || languageConfig.english;
+
+    // Escape user-provided fields to prevent LaTeX compilation errors
+    const safeJobTitle = escapeLatex(jobTitle);
+    const safeCompanyName = escapeLatex(companyName || 'the company');
+    const safeFullName = escapeLatex(profile.full_name || 'Candidate');
+    const safeEmail = escapeLatex(profile.email || 'Not provided');
+    const safePhone = escapeLatex(profile.phone || 'Not provided');
+    const safeLocation = escapeLatex(profile.location || 'Not provided');
+
+    // Also escape the job description to prevent issues there
+    const safeJobDescription = escapeLatex(jobDescription || '');

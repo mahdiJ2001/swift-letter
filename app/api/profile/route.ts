@@ -1,0 +1,149 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+
+export async function GET(request: NextRequest) {
+    try {
+        const supabase = createRouteHandlerClient({ cookies })
+        
+        // Get the current user
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError || !session) {
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            )
+        }
+
+        // Get userId from query parameters (for additional verification)
+        const { searchParams } = new URL(request.url)
+        const userId = searchParams.get('userId')
+        
+        if (userId !== session.user.id) {
+            return NextResponse.json(
+                { error: 'Forbidden' },
+                { status: 403 }
+            )
+        }
+
+        // Fetch user profile
+        const { data: profile, error } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single()
+
+        if (error && error.code !== 'PGRST116') {
+            // PGRST116 is "not found" which is okay for new users
+            throw error
+        }
+
+        if (!profile) {
+            return NextResponse.json(null, { status: 404 })
+        }
+
+        return NextResponse.json(profile)
+    } catch (error: any) {
+        console.error('Profile fetch error:', error)
+        return NextResponse.json(
+            { error: error.message },
+            { status: 500 }
+        )
+    }
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        const supabase = createRouteHandlerClient({ cookies })
+        
+        // Get the current user
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError || !session) {
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            )
+        }
+
+        const profileData = await request.json()
+        
+        const result = await supabase
+            .from('user_profiles')
+            .insert({
+                ...profileData,
+                user_id: session.user.id,
+                credits: 5
+            })
+            .select()
+            .single()
+
+        if (result.error) {
+            throw result.error
+        }
+
+        return NextResponse.json(result.data)
+    } catch (error: any) {
+        console.error('Profile creation error:', error)
+        return NextResponse.json(
+            { error: error.message },
+            { status: 500 }
+        )
+    }
+}
+
+export async function PUT(request: NextRequest) {
+    try {
+        const supabase = createRouteHandlerClient({ cookies })
+        
+        // Get the current user
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError || !session) {
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            )
+        }
+
+        const { id, ...profileData } = await request.json()
+        
+        // Ensure user can only update their own profile
+        const { data: existingProfile, error: fetchError } = await supabase
+            .from('user_profiles')
+            .select('user_id')
+            .eq('id', id)
+            .single()
+
+        if (fetchError) {
+            throw fetchError
+        }
+
+        if (existingProfile.user_id !== session.user.id) {
+            return NextResponse.json(
+                { error: 'Forbidden' },
+                { status: 403 }
+            )
+        }
+
+        const result = await supabase
+            .from('user_profiles')
+            .update(profileData)
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (result.error) {
+            throw result.error
+        }
+
+        return NextResponse.json(result.data)
+    } catch (error: any) {
+        console.error('Profile update error:', error)
+        return NextResponse.json(
+            { error: error.message },
+            { status: 500 }
+        )
+    }
+}

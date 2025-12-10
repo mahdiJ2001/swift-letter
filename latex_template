@@ -1,0 +1,100 @@
+\documentclass[11pt,a4paper]{article}
+
+% Core packages - compatible with all TeX distributions
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{tikz}
+
+% Professional color scheme
+\definecolor{accentcolor}{RGB}{0, 51, 102}
+\definecolor{lightgray}{RGB}{100, 100, 100}
+
+% Hyperlink styling
+\hypersetup{
+    colorlinks=true,
+    urlcolor=accentcolor,
+    linkcolor=accentcolor
+}
+
+% Remove page numbers
+\pagestyle{empty}
+
+% Spacing adjustments
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.85em}
+\renewcommand{\baselinestretch}{1.15}
+
+% Custom commands for styling
+\newcommand{\headername}[1]{%
+    {\fontsize{18}{22}\selectfont\textbf{\textcolor{accentcolor}{#1}}}%
+}
+
+\newcommand{\contactline}[1]{%
+    {\small\textcolor{lightgray}{#1}}%
+}
+
+\begin{document}
+
+% =========================
+% Header (General Skeleton)
+% =========================
+\begin{center}
+    \headername{<FULL NAME>}
+    
+    \vspace{0.5em}
+    \contactline{%
+        <Street Address> • <City, Country>\\
+        \href{mailto:<email>}{<email>} • <phone number> • \href{<LinkedIn URL>}{<LinkedIn Handle>}%
+    }
+\end{center}
+
+\vspace{1.5em}
+
+% Date
+{\small\textcolor{lightgray}{\today}}
+
+\vspace{1em}
+
+% Recipient Information
+\begin{flushleft}
+<Recipient Name>\\
+<Recipient Title>\\
+<Company Name>\\
+<Company Address Line 1>\\
+<Company Address Line 2>
+\end{flushleft}
+
+\vspace{0.5em}
+
+% Subject line
+\textbf{Re: <Subject / Position Title>}
+
+\vspace{0.5em}
+
+% Salutation
+Dear <Mr./Ms./Mx.> <Last Name>,
+
+% Opening paragraph
+<Opening paragraph introducing interest in the position and how the applicant learned about it.>
+
+% Middle paragraphs
+<Paragraph describing relevant experience, achievements, and strengths.>
+<Paragraph explaining motivation for the company and value the applicant brings.>
+
+% Closing paragraph
+<Closing paragraph expressing enthusiasm and a call to action (interview availability).>
+
+% Sign-off
+\vspace{0.5em}
+Sincerely,
+
+\vspace{2em}
+
+\textbf{<FULL NAME>}
+
+\vspace{0.5em}
+
+\end{document}
