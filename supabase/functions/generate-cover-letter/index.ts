@@ -103,8 +103,8 @@ serve(async (req: Request) => {
     const modelId = "anthropic.claude-3-sonnet-20240229-v1:0";
     const endpoint = `https://bedrock-runtime.${region}.amazonaws.com/model/${modelId}/invoke`;
 
-    // Create the prompt for Claude
-    const prompt = `You are an expert professional cover letter writer. Generate a personalized cover letter based on the following information:
+    // Create the prompt for Claude - generate complete LaTeX document
+    const prompt = `You are an expert professional cover letter writer. Generate a personalized cover letter as a complete LaTeX document based on the following information:
 
 CANDIDATE PROFILE:
 - Name: ${profile.full_name}
@@ -137,13 +137,71 @@ JOB DESCRIPTION:
 ${jobDescription}
 
 REQUIREMENTS:
-1. Write the entire cover letter in English
-2. Extract the job title and company name from the job description
-3. Write a professional, engaging cover letter (3-4 paragraphs)
-4. Tailor the content specifically to match the job requirements
-5. Highlight relevant experience and skills
-6. Keep it concise and professional
-7. Generate only the cover letter content without any additional formatting or explanations.`;
+You must produce a complete LaTeX document using this minimal template (uses only basic packages):
+
+\\documentclass[letterpaper,11pt]{article}
+\\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
+
+% Manual page setup instead of fullpage package
+\\setlength{\\oddsidemargin}{-0.5in}
+\\setlength{\\evensidemargin}{-0.5in}
+\\setlength{\\textwidth}{7.0in}
+\\setlength{\\topmargin}{-0.75in}
+\\setlength{\\textheight}{9.5in}
+\\setlength{\\headheight}{0pt}
+\\setlength{\\headsep}{0pt}
+\\setlength{\\footskip}{0.5in}
+
+% Remove page numbers
+\\pagestyle{empty}
+
+% Text alignment
+\\raggedbottom
+\\raggedright
+
+\\begin{document}
+
+% Header with candidate information
+\\begin{center}
+    {\\Large \\textbf{${profile.full_name}}} \\\\
+    \\vspace{5pt}
+    ${profile.email} \\textbar{} ${profile.phone} \\textbar{} ${profile.location || 'Location not specified'}
+\\end{center}
+
+\\vspace{10pt}
+
+% Date - using manual date instead of datetime package
+\\noindent \\today
+
+\\vspace{10pt}
+
+\\noindent Hiring Manager \\\\
+Company Name \\\\
+
+\\vspace{10pt}
+
+\\noindent Dear Hiring Manager,
+
+\\vspace{5pt}
+
+[Generate a professional 3-4 paragraph cover letter here that:]
+[- Extracts job title and company name from the job description]
+[- Tailors content to match job requirements]
+[- Highlights relevant experience and skills from the candidate's profile]
+[- Uses specific examples from their projects and experience]
+[- Maintains a professional, engaging tone]
+[- Is written entirely in English]
+
+\\vspace{10pt}
+
+\\noindent Sincerely, \\\\
+\\vspace{5pt}
+${profile.full_name}
+
+\\end{document}
+
+CRITICAL: Return ONLY the complete LaTeX document. Do not include any explanations, markdown formatting, or additional text. The response must be valid LaTeX that can be compiled directly.`;
 
     // Prepare request for AWS Bedrock (Claude 3 Sonnet format)
     const requestBody = JSON.stringify({

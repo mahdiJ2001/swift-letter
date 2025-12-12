@@ -34,20 +34,28 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      return NextResponse.json(errorData, { status: response.status });
+      const errorText = await response.text();
+      console.error('Edge Function Error:', response.status, errorText);
+      try {
+        const errorData = JSON.parse(errorText);
+        return NextResponse.json(errorData, { status: response.status });
+      } catch {
+        return NextResponse.json({ error: errorText }, { status: response.status });
+      }
     }
 
-    // Get the PDF buffer from the response
-    const pdfBuffer = await response.arrayBuffer();
+    // Get the JSON response from the Edge Function (which contains base64 PDF data)
+    let data;
+    try {
+      data = await response.json();
+    } catch (jsonError) {
+      console.error('Failed to parse Edge Function response as JSON:', jsonError);
+      return NextResponse.json({ error: 'Invalid response from PDF service' }, { status: 500 });
+    }
 
-    // Return the PDF as a response
-    return new NextResponse(pdfBuffer, {
+    // Return the JSON response with PDF data
+    return NextResponse.json(data, {
       status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': 'attachment; filename="cover-letter.pdf"',
-      },
     });
 
   } catch (error) {

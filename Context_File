@@ -157,3 +157,566 @@ serve(async (req: Request) => {
 
     // Also escape the job description to prevent issues there
     const safeJobDescription = escapeLatex(jobDescription || '');
+
+    // Build the improved prompt for the AI
+    const systemPrompt = `You are a professional HR recruiter and career branding expert who writes highly personalized, professionally-toned cover letters that get noticed by both recruiters and ATS systems. Your goal is to write a one-page cover letter that sounds authentic, specific, and confident WITHOUT using exaggerated or overused language. Focus on demonstrable competence rather than enthusiasm.
+
+CRITICAL TONE REQUIREMENT: Avoid overused words like "excited", "thrilled", "passionate", "expertise", "innovative", "dynamic". Use measured, professional language that shows capability through substance, not superlatives.
+
+IMPORTANT LANGUAGE REQUIREMENT: ${selectedLanguage.instruction} Use proper ${selectedLanguage.name} business letter conventions, vocabulary, and expressions throughout the entire letter.`;
+
+    const userPrompt = `BEFORE WRITING: Perform intelligent analysis and selection:
+
+🔍 STEP 1: JOB REQUIREMENTS ANALYSIS
+Analyze this job description and identify:
+- Primary technical skills/technologies required (programming languages, frameworks, tools)
+- Industry domain and business context  
+- Key responsibilities and challenges mentioned
+- Company type/size and their likely technical needs
+- Soft skills and collaboration requirements
+
+🎯 STEP 2: CANDIDATE PROJECT ANALYSIS  
+Review ALL candidate projects and score each based on:
+- Technology stack overlap with job requirements (highest weight)
+- Industry/domain relevance 
+- Problem complexity matching job level
+- Relevant challenges solved
+
+🏆 STEP 3: STRATEGIC PROJECT/EXPERIENCE SELECTION
+- If ONE project covers most/all required technologies → Focus on that single project for deep storytelling
+- If multiple projects are needed to showcase all required skills → Select 2-3 most relevant projects that collectively demonstrate all key requirements
+- Prioritize projects that show the EXACT technologies, frameworks, and tools mentioned in the job description
+- Use professional experiences if they better demonstrate required skills than personal projects
+- GOAL: Ensure every major job requirement is backed by concrete evidence from candidate's actual experience
+
+---
+
+Input You'll Receive:
+  Candidate's background (skills, experiences, achievements)
+  Job description (title, company name, mission, requirements)
+
+  Job Title: ${safeJobTitle}
+  Company: ${safeCompanyName}
+  Job Description:
+  ${safeJobDescription}
+  
+  LANGUAGE REQUIREMENT: Write the entire cover letter in ${selectedLanguage.name}. ${selectedLanguage.instruction}
+
+  Candidate Profile:
+  Name: ${safeFullName}
+  Email: ${safeEmail}
+  Phone: ${safePhone}
+  Location: ${safeLocation}
+  
+  Skills & Technologies: ${Array.isArray(profile.skills) ? profile.skills.join(', ') : (typeof profile.skills === 'string' ? profile.skills : 'Not provided')}
+  
+  Professional Experience: ${profile.experiences || 'Not provided'}
+  
+  Key Projects: ${profile.projects || 'Not provided'}
+  
+  Education: ${profile.education || 'Not provided'}
+  
+  Certifications: ${profile.certifications || 'Not provided'}
+
+
+  Output You Must Produce:
+  A tailored cover letter that:
+  - Is formatted as a valid LaTeX document using the following template structure (fill in all fields with the candidate/job data):
+
+\\documentclass[letterpaper,11pt]{article}
+
+\\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
+\\usepackage[empty]{fullpage}
+\\usepackage{titlesec}
+\\usepackage[usenames,dvipsnames]{color}
+\\usepackage[hidelinks]{hyperref}
+\\usepackage{fancyhdr}
+\\usepackage[english,french]{babel}
+\\usepackage{datetime}
+
+\\pagestyle{fancy}
+\\fancyhf{}
+\\fancyfoot{}
+\\renewcommand{\\headrulewidth}{0pt}
+\\renewcommand{\\footrulewidth}{0pt}
+
+\\addtolength{\\oddsidemargin}{-0.5in}
+\\addtolength{\\evensidemargin}{-0.5in}
+\\addtolength{\\textwidth}{1in}
+\\addtolength{\\topmargin}{-.5in}
+\\addtolength{\\textheight}{1.3in}
+
+\\raggedbottom
+\\raggedright
+\\setlength{\\parskip}{1.4em}
+\\setlength{\\parindent}{0pt}
+\\linespread{1.15}
+
+\\titleformat{\\section}{
+    \\vspace{3pt}\\scshape\\raggedright\\Large\\color{MidnightBlue}
+}{}{0em}{}[\\vspace{3pt}\\color{MidnightBlue}\\titlerule\\vspace{6pt}]
+
+\\newcommand{\\letterHeading}[5]{
+    \\begin{tabular*}{\\textwidth}{l@{\\extracolsep{\\fill}}r}
+    \\textbf{\\Large #1} & #5 \\\\
+    #2 & \\\\
+    #3 & \\\\
+    #4 & \\\\
+    \\end{tabular*}
+    \\vspace{15pt}
+}
+
+\\newcommand{\\letterRecipient}[3]{
+    \\textbf{\\large To:} #1 \\\\
+    \\textbf{\\large Position:} #2 \\\\
+    \\textbf{\\large Company:} #3 \\\\
+    \\vspace{12pt}
+}
+
+\\newcommand{\\letterSubject}[1]{
+    \\textbf{\\large Subject:} #1 \\\\
+    \\vspace{15pt}
+}
+
+\\begin{document}
+
+\\letterHeading
+{\\textbf{<Candidate Name>}}
+{<Location>}
+{<Phone> \\\\ \\href{mailto:<Email>}{<Email>}}
+{}
+{\\today}
+
+\\letterRecipient
+{Hiring Team at <Company Name> }
+{<Job Title>}
+{<Company Name>}
+
+\\letterSubject{Application for <Job Title> Position}
+
+Dear Hiring Team,
+
+<Body paragraphs: Connect, Contribute, Close with Confidence>
+
+Sincerely,\\\\[12pt]
+<Candidate Name>
+
+\\end{document}
+
+  - Fill in all fields above with the provided candidate and job data.
+  - Sounds written by a human (not AI-generated).
+  - Matches the recruiter’s key expectations.
+  - Passes ATS screening by including relevant job title and skill keywords.
+  - Has a clear, concise, and professional structure (maximum 350 words).
+
+  🎯 AUTHENTIC COVER LETTER REQUIREMENTS
+  
+  ✨ GENUINE CONNECTION & CAREER VISION
+  - Show how this specific job aligns with your future aspirations and career vision
+  - Paint a clear picture of how you'll grow through this role and how it fits your long-term goals  
+  - Use your personal motivation rather than just echoing their company mission
+  - If possible, reference a specific product, project, or recent company news that shows you've done research
+  - Make it feel like this role is a natural next step in your career journey, not just any job
+
+  📖 INTELLIGENT SKILL-PROJECT MAPPING & STORYTELLING
+  - 🧠 STEP 1: COMPREHENSIVE JOB REQUIREMENTS EXTRACTION - Carefully analyze the job description to identify:
+    * ALL required technical skills, programming languages, frameworks, tools, and platforms
+    * Industry domain and business context requirements
+    * Specific responsibilities, challenges, and methodologies mentioned
+    * Required experience levels for each technology
+    * Soft skills and collaboration requirements
+  
+  - 🎯 STEP 2: SKILL-TO-PROJECT MAPPING - Create a comprehensive mapping between job requirements and candidate's actual experience:
+    * Go through EACH required skill/technology mentioned in the job description
+    * For EACH requirement, search the candidate's projects and experiences for evidence
+    * Map specific projects/experiences that demonstrate each required skill
+    * Note the exact project names and contexts where each skill was used
+    * Identify which requirements are covered and which are missing
+  
+  - 📊 STEP 3: CONCRETE EVIDENCE COLLECTION - For each skill match found:
+    * Record the specific project/experience name that demonstrates the skill
+    * Note the context and application of that skill in that project
+    * Prioritize recent and substantial usage over brief mentions
+    * Ensure the skill usage level matches the job requirement level
+  
+  - � STEP 4: STRATEGIC SKILL DEMONSTRATION - In the cover letter, explicitly connect requirements to evidence:
+    * Use specific language like: "I possess [Skill X, Skill Y, Skill Z] from my [Project Name] project"
+    * For multiple skills from one project: "My [Project Name] project demonstrates my proficiency in [list of relevant skills]"
+    * For skills from different projects: "I have [Skill A] experience from [Project 1] and [Skill B, Skill C] from [Project 2]"
+    * Always name the specific project/experience that provides evidence for each claimed skill
+  
+  - ⚡ COMPREHENSIVE COVERAGE STRATEGY:
+    * Primary goal: Cover as many job requirements as possible with concrete project evidence
+    * If one project covers multiple requirements → Lead with that project and list all relevant skills
+    * If multiple projects needed → Systematically cover different requirement categories with different projects
+    * Example structure: "From my [Backend Project], I bring Java, Spring Boot, and PostgreSQL experience, while my [Frontend Project] demonstrates my React and TypeScript skills, and my [Cloud Project] showcases my AWS and Docker expertise"
+  
+  - 🚫 EVIDENCE-BASED CLAIMS ONLY:
+    * NEVER claim skills not demonstrated in specific named projects/experiences
+    * If a job requirement isn't covered by the candidate's experience, don't mention that skill
+    * Better to honestly represent covered skills than fabricate uncovered ones
+    * Focus on the strongest skill-project matches rather than trying to force weak connections
+  
+  - 📚 MULTI-PROJECT EVIDENCE STRATEGY:
+    * Organize by skill categories: "For backend development, my [Project A] involved Java and Spring..."
+    * Use connecting phrases: "Additionally, my [Project B] strengthened my [other skills]..."
+    * Create a narrative that systematically demonstrates job requirement coverage
+    * Maximum 3-4 projects mentioned to maintain readability and focus
+
+  💡 BALANCED PROFESSIONAL TONE
+  - Write like a confident professional who understands the role requirements
+  - Use clear, direct language without excessive enthusiasm or superlatives
+  - Avoid overused words like "excited", "expertise", "passionate", "thrilled"
+  - Replace generic enthusiasm with specific interest based on the role's challenges
+  - Show genuine interest through concrete understanding rather than emotional language
+
+  🔍 RESEARCH & SPECIFICITY  
+  - Reference something specific about the company (product, recent news, values in action)
+  - Connect your experience to their actual challenges or goals
+  - Show you understand their industry and where they fit in it
+  - Mention why this company appeals to you beyond just the job description
+
+  📋 STRUCTURE: The "Vision-Story-Future" Approach
+  
+  Paragraph 1 — VISION CONNECTION (Why This Role Matters to You)
+  - Open with how this role fits your career vision and aspirations
+  - Reference something specific about the company that resonates with your goals
+  - Show this isn't just any job application but a strategic career move
+  
+  Paragraph 2 — STORY OF IMPACT (Your Relevant Experience Through Stories)
+  - 🎯 INTELLIGENT PROJECT SELECTION PROCESS:
+    1. First, identify ALL key requirements from the job description (technical skills, frameworks, tools, domain, responsibilities)
+    2. Map each requirement to candidate's projects/experiences that demonstrate that specific skill
+    3. If ONE project covers most requirements → Focus deeply on that project
+    4. If multiple projects needed → Select 2-3 projects that collectively showcase ALL key requirements
+    5. Ensure every major job requirement is backed by concrete evidence from candidate's actual experience
+  
+  - 📖 CONCRETE SKILL DEMONSTRATION STORYTELLING:
+    * MANDATORY FORMAT: "I possess [specific skills] from my [exact project name] project"
+    * Example: "I possess Java, Spring Boot, and MySQL skills from my E-commerce Platform project"
+    * Example: "My Customer Management System demonstrates my React, Node.js, and MongoDB experience"
+    * Always name the specific project that provides evidence for each skill claimed
+    * Group related skills by the project that demonstrates them
+  
+  - 🔍 SYSTEMATIC REQUIREMENT COVERAGE:
+    * Go through each major job requirement and find corresponding project evidence
+    * Backend requirements → "My [Backend Project Name] involved [specific backend technologies mentioned in job]"
+    * Frontend requirements → "My [Frontend Project Name] demonstrates [specific frontend skills from job posting]"
+    * Cloud/DevOps requirements → "My [Cloud Project Name] showcases [specific cloud technologies mentioned]"
+    * Database requirements → "I have [database technology] experience from [specific project name]"
+  
+  - ⚡ MULTI-PROJECT EVIDENCE STRUCTURE:
+    * Primary project focus: Lead with the project that covers the most job requirements
+    * Secondary evidence: "Additionally, my [Project 2] demonstrates [other required skills]"
+    * Tertiary evidence: "My [Project 3] further showcases [remaining requirements]"
+    * Example: "My full-stack e-commerce project demonstrates Java, Spring, React, and PostgreSQL skills, while my cloud migration project shows my AWS and Docker expertise"
+  
+  - 🎯 EVIDENCE-BASED CREDIBILITY:
+    * Every technical skill mentioned must be backed by a named project/experience
+    * Use project names as proof points: "This experience from [Project Name] aligns with your need for [job requirement]"
+    * Connect project challenges to job challenges: "In [Project Name], I solved [specific problem] using [technologies], which directly relates to [job requirement]"
+    * Make it clear you have hands-on experience, not just theoretical knowledge
+  
+  Paragraph 3 — FUTURE CONTRIBUTION (How You'll Grow and Add Value)
+  - Explain how you'll apply your experience to contribute immediately
+  - Show understanding of their challenges and how you'll help address them
+  - Express genuine enthusiasm for learning and growing with the team
+  - End with confidence about mutual benefit
+
+  🎨 PROFESSIONAL TONE GUIDELINES
+  - Write with confidence and clarity, avoiding exaggerated enthusiasm
+  - Use measured language that demonstrates competence rather than excitement
+  
+  📝 WORD CHOICE GUIDELINES:
+  AVOID these overused/exaggerated terms:
+  ❌ "excited" → ✅ "interested in", "drawn to", "motivated by"
+  ❌ "thrilled" → ✅ "pleased to", "ready to", "prepared to"
+  ❌ "passionate" → ✅ "focused on", "committed to", "experienced in"
+  ❌ "expertise" → ✅ "experience", "skills", "background in"
+  ❌ "innovative" → ✅ "practical", "effective", "solution-oriented"
+  ❌ "dynamic" → ✅ "adaptable", "versatile", "capable"
+  ❌ "cutting-edge" → ✅ "current", "modern", "up-to-date"
+  ❌ "game-changing" → ✅ "impactful", "valuable", "beneficial"
+  
+  - Focus on demonstrable capability rather than emotional enthusiasm
+  - Show professionalism through concrete examples, not superlatives
+  - Use specific, measurable language when possible
+
+  ⚙️ TECHNICAL REQUIREMENTS:
+  - Include the exact job title 1-2 times naturally in the text
+  - Weave in relevant keywords from the job description organically
+  - Keep formatting clean for ATS compatibility (no lists, tables, or complex formatting)
+  - Only include email, phone, and today's date in the header (no LinkedIn, GitHub, etc.)
+  - Start with "Dear Hiring Manager," unless a specific name is mentioned in the job description
+  - Maximum 350 words total for the body content
+
+  🚨 CRITICAL: EVIDENCE-BASED SKILL CLAIMS ONLY 🚨
+  - MANDATORY SKILL-PROJECT MAPPING: Every technical skill mentioned MUST be backed by a specific named project/experience from the candidate's profile
+  - CONCRETE EVIDENCE REQUIREMENT: Use exact project names and technologies as listed in the candidate's profile
+  - NO FABRICATION: Never invent project names, technologies, or experiences not explicitly provided
+  - SKILL VERIFICATION PROCESS:
+    ✅ Before claiming any skill: Find the specific project/experience in the profile that demonstrates it
+    ✅ Use exact project names as provided in the candidate's profile
+    ✅ Only mention technologies explicitly listed in that project's description
+    ✅ If a job requirement isn't covered by any candidate project, don't claim that skill
+  
+  - REQUIRED EVIDENCE FORMAT:
+    * "I possess [Skill A, Skill B] from my [Exact Project Name from profile] project"
+    * "My [Exact Project Name] demonstrates [specific technologies listed in that project]"
+    * "I have [technology] experience from [specific project name where it was mentioned]"
+  
+  - VERIFICATION CHECKLIST FOR EACH SKILL CLAIM:
+    ✅ Is this skill explicitly mentioned in the candidate's projects/experiences?
+    ✅ Is the project name exactly as provided in the candidate's profile?
+    ✅ Are the technologies I'm claiming actually listed in that specific project?
+    ✅ Am I connecting the right skills to the right projects?
+  
+  - HONEST COVERAGE STRATEGY:
+    * Focus on skills you CAN prove with concrete project evidence
+    * If job requires 10 skills but candidate only demonstrates 7 → focus on those 7 with strong evidence
+    * Better to have strong evidence for some requirements than weak claims for all requirements
+    * Use specific project names to build credibility: "My inventory management system project involved Java and MySQL" vs generic "I have Java experience"
+
+  🔍 MANDATORY SKILL-PROJECT VERIFICATION CHECKLIST:
+  Before writing ANY skill claim in the cover letter:
+  ✅ SKILL MAPPING: Have I mapped each job requirement to specific projects in the candidate's profile?
+  ✅ PROJECT NAMES: Am I using exact project names as provided in the candidate's profile?
+  ✅ TECHNOLOGY MATCH: Are the technologies I'm claiming explicitly mentioned in those specific projects?
+  ✅ EVIDENCE FORMAT: Am I using the required format "I possess [skills] from my [project name] project"?
+  ✅ NO GAPS: If I can't find project evidence for a job requirement, am I avoiding that skill claim?
+  ✅ COMPREHENSIVE COVERAGE: Am I systematically covering as many job requirements as possible with concrete evidence?
+  
+  EXAMPLE VERIFICATION PROCESS:
+  Job requires: Java, Spring, React, AWS, MySQL
+  Candidate has: "E-commerce Platform (Java, Spring, MySQL)" and "Portfolio Website (React, CSS)"
+  CORRECT approach: "I possess Java, Spring, and MySQL from my E-commerce Platform project, and React experience from my Portfolio Website project"
+  WRONG approach: Don't mention AWS since no project demonstrates it
+  
+  Remember: Specific project names + exact technology matches = Credibility and authenticity
+  
+`;
+
+    console.log(`Calling AWS Bedrock ${generationMode === 'fast' ? 'Llama 3.1 8B' : 'Claude 3 Sonnet'}...`);
+
+    // Prepare the request body based on model type
+    let requestBody: string;
+
+    if (generationMode === 'fast') {
+      // Llama 3.1 format - uses different structure
+      requestBody = JSON.stringify({
+        prompt: `<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+${systemPrompt}<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+${userPrompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+`,
+        max_gen_len: 1500,
+        temperature: 0.8,
+        top_p: 0.9
+      });
+    } else {
+      // Claude 3 Sonnet format (Messages API)
+      requestBody = JSON.stringify({
+        anthropic_version: "bedrock-2023-05-31",
+        max_tokens: 1500,
+        temperature: 0.7,
+        messages: [
+          {
+            role: "user",
+            content: `${systemPrompt}\n\n${userPrompt}`
+          }
+        ]
+      });
+    }
+
+    // Create AWS V4 signature manually
+    const now = new Date();
+    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '').slice(0, 15) + 'Z';
+    const dateStamp = amzDate.slice(0, 8);
+
+    const host = `bedrock-runtime.${region}.amazonaws.com`;
+    // URL encode the model ID (colons become %3A)
+    const encodedModelId = modelId.replace(/:/g, '%3A');
+    const canonicalUri = `/model/${encodedModelId}/invoke`;
+    const canonicalQuerystring = '';
+    const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-amz-date:${amzDate}\n`;
+    const signedHeaders = 'content-type;host;x-amz-date';
+
+    const payloadHash = hex(await sha256(requestBody));
+    const canonicalRequest = `POST\n${canonicalUri}\n${canonicalQuerystring}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+
+    const algorithm = 'AWS4-HMAC-SHA256';
+    const credentialScope = `${dateStamp}/${region}/bedrock/aws4_request`;
+    const stringToSign = `${algorithm}\n${amzDate}\n${credentialScope}\n${hex(await sha256(canonicalRequest))}`;
+
+    const signingKey = await getSignatureKey(awsSecretAccessKey, dateStamp, region, 'bedrock');
+    const signature = hex(await hmac(signingKey, stringToSign));
+
+    const authorizationHeader = `${algorithm} Credential=${awsAccessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-Amz-Date': amzDate,
+      'Authorization': authorizationHeader,
+      'Host': host,
+    };
+
+    // Call Bedrock API
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: requestBody,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Bedrock API error:', response.status, errorText);
+      throw new Error(`Bedrock API error: ${response.status} - ${errorText}`);
+    }
+
+    const responseBody = await response.json();
+    console.log('Bedrock response received');
+
+    // Extract content based on model type
+    let coverLetter: string;
+
+    if (generationMode === 'fast') {
+      // Llama 3.1 response format
+      coverLetter = responseBody.generation;
+    } else {
+      // Claude 3 Sonnet response format (Messages API)
+      coverLetter = responseBody.content[0].text;
+    }
+
+    // Post-process the LaTeX to ensure it's valid
+    console.log('Post-processing LaTeX...');
+
+    // 1. CRITICAL: Extract ONLY the LaTeX block - must start with \documentclass and end with \end{document}
+    const latexMatch = coverLetter.match(/\\documentclass[\s\S]*?\\end\{document\}/);
+    if (latexMatch) {
+      coverLetter = latexMatch[0];
+      console.log('✅ Extracted pure LaTeX block from AI response');
+    } else {
+      console.log('⚠️ No complete LaTeX block found, attempting to construct valid document...');
+
+      // Try to find documentclass start
+      const docClassMatch = coverLetter.match(/\\documentclass[\s\S]*/);
+      if (docClassMatch) {
+        coverLetter = docClassMatch[0];
+        console.log('✅ Found documentclass, extracted from that point');
+      }
+    }
+
+    // 2. Ensure LaTeX structure - fix if doesn't start with \documentclass or end with \end{document}
+    if (!coverLetter.startsWith('\\documentclass')) {
+      console.log('⚠️ LaTeX does not start with \\documentclass, searching for it...');
+      const docClassIndex = coverLetter.indexOf('\\documentclass');
+      if (docClassIndex !== -1) {
+        coverLetter = coverLetter.substring(docClassIndex);
+        console.log('✅ Fixed: Extracted from \\documentclass position');
+      } else {
+        console.error('❌ No \\documentclass found anywhere in response');
+        throw new Error('Invalid LaTeX: No \\documentclass found in AI response');
+      }
+    }
+
+    if (!coverLetter.endsWith('\\end{document}')) {
+      console.log('⚠️ Adding missing \\end{document}');
+      coverLetter += '\n\\end{document}';
+    }
+
+    // 3. Fix common LaTeX issues
+    coverLetter = coverLetter
+      // Fix truncated \end{document} (common issue)
+      .replace(/\\end\{document[>}]*$/g, '\\end{document}')
+      // Remove any trailing > characters that might be from truncation
+      .replace(/[>]+$/g, '')
+      // Fix the "$12pt]" issue - replace with proper spacing
+      .replace(/\$(\d+)pt\]/g, '\\\\[$1pt]')
+      // Keep non-ASCII characters for international support (French accents, etc.)
+      // .replace(/[^\x00-\x7F]/g, '') // REMOVED - this was breaking French characters
+      // Ensure proper line endings
+      .replace(/\r\n/g, '\n')
+      .trim();
+
+    // 4. Fix LaTeX special characters in body paragraphs (enhanced escaping)
+    // Find the body section and escape special characters only there
+    const bodyStart = coverLetter.indexOf('Dear');
+    const bodyEnd = coverLetter.lastIndexOf('Sincerely,') !== -1 ? coverLetter.lastIndexOf('Sincerely,') :
+      (coverLetter.lastIndexOf('Cordialement,') !== -1 ? coverLetter.lastIndexOf('Cordialement,') : coverLetter.length);
+
+    if (bodyStart !== -1 && bodyEnd !== -1) {
+      const beforeBody = coverLetter.substring(0, bodyStart);
+      const bodyContent = coverLetter.substring(bodyStart, bodyEnd);
+      const afterBody = coverLetter.substring(bodyEnd);
+
+      // Comprehensive LaTeX character escaping in body content
+      let cleanedBody = bodyContent
+        // Escape % symbols that are not already escaped (for percentages like "30%")
+        .replace(/([^\\])%/g, '$1\\\\%')
+        // Escape & symbols that are not already escaped (most critical for job titles like "AI & ML")
+        .replace(/([^\\])&/g, '$1\\\\&')
+        // Escape $ symbols that are not already escaped
+        .replace(/([^\\])\\$/g, '$1\\\\$')
+        // Escape # symbols that are not already escaped
+        .replace(/([^\\])#/g, '$1\\\\#')
+        // Escape _ symbols that are not already escaped (but be careful with email addresses)
+        .replace(/([^\\])_(?![a-zA-Z0-9@.])/g, '$1\\\\_');
+
+      coverLetter = beforeBody + cleanedBody + afterBody;
+    }
+
+    // 5. Final validation and auto-correction
+    if (!coverLetter.startsWith('\\documentclass')) {
+      console.log('🔧 Final fix: Document still doesn\'t start with \\documentclass, searching again...');
+      const docClassIndex = coverLetter.indexOf('\\documentclass');
+      if (docClassIndex !== -1) {
+        coverLetter = coverLetter.substring(docClassIndex);
+        console.log('✅ Final fix applied: Extracted valid LaTeX block');
+      } else {
+        console.error('❌ Critical: No valid LaTeX document structure found');
+        throw new Error('Unable to extract valid LaTeX document from AI response');
+      }
+    }
+
+    if (!coverLetter.endsWith('\\end{document}')) {
+      console.log('🔧 Final fix: Ensuring document ends with \\end{document}');
+      coverLetter += '\n\\end{document}';
+    }
+
+    console.log('✅ LaTeX validation complete - sending clean document to compilation');
+
+    // Log the final LaTeX for debugging
+    console.log('Final LaTeX preview:', coverLetter.slice(-200));
+
+    // Increment generation counter
+    try {
+      await supabaseAdmin.rpc('increment_generation_count');
+      console.log('📊 Generation count incremented');
+    } catch (counterError) {
+      console.error('⚠️ Counter increment failed (non-critical):', counterError);
+      // Don't fail the request if counter fails
+    }
+
+    // Cover letter generated successfully - no usage tracking
+    console.log('✅ Cover letter generated successfully for user:', user.id.slice(-8));
+
+    return new Response(JSON.stringify({ coverLetter }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Error in generate-cover-letter function:', error);
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'An unknown error occurred'
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  }
+});

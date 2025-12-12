@@ -80,11 +80,30 @@ serve(async (req: Request) => {
       );
     }
 
-    // Parse the Lambda response
-    const lambdaResult = await lambdaResponse.json();
+    // Handle Lambda response as binary PDF
+    let base64Pdf: string;
     
-    // The Lambda returns { body: base64_pdf, isBase64Encoded: true }
-    const base64Pdf = lambdaResult.body;
+    try {
+      // Get response as ArrayBuffer to handle binary PDF data properly
+      const pdfBuffer = await lambdaResponse.arrayBuffer();
+      
+      // Convert ArrayBuffer to base64
+      const bytes = new Uint8Array(pdfBuffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      base64Pdf = btoa(binary);
+      
+      console.log('PDF converted to base64, length:', base64Pdf.length);
+      
+    } catch (error) {
+      console.error('Error processing PDF response:', error);
+      return new Response(
+        JSON.stringify({ error: "Failed to process PDF response" }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (!base64Pdf) {
       return new Response(
@@ -98,17 +117,17 @@ serve(async (req: Request) => {
 
     console.log('✅ PDF generated successfully, size:', Math.round(base64Pdf.length * 0.75), 'bytes');
 
-    // Convert base64 to binary and return as PDF
-    const pdfBuffer = Uint8Array.from(atob(base64Pdf), c => c.charCodeAt(0));
-
-    return new Response(pdfBuffer, {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/pdf",
-        "Content-Disposition": "attachment; filename=\"cover-letter.pdf\"",
-      },
-    });
+    // Return JSON with base64 PDF data
+    return new Response(
+      JSON.stringify({
+        success: true,
+        pdfData: base64Pdf
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
 
   } catch (error: any) {
     console.error('Error generating PDF:', error);

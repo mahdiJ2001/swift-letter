@@ -38,6 +38,8 @@ export default function JobDescriptionForm() {
     const [profile, setProfile] = useState<UserProfile | null>(null)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
+    const [showPdfPreview, setShowPdfPreview] = useState(false)
+    const [pdfUrl, setPdfUrl] = useState<string>('')
     const router = useRouter()
     const { user } = useAuth()
 
@@ -149,7 +151,8 @@ export default function JobDescriptionForm() {
             if (data.success) {
                 setGeneratedLetter(data.content)
                 setGeneratedLatex(data.latex)
-                setSuccess(`Cover letter generated successfully! You have ${data.creditsRemaining} credits remaining.`)
+                // Generate PDF directly
+                await generatePdfAndPreview(data.latex)
             } else {
                 throw new Error(data.error || 'Failed to generate cover letter')
             }
@@ -169,14 +172,8 @@ export default function JobDescriptionForm() {
         }
     }
 
-    const handleDownloadPdf = async () => {
-        if (!generatedLatex) {
-            setError('No LaTeX content available for PDF generation')
-            return
-        }
-
+    const generatePdfAndPreview = async (latexContent: string) => {
         setIsPdfGenerating(true)
-        setError('')
 
         try {
             const { data: { session } } = await supabase.auth.getSession()
@@ -192,27 +189,40 @@ export default function JobDescriptionForm() {
                     'Authorization': `Bearer ${session.access_token}`
                 },
                 body: JSON.stringify({
-                    latex: generatedLatex
+                    latex: latexContent
                 })
             })
 
             if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.error || 'Failed to generate PDF')
+                const errorText = await response.text()
+                console.error('PDF API Error Response:', errorText)
+                try {
+                    const errorData = JSON.parse(errorText)
+                    throw new Error(errorData.error || `PDF API Error: ${response.status}`)
+                } catch {
+                    throw new Error(`PDF API Error: ${response.status} - ${errorText}`)
+                }
             }
 
-            const pdfBlob = await response.blob()
-            const url = window.URL.createObjectURL(pdfBlob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = 'cover-letter.pdf'
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
-            window.URL.revokeObjectURL(url)
+            const data = await response.json()
 
-            setSuccess('PDF downloaded successfully!')
+            if (data.success && data.pdfData) {
+                // Convert base64 to blob URL for preview
+                const byteCharacters = atob(data.pdfData)
+                const byteNumbers = new Array(byteCharacters.length)
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i)
+                }
+                const byteArray = new Uint8Array(byteNumbers)
+                const blob = new Blob([byteArray], { type: 'application/pdf' })
+                const url = URL.createObjectURL(blob)
 
+                setPdfUrl(url)
+                setShowPdfPreview(true)
+                setSuccess('Cover letter generated successfully!')
+            } else {
+                throw new Error(data.error || 'Failed to generate PDF')
+            }
         } catch (error: any) {
             console.error('Error generating PDF:', error)
             setError(error.message || 'Failed to generate PDF. Please try again.')
@@ -220,6 +230,8 @@ export default function JobDescriptionForm() {
             setIsPdfGenerating(false)
         }
     }
+
+
 
     return (
         <Card className="w-full max-w-none mx-auto shadow-lg border-0 bg-white">
@@ -269,14 +281,14 @@ export default function JobDescriptionForm() {
                     <div className="text-center">
                         <Button
                             type="submit"
-                            disabled={!jobDescription.trim() || isLoading}
+                            disabled={!jobDescription.trim() || isLoading || isPdfGenerating}
                             size="lg"
                             className="w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isLoading ? (
+                            {isLoading || isPdfGenerating ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                    Generating Cover Letter...
+                                    {isPdfGenerating ? 'Generating PDF...' : 'Generating Cover Letter...'}
                                 </>
                             ) : (
                                 <>
@@ -312,44 +324,74 @@ export default function JobDescriptionForm() {
                     </div>
                 </form>
 
-                {/* Generated Cover Letter Display */}
-                {generatedLetter && (
-                    <div className="mt-6">
-                        <div className="border-t pt-6">
-                            <div className="flex items-center space-x-2 mb-4">
-                                <Zap className="h-5 w-5 text-green-600" />
-                                <h3 className="text-lg font-semibold text-gray-900">Your Generated Cover Letter</h3>
+                {/* PDF Preview Modal */}
+                {showPdfPreview && pdfUrl && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg max-w-6xl w-full max-h-[95vh] flex flex-col">
+                            <div className="flex items-center justify-between p-4 border-b">
+                                <div className="flex items-center space-x-2">
+                                    <Zap className="h-5 w-5 text-green-600" />
+                                    <h3 className="text-lg font-semibold text-gray-900">Your Cover Letter</h3>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Button
+                                        onClick={() => {
+                                            const a = document.createElement('a')
+                                            a.href = pdfUrl
+                                            a.download = 'cover-letter.pdf'
+                                            document.body.appendChild(a)
+                                            a.click()
+                                            document.body.removeChild(a)
+                                        }}
+                                        className="bg-red-600 text-white hover:bg-red-700"
+                                    >
+                                        <Download className="h-4 w-4 mr-2" />
+                                        Download PDF
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setShowPdfPreview(false)
+                                            URL.revokeObjectURL(pdfUrl)
+                                            setPdfUrl('')
+                                            setGeneratedLetter('')
+                                            setGeneratedLatex('')
+                                            setJobDescription('')
+                                        }}
+                                    >
+                                        Generate Another
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setShowPdfPreview(false)
+                                            URL.revokeObjectURL(pdfUrl)
+                                            setPdfUrl('')
+                                        }}
+                                    >
+                                        ✕
+                                    </Button>
+                                </div>
                             </div>
-                            <div className="bg-gray-50 p-4 rounded-md mb-4">
-                                <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">
-                                    {generatedLetter}
-                                </pre>
-                            </div>
-                            <div className="flex justify-end space-x-2">
-                                <Button variant="outline" onClick={() => navigator.clipboard.writeText(generatedLetter)}>
-                                    Copy to Clipboard
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={handleDownloadPdf}
-                                    disabled={isPdfGenerating || !generatedLatex}
-                                    className="bg-red-600 text-white hover:bg-red-700"
-                                >
-                                    {isPdfGenerating ? (
-                                        <>
-                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                            Generating PDF...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Download className="h-4 w-4 mr-2" />
-                                            Download PDF
-                                        </>
-                                    )}
-                                </Button>
-                                <Button onClick={() => { setGeneratedLetter(''); setGeneratedLatex(''); setJobDescription('') }}>
-                                    Generate Another
-                                </Button>
+                            <div className="flex-1 p-2 relative overflow-hidden">
+                                <div className="relative w-full h-full">
+                                    <iframe
+                                        src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                                        className="w-full border-0 rounded"
+                                        title="Cover Letter Preview"
+                                        style={{
+                                            height: 'calc(95vh - 60px)',
+                                            marginTop: '-40px',
+                                            paddingTop: '40px',
+                                            border: 'none'
+                                        }}
+                                    />
+                                    {/* Overlay to hide any remaining toolbar */}
+                                    <div
+                                        className="absolute top-0 left-0 w-full bg-white z-10"
+                                        style={{ height: '40px' }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
