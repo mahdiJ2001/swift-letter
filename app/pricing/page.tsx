@@ -5,7 +5,7 @@ import { Check, Star, CreditCard, Zap, Shield, Clock, Users, TrendingUp, Target 
 
 export default function PricingPage() {
     return (
-        <div className="min-h-screen bg-gradient-bg">
+        <div className="min-h-screen bg-gradient-to-b from-green-100 via-green-50 to-white">
             <Header />
 
             <main>

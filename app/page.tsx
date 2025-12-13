@@ -20,7 +20,7 @@ export default function HomePage() {
                         </h1>
                         <p className="text-xl text-gray-600 mb-12 max-w-4xl mx-auto">
                             Swift Letter converts your job descriptions into fully personalized,
-                            professional cover letters—ensuring they pass every screening tool.
+                            professional cover letters ensuring they pass every screening tool.
                         </p>
                     </div>
                 </section>

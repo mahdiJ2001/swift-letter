@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const [showCreditsModal, setShowCreditsModal] = useState(false)
     const [credits, setCredits] = useState<number | null>(null)
     const { user, signOut } = useAuth()
 
@@ -64,6 +65,12 @@ export default function Header() {
                             >
                                 Pricing
                             </Link>
+                            <Link
+                                href="/feedback"
+                                className="text-gray-600 hover:text-green-600 font-medium transition-colors"
+                            >
+                                Feedback
+                            </Link>
                         </nav>
                     </div>
 
@@ -72,10 +79,15 @@ export default function Header() {
                         {user ? (
                             <>
                                 {credits !== null && (
-                                    <div className="flex items-center space-x-1 px-2 py-1 bg-green-50 rounded-md border border-green-200">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowCreditsModal(true)}
+                                        className="flex items-center space-x-1 px-2 py-1 bg-green-50 hover:bg-green-100 rounded-md border border-green-200 text-green-700 hover:text-green-800"
+                                    >
                                         <Star className="h-4 w-4 text-green-600" />
-                                        <span className="text-sm font-medium text-green-700">{credits}</span>
-                                    </div>
+                                        <span className="text-sm font-medium">{credits}</span>
+                                    </Button>
                                 )}
                                 <Button variant="ghost" asChild>
                                     <Link href="/profile" className="flex items-center space-x-2">
@@ -147,6 +159,13 @@ export default function Header() {
                         >
                             Pricing
                         </Link>
+                        <Link
+                            href="/feedback"
+                            className="block text-gray-600 hover:text-green-600 font-medium transition-colors px-2 py-1"
+                            onClick={() => setIsMenuOpen(false)}
+                        >
+                            Feedback
+                        </Link>
                         {user ? (
                             <>
                                 {credits !== null && (
@@ -197,6 +216,41 @@ export default function Header() {
                     </div>
                 )}
             </div>
+
+            {/* Credits Modal */}
+            {showCreditsModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <div className="text-center">
+                            <Star className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                            <h3 className="text-xl font-semibold text-gray-900 mb-2">Your Credits</h3>
+                            <div className="text-4xl font-bold text-green-600 mb-4">{credits}</div>
+                            <p className="text-gray-600 mb-6">
+                                {credits === 0 ? 'You have no credits remaining.' :
+                                    credits === 1 ? 'You have 1 credit remaining.' :
+                                        `You have ${credits} credits remaining.`}
+                            </p>
+                            <div className="flex space-x-3">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowCreditsModal(false)}
+                                    className="flex-1"
+                                >
+                                    Close
+                                </Button>
+                                <Button
+                                    asChild
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                >
+                                    <Link href="/pricing" onClick={() => setShowCreditsModal(false)}>
+                                        Buy Credits
+                                    </Link>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </header>
     )
 }

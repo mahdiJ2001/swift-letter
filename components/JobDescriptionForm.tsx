@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Clipboard, Zap, Download } from 'lucide-react'
+import { Clipboard, Zap, Download, PenTool, Upload } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -27,6 +27,7 @@ type UserProfile = {
     linkedin?: string
     github?: string
     portfolio?: string
+    writing_style?: string
 }
 
 export default function JobDescriptionForm() {
@@ -40,6 +41,12 @@ export default function JobDescriptionForm() {
     const [success, setSuccess] = useState('')
     const [showPdfPreview, setShowPdfPreview] = useState(false)
     const [pdfUrl, setPdfUrl] = useState<string>('')
+    const [showWritingStyle, setShowWritingStyle] = useState(false)
+    const [selectedLanguage, setSelectedLanguage] = useState('english')
+    const [showLanguageModal, setShowLanguageModal] = useState(false)
+    const [isEditingLetter, setIsEditingLetter] = useState(false)
+    const [editableLetter, setEditableLetter] = useState('')
+    const [isUploadingResume, setIsUploadingResume] = useState(false)
     const router = useRouter()
     const { user } = useAuth()
 
@@ -49,6 +56,105 @@ export default function JobDescriptionForm() {
             setJobDescription(text)
         } catch (err) {
             console.error('Failed to read clipboard:', err)
+        }
+    }
+
+    const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        if (!file) return
+
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            setError('Please upload a PDF file.')
+            return
+        }
+
+        if (file.size > 10 * 1024 * 1024) { // 10MB limit
+            setError('File size must be less than 10MB.')
+            return
+        }
+
+        setIsUploadingResume(true)
+        setError('')
+        setSuccess('Processing resume, this will update your profile...')
+
+        try {
+            // Create FormData to send the file to API
+            const formData = new FormData()
+            formData.append('file', file)
+
+            setSuccess('Extracting text from PDF...')
+
+            // Send to API endpoint for processing
+            const response = await fetch('/api/extract-pdf', {
+                method: 'POST',
+                body: formData
+            })
+
+            setSuccess('Processing with AI...')
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.error || 'Failed to process PDF')
+            }
+
+            const responseData = await response.json()
+            const extractedData = responseData.data
+
+            // Format arrays for display
+            const { formatSkillsArray, formatLanguagesArray } = await import('@/lib/resume-parser')
+
+            // Prepare profile data for update
+            const updatedProfile = {
+                full_name: extractedData.full_name || '',
+                email: extractedData.email || '',
+                phone: extractedData.phone || '',
+                location: extractedData.location || '',
+                experiences: extractedData.experiences || '',
+                projects: extractedData.projects || '',
+                skills: formatSkillsArray(extractedData.skills || null) || '',
+                education: extractedData.education || '',
+                certifications: extractedData.certifications || '',
+                languages: formatLanguagesArray(extractedData.languages || null) || '',
+                links: [
+                    extractedData.linkedin ? `LinkedIn: ${extractedData.linkedin}` : '',
+                    extractedData.github ? `GitHub: ${extractedData.github}` : '',
+                    extractedData.portfolio ? `Portfolio: ${extractedData.portfolio}` : ''
+                ].filter(Boolean).join('\n')
+            }
+
+            // Save to profile
+            if (user) {
+                const { data: { session } } = await supabase.auth.getSession()
+                if (session) {
+                    const updateResponse = await fetch('/api/profile', {
+                        method: profile ? 'PUT' : 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({
+                            ...updatedProfile,
+                            ...(profile ? { id: profile.id } : {})
+                        })
+                    })
+
+                    if (updateResponse.ok) {
+                        const savedProfile = await updateResponse.json()
+                        setProfile(savedProfile)
+                        setSuccess('Resume processed and profile updated successfully!')
+                    } else {
+                        throw new Error('Failed to save profile')
+                    }
+                }
+            }
+
+            // Clear the file input
+            event.target.value = ''
+        } catch (error: any) {
+            console.error('Resume processing error:', error)
+            setError(error.message || 'Failed to process resume. Please try again.')
+        } finally {
+            setIsUploadingResume(false)
         }
     }
 
@@ -86,7 +192,7 @@ export default function JobDescriptionForm() {
                 return
             }
 
-            // Profile is complete, generate cover letter directly
+            // Profile is complete, generate cover letter
             setProfile(profileData)
             await generateCoverLetter(profileData)
 
@@ -130,7 +236,7 @@ export default function JobDescriptionForm() {
                         languages: profileData.languages
                     },
                     jobDescription,
-                    language: 'english',
+                    language: selectedLanguage,
                     generationMode: 'polished'
                 })
             })
@@ -151,6 +257,19 @@ export default function JobDescriptionForm() {
             if (data.success) {
                 setGeneratedLetter(data.content)
                 setGeneratedLatex(data.latex)
+                // Extract text content from LaTeX for editing
+                const textMatch = data.content.match(/\\begin{document}([\s\S]*?)\\end{document}/)
+                if (textMatch) {
+                    const textContent = textMatch[1]
+                        .replace(/\\noindent\s*/g, '')
+                        .replace(/\\vspace{[^}]*}/g, '\n')
+                        .replace(/\\\\\s*/g, '\n')
+                        .replace(/\\textbar{}/g, '|')
+                        .replace(/\\Large\s*\\textbf{([^}]*)}/g, '$1')
+                        .replace(/\{([^}]*)\}/g, '$1')
+                        .trim()
+                    setEditableLetter(textContent)
+                }
                 // Generate PDF directly
                 await generatePdfAndPreview(data.latex)
             } else {
@@ -169,6 +288,87 @@ export default function JobDescriptionForm() {
             }
 
             setError(errorMessage)
+        }
+    }
+
+
+
+    const generatePdfFromText = async (textContent: string) => {
+        setIsPdfGenerating(true)
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+
+            if (!session) {
+                throw new Error('No valid session found')
+            }
+
+            // Convert text to simple LaTeX document
+            const simpleLatex = `\\documentclass[letterpaper,11pt]{article}
+\\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
+
+% Manual page setup
+\\setlength{\\oddsidemargin}{-0.5in}
+\\setlength{\\evensidemargin}{-0.5in}
+\\setlength{\\textwidth}{7.0in}
+\\setlength{\\topmargin}{-0.75in}
+\\setlength{\\textheight}{9.5in}
+\\setlength{\\headheight}{0pt}
+\\setlength{\\headsep}{0pt}
+\\setlength{\\footskip}{0.5in}
+
+\\pagestyle{empty}
+\\raggedbottom
+\\raggedright
+
+\\begin{document}
+
+${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').replace(/\$/g, '\\$').replace(/_/g, '\\_')}
+
+\\end{document}`
+
+            const response = await fetch('/api/generate-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
+                    latex: simpleLatex
+                })
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                console.error('PDF API Error Response:', errorText)
+                throw new Error(`PDF API Error: ${response.status} - ${errorText}`)
+            }
+
+            const data = await response.json()
+
+            if (data.success && data.pdfData) {
+                const byteCharacters = atob(data.pdfData)
+                const byteNumbers = new Array(byteCharacters.length)
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i)
+                }
+                const byteArray = new Uint8Array(byteNumbers)
+                const blob = new Blob([byteArray], { type: 'application/pdf' })
+                const url = URL.createObjectURL(blob)
+
+                setPdfUrl(url)
+                setShowPdfPreview(true)
+                setIsEditingLetter(false)
+                setSuccess('Cover letter updated successfully!')
+            } else {
+                throw new Error(data.error || 'Failed to generate PDF')
+            }
+        } catch (error: any) {
+            console.error('Error generating PDF:', error)
+            setError(error.message || 'Failed to generate PDF. Please try again.')
+        } finally {
+            setIsPdfGenerating(false)
         }
     }
 
@@ -236,12 +436,37 @@ export default function JobDescriptionForm() {
     return (
         <Card className="w-full max-w-none mx-auto shadow-lg border-0 bg-white">
             <CardHeader className="text-left pb-4">
-                <CardTitle className="text-lg font-semibold text-gray-900">
-                    Generate Cover Letter
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-semibold text-gray-900">
+                        Generate Cover Letter
+                    </CardTitle>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('resume-upload')?.click()}
+                        disabled={isUploadingResume}
+                        className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 font-medium"
+                    >
+                        {isUploadingResume ? (
+                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                        ) : (
+                            <Upload className="h-4 w-4 mr-2" />
+                        )}
+                        <span>{isUploadingResume ? 'Processing Resume...' : 'Attach Resume'}</span>
+                    </Button>
+                    <input
+                        id="resume-upload"
+                        type="file"
+                        accept=".pdf"
+                        className="hidden"
+                        onChange={handleResumeUpload}
+                    />
+                </div>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleGenerateCoverLetter} className="space-y-6">
+
                     <div className="relative">
                         <Textarea
                             id="jobDescription"
@@ -259,23 +484,40 @@ export default function JobDescriptionForm() {
                             onChange={(e) => setJobDescription(e.target.value)}
                             required
                         />
-                        {/* Paste Button */}
+
+                        {/* Language Button - Top Right */}
                         <Button
                             type="button"
                             variant="secondary"
                             size="sm"
-                            onClick={handlePasteFromClipboard}
+                            onClick={() => setShowLanguageModal(true)}
                             className="absolute top-4 right-4"
                         >
-                            <Clipboard className="h-4 w-4 mr-2" />
-                            <span>Paste</span>
+                            <span className="text-sm mr-1">🌐</span>
+                            <span>{selectedLanguage === 'english' ? 'EN' : 'FR'}</span>
                         </Button>
+
+                        {/* Paste Button - Center */}
+                        {!jobDescription && (
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={handlePasteFromClipboard}
+                                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                            >
+                                <Clipboard className="h-4 w-4 mr-2" />
+                                <span>Paste</span>
+                            </Button>
+                        )}
 
                         {/* Character Count */}
                         <div className="absolute bottom-4 right-4 text-sm text-gray-500">
                             {jobDescription.length} characters
                         </div>
                     </div>
+
+
 
                     {/* Submit Button */}
                     <div className="text-center">
@@ -324,6 +566,95 @@ export default function JobDescriptionForm() {
                     </div>
                 </form>
 
+                {/* Language Selection Modal */}
+                {showLanguageModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg max-w-md w-full p-6">
+                            <h3 className="text-lg font-semibold mb-4">Select Language</h3>
+                            <div className="space-y-3 mb-6">
+                                <button
+                                    onClick={() => setSelectedLanguage('english')}
+                                    className={`w-full p-3 text-left rounded-lg border-2 transition-colors ${selectedLanguage === 'english'
+                                        ? 'border-green-500 bg-green-50 text-green-700'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <div className="flex items-center">
+                                        <span className="text-xl mr-3">🇺🇸</span>
+                                        <div>
+                                            <div className="font-medium">English</div>
+                                            <div className="text-sm text-gray-500">Generate cover letter in English</div>
+                                        </div>
+                                    </div>
+                                </button>
+                                <button
+                                    onClick={() => setSelectedLanguage('french')}
+                                    className={`w-full p-3 text-left rounded-lg border-2 transition-colors ${selectedLanguage === 'french'
+                                        ? 'border-green-500 bg-green-50 text-green-700'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <div className="flex items-center">
+                                        <span className="text-xl mr-3">🇫🇷</span>
+                                        <div>
+                                            <div className="font-medium">Français</div>
+                                            <div className="text-sm text-gray-500">Générer la lettre de motivation en français</div>
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
+                            <div className="flex justify-end space-x-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowLanguageModal(false)}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={() => setShowLanguageModal(false)}
+                                    className="bg-green-600 hover:bg-green-700"
+                                >
+                                    Select
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Edit Cover Letter Modal */}
+                {isEditingLetter && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg max-w-4xl w-full max-h-[95vh] flex flex-col">
+                            <div className="flex items-center justify-between p-4 border-b">
+                                <h3 className="text-lg font-semibold text-gray-900">Edit Cover Letter</h3>
+                                <div className="flex items-center space-x-2">
+                                    <Button
+                                        onClick={() => generatePdfFromText(editableLetter)}
+                                        disabled={isPdfGenerating}
+                                        className="bg-green-600 text-white hover:bg-green-700"
+                                    >
+                                        {isPdfGenerating ? 'Generating...' : 'Update PDF'}
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setIsEditingLetter(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="flex-1 p-4">
+                                <Textarea
+                                    value={editableLetter}
+                                    onChange={(e) => setEditableLetter(e.target.value)}
+                                    className="w-full h-full min-h-[400px] resize-none"
+                                    placeholder="Edit your cover letter here..."
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* PDF Preview Modal */}
                 {showPdfPreview && pdfUrl && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -334,6 +665,13 @@ export default function JobDescriptionForm() {
                                     <h3 className="text-lg font-semibold text-gray-900">Your Cover Letter</h3>
                                 </div>
                                 <div className="flex items-center space-x-2">
+                                    <Button
+                                        onClick={() => setIsEditingLetter(true)}
+                                        className="bg-blue-600 text-white hover:bg-blue-700"
+                                    >
+                                        <PenTool className="h-4 w-4 mr-2" />
+                                        Edit Cover
+                                    </Button>
                                     <Button
                                         onClick={() => {
                                             const a = document.createElement('a')

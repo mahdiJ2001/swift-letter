@@ -103,8 +103,8 @@ serve(async (req: Request) => {
     const modelId = "anthropic.claude-3-sonnet-20240229-v1:0";
     const endpoint = `https://bedrock-runtime.${region}.amazonaws.com/model/${modelId}/invoke`;
 
-    // Create the prompt for Claude - generate complete LaTeX document
-    const prompt = `You are an expert professional cover letter writer. Generate a personalized cover letter as a complete LaTeX document based on the following information:
+    // Create the prompt for Claude - generate complete LaTeX document using specific template
+    const prompt = `You are an expert cover letter writer. You must fill in the following template with relevant information from the candidate profile and job description. Follow this EXACT template structure:
 
 CANDIDATE PROFILE:
 - Name: ${profile.full_name}
@@ -133,11 +133,16 @@ ${profile.certifications || 'Not specified'}
 LANGUAGES:
 ${profile.languages || 'Not specified'}
 
+
+
 JOB DESCRIPTION:
 ${jobDescription}
 
-REQUIREMENTS:
-You must produce a complete LaTeX document using this minimal template (uses only basic packages):
+LANGUAGE: ${language}
+${language === 'french' ? 'IMPORTANT: Generate the entire cover letter in French. Use proper French business letter format and professional French language.' : 'Generate the cover letter in English.'}
+
+TEMPLATE TO FOLLOW EXACTLY:
+You must create a complete LaTeX document that follows this exact structure. Fill in ALL bracketed placeholders with relevant information:
 
 \\documentclass[letterpaper,11pt]{article}
 \\usepackage[utf8]{inputenc}
@@ -162,46 +167,116 @@ You must produce a complete LaTeX document using this minimal template (uses onl
 
 \\begin{document}
 
-% Header with candidate information
-\\begin{center}
-    {\\Large \\textbf{${profile.full_name}}} \\\\
-    \\vspace{5pt}
-    ${profile.email} \\textbar{} ${profile.phone} \\textbar{} ${profile.location || 'Location not specified'}
-\\end{center}
-
-\\vspace{10pt}
-
-% Date - using manual date instead of datetime package
 \\noindent \\today
 
 \\vspace{10pt}
 
-\\noindent Hiring Manager \\\\
-Company Name \\\\
+\\noindent ${profile.full_name} \\\\
+${profile.email} \\\\
+${profile.linkedin ? profile.linkedin + ' \\\\' : ''}${profile.portfolio ? profile.portfolio + ' \\\\' : ''}
 
 \\vspace{10pt}
 
-\\noindent Dear Hiring Manager,
+${language === 'french' ? `\\\\noindent À l'équipe de recrutement de [Company's Name],
 
-\\vspace{5pt}
+\\\\vspace{5pt}
 
-[Generate a professional 3-4 paragraph cover letter here that:]
-[- Extracts job title and company name from the job description]
-[- Tailors content to match job requirements]
-[- Highlights relevant experience and skills from the candidate's profile]
-[- Uses specific examples from their projects and experience]
-[- Maintains a professional, engaging tone]
-[- Is written entirely in English]
+\\\\noindent Je vous contacte au sujet du poste de [Job Title] chez [Company's Name]. J'ai travaillé sur [current work or recent focus from user profile], et quand j'ai découvert cette opportunité, j'ai tout de suite pensé que c'était exactement le genre de poste que je recherchais. [Brief personal connection or genuine interest in the role].
 
-\\vspace{10pt}
+\\\\vspace{5pt}
 
-\\noindent Sincerely, \\\\
-\\vspace{5pt}
-${profile.full_name}
+\\\\noindent Ce poste me semble être une étape naturelle dans ma carrière. J'ai [mention current experience level or stage], et je suis vraiment intéressé par [specific aspect of the role that advances career]. Prendre en charge [specific responsibility from job description] serait un excellent moyen de [how it helps build their career or skills they want to develop].
+
+\\\\vspace{5pt}
+
+\\\\noindent [Mini-story about problem solved]. La partie la plus délicate était [specific technical challenge]. Cela m'a pris un certain temps pour comprendre [what you tried], mais une fois que j'ai [solution], tout s'est bien passé. Ce que j'ai appris de cette expérience était [key insight or skill gained].
+
+\\\\vspace{5pt}
+
+\\\\noindent Je suis tombé sur [specific company thing you found]. C'est exactement ce qui m'intéresse - [natural connection to your experience]. La partie [specific aspect] a particulièrement attiré mon attention parce que [personal reason why it matters to you].
+
+\\\\vspace{5pt}
+
+\\\\noindent D'après ce que je peux voir, vous recherchez quelqu'un qui peut [key requirement from job description]. C'est exactement le genre de travail que j'ai fait récemment, et je pense que je pourrais me rendre utile assez rapidement.
+
+\\\\vspace{5pt}
+
+\\\\noindent J'aimerais en savoir plus sur ce poste. N'hésitez pas à me contacter au ${profile.phone} ou ${profile.email}.
+
+\\\\vspace{10pt}
+
+\\\\noindent Cordialement, \\\\\\\\
+\\\\vspace{5pt}
+${profile.full_name}` : `\\\\noindent To the [Company's Name] hiring team,
+
+\\\\vspace{5pt}
+
+\\\\noindent I'm reaching out about the [Job Title] role at [Company's Name]. I've been [current work or recent focus from user profile], and when I came across this opening, it felt like exactly the kind of opportunity I've been looking for. [Brief personal connection or genuine interest in the role].
+
+\\\\vspace{5pt}
+
+\\\\noindent This role feels like a natural next step for me. I've been [mention current experience level or stage], and I'm really interested in [specific aspect of the role that advances career]. Taking on [specific responsibility from job description] would be a great way to [how it helps build their career or skills they want to develop].
+
+\\\\vspace{5pt}
+
+\\\\noindent [Mini-story about problem solved]. The trickiest part was [specific technical challenge]. Took me a while to figure out [what you tried], but once I [solution], it worked pretty smoothly. What I learned from that whole experience was [key insight or skill gained].
+
+\\\\vspace{5pt}
+
+\\\\noindent I came across [specific company thing you found]. That's pretty much what I'm interested in - [natural connection to your experience]. The [specific aspect] part especially caught my attention because [personal reason why it matters to you].
+
+\\\\vspace{5pt}
+
+\\\\noindent From what I can tell, you're looking for someone who can [key requirement from job description]. That's exactly the kind of work I've been doing lately, and I think I could jump in and be useful pretty quickly.
+
+\\\\vspace{5pt}
+
+\\\\noindent I'd be interested in talking more about the role. Feel free to reach me at ${profile.phone} or ${profile.email}.
+
+\\\\vspace{10pt}
+
+\\\\noindent Thanks for your time, \\\\\\\\
+\\\\vspace{5pt}
+${profile.full_name}`}
 
 \\end{document}
 
-CRITICAL: Return ONLY the complete LaTeX document. Do not include any explanations, markdown formatting, or additional text. The response must be valid LaTeX that can be compiled directly.`;
+INSTRUCTIONS:
+1. Extract job title and company name from job description
+2. Fill in [current work or recent focus from user profile] - What they're currently doing based ONLY on their profile info
+3. Fill in [Brief personal connection or genuine interest in the role] - Why this specific role caught their attention
+4. Fill in [current experience level or stage] - Where they are in their career based ONLY on user profile
+5. Fill in [specific aspect of the role that advances career] - What part of the job helps them grow
+6. Fill in [specific responsibility from job description] - Key responsibility from the job posting
+7. Fill in [how it helps build their career or skills they want to develop] - Career benefit this role provides
+8. Fill in [Mini-story about problem solved] - Tell actual story of real problem they solved using casual language
+9. Fill in [specific technical challenge] - The hardest part of the problem
+10. Fill in [what you tried] - What approaches you attempted first
+11. Fill in [solution] - How you actually solved it, mention tech naturally (e.g., "built the frontend in Angular" not "Angular skills")
+12. Fill in [key insight or skill gained] - What you learned from solving that problem
+13. Fill in [specific company thing you found] - ONE real thing about company (blog post, GitHub repo, product update, news). Use phrases like "your recent blog post about X" or "you just shipped Y feature"
+14. Fill in [natural connection to your experience] - Connect it casually like "Same kind of problem I dealt with" or "That's the work I've been doing"
+15. Fill in [specific aspect] - Specific part of what you found about the company
+16. Fill in [personal reason why it matters to you] - Why that specific thing interests you personally
+17. Fill in [key requirement from job description] - Main thing they're looking for in the role
+
+LANGUAGE REQUIREMENTS:
+- Use casual phrases: "just wrapped up", "figured out", "the [tech] work", "pretty smoothly", "took me a while", "pretty much"
+- BANNED WORDS: "leverage", "cutting-edge", "scalable", "drive efficiency", "add value", "passionate about", "excited to", "utilize", "implement"
+- Say "figured out" not "implemented"
+- Say "I'd be interested in" not "I would love to"
+- Keep under 300 words total (longer template now)
+- Technical details come from describing problems, not listing skills
+- ONLY use information that exists in the user's profile - DO NOT invent experiences, skills, or details
+- Make it sound like a natural career progression, not forced
+- Focus on genuine career growth motivations
+- Sound like a normal person, not a robot
+
+
+
+CRITICAL: Return ONLY the complete LaTeX document. Do not include any explanations, markdown formatting, or additional text. The response must be valid LaTeX that can be compiled directly.
+
+IMPORTANT: When writing percentages, always use \\% instead of % to avoid LaTeX compilation errors. Also escape other special characters: & becomes \\&, # becomes \\#, $ becomes \\$, _ becomes \\_`;
 
     // Prepare request for AWS Bedrock (Claude 3 Sonnet format)
     const requestBody = JSON.stringify({
