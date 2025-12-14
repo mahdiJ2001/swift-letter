@@ -46,6 +46,10 @@ export default function JobDescriptionForm() {
     const [showLanguageModal, setShowLanguageModal] = useState(false)
     const [isEditingLetter, setIsEditingLetter] = useState(false)
     const [editableLetter, setEditableLetter] = useState('')
+    const [editableRecipientName, setEditableRecipientName] = useState('')
+    const [editableCompany, setEditableCompany] = useState('')
+    const [editablePosition, setEditablePosition] = useState('')
+    const [editableSubject, setEditableSubject] = useState('')
     const [isUploadingResume, setIsUploadingResume] = useState(false)
     const [showErrorPopup, setShowErrorPopup] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
@@ -326,18 +330,39 @@ export default function JobDescriptionForm() {
                 setGeneratedLetter(data.content)
                 setGeneratedLatex(data.latex)
                 // Extract text content from LaTeX for editing
-                const textMatch = data.content.match(/\\begin{document}([\s\S]*?)\\end{document}/)
+                const textMatch = data.content.match(/% Letter Body[\s\S]*?% =========================\s*([\s\S]*?)\s*\\vspace{2\.0em}/)
                 if (textMatch) {
                     const textContent = textMatch[1]
                         .replace(/\\noindent\s*/g, '')
                         .replace(/\\vspace{[^}]*}/g, '\n')
                         .replace(/\\\\\s*/g, '\n')
-                        .replace(/\\textbar{}/g, '|')
-                        .replace(/\\Large\s*\\textbf{([^}]*)}/g, '$1')
-                        .replace(/\{([^}]*)\}/g, '$1')
+                        .replace(/\\textbf\{([^}]*)\}/g, '$1')
+                        .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')
+                        .replace(/\\targetCompany\s*\\\s*/g, '')
+                        .replace(/\\targetPosition\s*\\\s*/g, '')
+                        .replace(/\\myname/g, profile?.full_name || '')
+                        .replace(/\\mylocation/g, profile?.location || '')
+                        .replace(/\\myemail/g, profile?.email || '')
+                        .replace(/\\myphone/g, profile?.phone || '')
+                        .replace(/\\%/g, '%')
+                        .replace(/\\_/g, '_')
+                        .replace(/\\&/g, '&')
+                        .replace(/\\#/g, '#')
+                        .replace(/\\\$/g, '$')
                         .trim()
                     setEditableLetter(textContent)
                 }
+
+                // Extract individual fields from LaTeX
+                const companyMatch = data.content.match(/\\newcommand\{\\targetCompany\}\{([^}]*)\}/)
+                const positionMatch = data.content.match(/\\newcommand\{\\targetPosition\}\{([^}]*)\}/)
+                const subjectMatch = data.content.match(/\\newcommand\{\\targetSubject\}\{([^}]*)\}/)
+                const recipientMatch = data.content.match(/\\newcommand\{\\recipientName\}\{([^}]*)\}/)
+
+                setEditableCompany(companyMatch?.[1] || '')
+                setEditablePosition(positionMatch?.[1] || '')
+                setEditableSubject(subjectMatch?.[1] || '')
+                setEditableRecipientName(recipientMatch?.[1] || '')
                 // Generate PDF directly
                 await generatePdfAndPreview(data.latex)
             } else {
@@ -361,7 +386,7 @@ export default function JobDescriptionForm() {
 
 
 
-    const generatePdfFromText = async (textContent: string) => {
+    const generatePdfFromText = async (textContent: string, recipientName: string = '', companyName: string = '', positionName: string = '', subjectText: string = '') => {
         setIsPdfGenerating(true)
 
         try {
@@ -371,30 +396,27 @@ export default function JobDescriptionForm() {
                 throw new Error('No valid session found')
             }
 
-            // Convert text to simple LaTeX document
-            const simpleLatex = `\\documentclass[letterpaper,11pt]{article}
-\\usepackage[utf8]{inputenc}
-\\usepackage[T1]{fontenc}
+            // Use provided values or extract from text content as fallback
+            const targetCompany = companyName || textContent.match(/To the Hiring Team at ([^,\n]+)/)?.[1]?.trim() || 'Company'
+            const targetPosition = positionName || textContent.match(/saw the ([^,\n]+) opening/)?.[1]?.trim() || 'Position'
+            const targetRecipient = recipientName || 'Hiring Manager'
+            const targetSubject = subjectText || `Application for ${targetPosition} at ${targetCompany}`
 
-% Manual page setup
-\\setlength{\\oddsidemargin}{-0.5in}
-\\setlength{\\evensidemargin}{-0.5in}
-\\setlength{\\textwidth}{7.0in}
-\\setlength{\\topmargin}{-0.75in}
-\\setlength{\\textheight}{9.5in}
-\\setlength{\\headheight}{0pt}
-\\setlength{\\headsep}{0pt}
-\\setlength{\\footskip}{0.5in}
-
-\\pagestyle{empty}
-\\raggedbottom
-\\raggedright
-
-\\begin{document}
-
+            // Use the original LaTeX template with updated content
+            const formattedLatex = generatedLatex
+                .replace(/\\newcommand\{\\recipientName\}\{[^}]*\}/g, `\\newcommand{\\recipientName}{${targetRecipient}}`)
+                .replace(/\\newcommand\{\\targetCompany\}\{[^}]*\}/g, `\\newcommand{\\targetCompany}{${targetCompany}}`)
+                .replace(/\\newcommand\{\\targetPosition\}\{[^}]*\}/g, `\\newcommand{\\targetPosition}{${targetPosition}}`)
+                .replace(/\\newcommand\{\\targetSubject\}\{[^}]*\}/g, `\\newcommand{\\targetSubject}{${targetSubject}}`)
+                .replace(
+                    /% =========================\s*% Letter Body\s*% =========================[\s\S]*?\\vspace\{2\.0em\}/,
+                    `% =========================
+% Letter Body
+% =========================
 ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').replace(/\$/g, '\\$').replace(/_/g, '\\_')}
 
-\\end{document}`
+\\vspace{2.0em}`
+                )
 
             const response = await fetch('/api/generate-pdf', {
                 method: 'POST',
@@ -403,7 +425,7 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                     'Authorization': `Bearer ${session.access_token}`
                 },
                 body: JSON.stringify({
-                    latex: simpleLatex
+                    latex: formattedLatex
                 })
             })
 
@@ -424,6 +446,9 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                 const byteArray = new Uint8Array(byteNumbers)
                 const blob = new Blob([byteArray], { type: 'application/pdf' })
                 const url = URL.createObjectURL(blob)
+
+                // Update the generatedLatex with the new formatted version
+                setGeneratedLatex(formattedLatex)
 
                 setPdfUrl(url)
                 setShowPdfPreview(true)
@@ -691,17 +716,17 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
 
                 {/* Edit Cover Letter Modal */}
                 {isEditingLetter && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg max-w-4xl w-full max-h-[95vh] flex flex-col">
-                            <div className="flex items-center justify-between p-4 border-b">
-                                <h3 className="text-lg font-semibold text-gray-900">Edit Cover Letter</h3>
-                                <div className="flex items-center space-x-2">
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+                        <div className="bg-white rounded-lg max-w-5xl w-full max-h-[95vh] flex flex-col shadow-2xl">
+                            <div className="flex items-center justify-between p-6 border-b">
+                                <h3 className="text-xl font-semibold text-gray-900">Edit Cover Letter</h3>
+                                <div className="flex items-center space-x-3">
                                     <Button
-                                        onClick={() => generatePdfFromText(editableLetter)}
+                                        onClick={() => generatePdfFromText(editableLetter, editableRecipientName, editableCompany, editablePosition, editableSubject)}
                                         disabled={isPdfGenerating}
                                         className="bg-green-600 text-white hover:bg-green-700"
                                     >
-                                        {isPdfGenerating ? 'Generating...' : 'Update PDF'}
+                                        {isPdfGenerating ? 'Recompiling...' : 'Recompile & Preview'}
                                     </Button>
                                     <Button
                                         variant="outline"
@@ -711,13 +736,85 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                                     </Button>
                                 </div>
                             </div>
-                            <div className="flex-1 p-4">
-                                <Textarea
-                                    value={editableLetter}
-                                    onChange={(e) => setEditableLetter(e.target.value)}
-                                    className="w-full h-full min-h-[400px] resize-none"
-                                    placeholder="Edit your cover letter here..."
-                                />
+                            <div className="flex-1 p-6 overflow-auto">
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Recipient Information
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">To (Recipient)</label>
+                                                <Input
+                                                    placeholder="Hiring Manager"
+                                                    value={editableRecipientName}
+                                                    onChange={(e) => setEditableRecipientName(e.target.value)}
+                                                    className="text-sm"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Company Name</label>
+                                                <Input
+                                                    placeholder="Company Name"
+                                                    value={editableCompany}
+                                                    onChange={(e) => {
+                                                        setEditableCompany(e.target.value)
+                                                        // Also update in letter content
+                                                        const updated = editableLetter.replace(
+                                                            /To the Hiring Team at [^,\n]+/,
+                                                            `To the Hiring Team at ${e.target.value}`
+                                                        )
+                                                        setEditableLetter(updated)
+                                                    }}
+                                                    className="text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Position</label>
+                                                <Input
+                                                    placeholder="Software Engineer"
+                                                    value={editablePosition}
+                                                    onChange={(e) => {
+                                                        setEditablePosition(e.target.value)
+                                                        // Also update in letter content
+                                                        const updated = editableLetter.replace(
+                                                            /saw the ([^,\n]+) opening/,
+                                                            `saw the ${e.target.value} opening`
+                                                        )
+                                                        setEditableLetter(updated)
+                                                    }}
+                                                    className="text-sm"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Subject</label>
+                                                <Input
+                                                    placeholder="Application for Position at Company"
+                                                    value={editableSubject}
+                                                    onChange={(e) => setEditableSubject(e.target.value)}
+                                                    className="text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Cover Letter Content
+                                        </label>
+                                        <Textarea
+                                            value={editableLetter}
+                                            onChange={(e) => setEditableLetter(e.target.value)}
+                                            className="w-full min-h-[500px] resize-none text-sm leading-relaxed"
+                                            placeholder="Edit your cover letter content here..."
+                                        />
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Edit the text naturally - formatting will be handled automatically when you recompile.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -725,7 +822,7 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
 
                 {/* PDF Preview Modal */}
                 {showPdfPreview && pdfUrl && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9000 }}>
                         <div className="bg-white rounded-lg max-w-6xl w-full max-h-[95vh] flex flex-col">
                             <div className="flex items-center justify-between p-4 border-b">
                                 <div className="flex items-center space-x-2">

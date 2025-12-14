@@ -225,13 +225,15 @@ You must create a complete LaTeX document that follows this EXACT structure. Rep
 % =========================
 % Letter Body
 % =========================
-Dear \\recipientName,
+To the Hiring Team at \\targetCompany,
 
-I am writing to express my enthusiastic interest in the \\targetPosition \\ role at \\targetCompany. With my background in software development and my passion for building scalable solutions, I am confident that I can contribute significantly to your team.
+I've been looking for a role where I can keep building in [Tech A] and [Tech B] but also get more hands-on with [Tech C]. When I saw the \\targetPosition \\ opening, it felt like a great match for what I'm looking for next. This is especially true since I've been wanting to move toward [specific goal] for a while now, and it's been a priority for me to find a team that's actually using this stack to solve real-world problems.
 
-At my previous experience, I focused on improving system efficiency and collaborating with cross-functional teams to deliver high-quality products. I am particularly impressed by \\targetCompany's recent work in the industry and would love the opportunity to bring my skills to your projects.
+I actually just wrapped up a project involving [Project Name]. The main hurdle was [describe problem]. I tried a few different ways to solve it and eventually figured out that [fix] was the way to go. It took me a bit to get [specific part] working the way I wanted, but once that was sorted, it ended up [result]. I also picked up a lot regarding [specific skill] while I was at it, which has changed how I think about [relevant technical task].
 
-I look forward to the possibility of discussing my application with you in an interview. Thank you for your time and consideration.
+The work you're doing at \\targetCompany \\ with [specific product/service] looks really interesting and it seems like a solid place to [career goal]. I'm the kind of developer who likes to understand how the whole puzzle fits together, so I think my background with [Tech A/B] would be pretty useful for the team. I'd be interested in chatting about what you have planned for the next few months and how I might be able to help out with the current roadmap.
+
+Thanks for taking the time to look this over.
 
 \\vspace{2.0em}
 
@@ -245,23 +247,49 @@ CRITICAL INSTRUCTIONS:
 2. Update ONLY these lines in the template:
    - \\newcommand{\\targetPosition}{[Replace with actual job title]}
    - \\newcommand{\\targetCompany}{[Replace with actual company name]}
-3. Replace the letter body content (the 3 paragraphs between "Dear \\recipientName," and "\\vspace{2.0em}") with personalized content
-4. Write ${language === 'french' ? 'in French' : 'in English'} using information from the user profile and job description
-5. Keep ALL other LaTeX formatting, commands, and structure EXACTLY as shown
-6. Do NOT add any extra LaTeX commands like \\noindent or \\vspace in the letter body
-7. Write natural paragraphs - the spacing is handled by the template structure
+3. Replace the letter body content (between "To the Hiring Team at \\targetCompany," and "Thanks for taking the time to look this over.") with personalized content following the EXACT template structure shown
+4. Fill in the bracketed placeholders naturally and conversationally - DO NOT just copy-paste from the user profile. Instead:
+   - [Tech A], [Tech B]: Use technologies the user has worked with, but mention them casually (e.g., "React stuff" instead of "React development")
+   - [Tech C]: Pick a technology from the job description the user wants to learn more about
+   - [specific goal]: Write a genuine career progression reason, not a corporate buzzword
+   - [Project Name]: Use a real project name from the user's profile, or describe it naturally without formal titles
+   - [describe problem]: Explain the actual technical challenge in simple terms, like you're talking to a friend
+   - [fix]: Describe the solution conversationally, using phrases like "turned out" or "ended up working better"
+   - [specific part]: Mention a technical detail that was tricky, using casual language
+   - [result]: State the outcome naturally, avoid metrics unless they sound organic to the conversation
+   - [specific skill]: Pick something the user learned that relates to the job, mention it casually
+   - [relevant technical task]: Connect it to something in the job description, but make it sound like natural curiosity
+   - [specific product/service]: Research the company and mention something specific they're working on
+   - [career goal]: Make it about personal growth, not company benefits
+5. Write ${language === 'french' ? 'in French' : 'in English'} using information from the user profile and job description
+6. Keep ALL other LaTeX formatting, commands, and structure EXACTLY as shown
+7. Do NOT add any extra LaTeX commands like \\noindent or \\vspace in the letter body
+8. Write natural paragraphs following the template structure - the spacing is handled by the template structure
+9. Do NOT use phrases like "I am confident that" - replace with more natural language like "I believe", "I think", or "it seems like"
+10. CRITICAL: Never use single dashes (-) or double dashes (--) anywhere in the generated content - these are AI telltales
+11. CRITICAL: Never use double quotes (") in the generated content - use single quotes (') instead to avoid revealing AI generation
+12. CRITICAL: Always properly escape percentage symbols - write 96\\% not just 96 to ensure percentages display correctly in the final PDF
 
 LANGUAGE REQUIREMENTS:
-- Use casual phrases: "just wrapped up", "figured out", "the [tech] work", "pretty smoothly", "took me a while", "pretty much"
-- BANNED WORDS: "leverage", "cutting-edge", "scalable", "drive efficiency", "add value", "passionate about", "excited to", "utilize", "implement"
+- Use casual phrases: "just wrapped up", "figured out", "the [tech] work", "pretty smoothly", "took me a while", "pretty much", "turned out", "ended up", "actually", "honestly"
+- BANNED WORDS: "leverage", "cutting-edge", "scalable", "drive efficiency", "add value", "passionate about", "excited to", "utilize", "implement", "proficient", "expertise", "extensive experience"
 - Say "figured out" not "implemented"
 - Say "I'd be interested in" not "I would love to"
+- Say "React stuff" not "React development"
+- Say "working on" not "developing" or "building"
+- Say "got into" not "learned" or "acquired skills in"
 - Keep under 300 words total
 - Technical details come from describing problems, not listing skills
-- ONLY use information that exists in the user's profile - DO NOT invent experiences, skills, or details
+- CRITICAL: ONLY use information that exists in the user's profile - DO NOT invent experiences, skills, projects, or details
+- If the user profile lacks specific information for a placeholder, use generic terms or skip that detail entirely
+- DO NOT create fictional project names, fake experiences, or made-up technical achievements
+- DO NOT assume skills or technologies not explicitly mentioned in the user's profile
 - Make it sound like a natural career progression, not forced
-- Focus on genuine career growth motivations
-- Sound like a normal person, not a robot
+- Focus on genuine career growth motivations based only on provided information
+- Sound like a normal person having a conversation, not writing a formal document
+- Avoid obvious AI patterns like "With X years of experience in Y" or "My background in Z makes me a strong candidate"
+- When mentioning technologies, integrate them naturally into problem descriptions rather than listing them
+- Make connections between user experience and job requirements feel organic, not forced
 
 CRITICAL OUTPUT FORMAT:
 - Return ONLY the complete LaTeX document starting with \\documentclass
@@ -270,6 +298,19 @@ CRITICAL OUTPUT FORMAT:
 - Do NOT add \\noindent, \\vspace, or other LaTeX commands in the letter body
 - The response must be pure, compilable LaTeX
 - Escape special characters: % becomes \\%, & becomes \\&, # becomes \\#, $ becomes \\$, _ becomes \\_
+- Never use single dashes (-) or double dashes (--) anywhere in the content
+- Never use double quotes (") anywhere in the content - use single quotes (') instead
+- Always escape percentages properly (e.g., 96\\% not 96) to display correctly in PDF
+
+CRITICAL ANTI-AI DETECTION:
+- Do NOT use formal business language or corporate buzzwords
+- Do NOT structure sentences like "As a software developer with X years of experience..."
+- Do NOT list qualifications or skills directly
+- DO sound like a real person casually explaining their background
+- DO use contractions (I've, I'd, it's, that's, etc.)
+- DO use filler words occasionally (actually, honestly, pretty much)
+- DO make it sound like you're talking to someone you know, not writing a formal letter
+- DO let personality show through word choice and sentence structure
 
 Your response should start exactly with: \\documentclass[11pt,a4paper]{article}`;
 
@@ -355,6 +396,8 @@ Your response should start exactly with: \\documentclass[11pt,a4paper]{article}`
       .replace(/\\noindent\s*/g, '') // Remove all noindent commands  
       .replace(/\\vspace\{?5pt\}?/g, '') // Remove manual vspace commands
       .replace(/\\vspace\{?10pt\}?/g, '') // Remove manual vspace commands
+      .replace(/--/g, ' ') // Remove double dashes (AI telltale)
+      .replace(/(?<!\\)-(?!\\)/g, ' ') // Remove single dashes not part of LaTeX commands
       .trim();
 
     console.log('🧹 Cleaned LaTeX length:', coverLetter.length);
