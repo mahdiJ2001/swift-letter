@@ -96,18 +96,51 @@ export async function POST(request: NextRequest) {
 
       // Call Supabase Edge Function to parse the extracted text
       console.log('Calling Edge Function with extracted text...')
-      const { data, error } = await supabase.functions.invoke('extract-profile-from-pdf', {
-        body: { 
-          pdfText: fullText.trim()
-        }
-      })
+      console.log('Text length being sent:', fullText.trim().length)
+      
+      // Add timeout protection and retry logic
+      const callEdgeFunction = async (retryCount = 0): Promise<any> => {
+        try {
+          const { data, error } = await supabase.functions.invoke('extract-profile-from-pdf', {
+            body: { 
+              pdfText: fullText.trim().substring(0, 8000) // Limit text to prevent timeouts
+            }
+          })
 
-      if (error) {
-        console.error('Edge function error:', error)
-        return NextResponse.json({ 
-          error: error.message || 'Failed to process extracted text with AI' 
-        }, { status: 500 })
+          if (error) {
+            console.error(`Edge function error (attempt ${retryCount + 1}):`, error)
+            
+            // If it's a timeout or connection error and we haven't retried, try again
+            if (retryCount === 0 && (
+              error.message?.includes('stream closed') ||
+              error.message?.includes('broken pipe') ||
+              error.message?.includes('timeout') ||
+              error.message?.includes('fetch failed')
+            )) {
+              console.log('Retrying Edge Function call...')
+              await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second
+              return callEdgeFunction(1)
+            }
+            
+            throw new Error(error.message || 'Failed to process extracted text with AI')
+          }
+
+          return data
+        } catch (funcError: any) {
+          if (retryCount === 0 && (
+            funcError.message?.includes('stream closed') ||
+            funcError.message?.includes('broken pipe') ||
+            funcError.message?.includes('timeout')
+          )) {
+            console.log('Retrying Edge Function call after error...')
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            return callEdgeFunction(1)
+          }
+          throw funcError
+        }
       }
+
+      const data = await callEdgeFunction()
 
       console.log('Edge function response:', data)
       return NextResponse.json({ data })

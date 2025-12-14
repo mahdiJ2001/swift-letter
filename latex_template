@@ -1,12 +1,24 @@
 \documentclass[11pt,a4paper]{article}
 
-% Core packages - compatible with all TeX distributions
+% Core packages
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[margin=0.75in]{geometry}
 \usepackage{hyperref}
 \usepackage{xcolor}
-\usepackage{tikz}
+
+% --- USER DATA (Change these) ---
+\newcommand{\myname}{John Doe}
+\newcommand{\mylocation}{City, Country}
+\newcommand{\myemail}{john.doe@example.com}
+\newcommand{\myphone}{+123 456 789}
+\newcommand{\mylinkedin}{linkedin.com/in/johndoe}
+
+% --- RECIPIENT DATA (Change these) ---
+\newcommand{\recipientName}{Hiring Manager}
+\newcommand{\targetPosition}{Software Engineer}
+\newcommand{\targetCompany}{Innovative Tech Solutions}
+\newcommand{\targetSubject}{Application for \targetPosition \ at \targetCompany}
 
 % Professional color scheme
 \definecolor{accentcolor}{RGB}{0, 51, 102}
@@ -19,7 +31,6 @@
     linkcolor=accentcolor
 }
 
-% Remove page numbers
 \pagestyle{empty}
 
 % Spacing adjustments
@@ -28,27 +39,18 @@
 \renewcommand{\baselinestretch}{1.15}
 
 % Custom commands for styling
-\newcommand{\headername}[1]{%
-    {\fontsize{18}{22}\selectfont\textbf{\textcolor{accentcolor}{#1}}}%
-}
-
-\newcommand{\contactline}[1]{%
-    {\small\textcolor{lightgray}{#1}}%
-}
+\newcommand{\headername}[1]{{\fontsize{18}{22}\selectfont\textbf{\textcolor{accentcolor}{#1}}}}
+\newcommand{\contactline}[1]{{\small\textcolor{lightgray}{#1}}}
 
 \begin{document}
 
 % =========================
-% Header (General Skeleton)
+% Header
 % =========================
 \begin{center}
-    \headername{<FULL NAME>}
-    
+    \headername{\myname} \\
     \vspace{0.5em}
-    \contactline{%
-        <Street Address> • <City, Country>\\
-        \href{mailto:<email>}{<email>} • <phone number> • \href{<LinkedIn URL>}{<LinkedIn Handle>}%
-    }
+    \contactline{\mylocation \ • \href{mailto:\myemail}{\myemail} \ • \myphone \ • \href{https://\mylinkedin}{LinkedIn}}
 \end{center}
 
 \vspace{1.5em}
@@ -58,43 +60,36 @@
 
 \vspace{1em}
 
+% =========================
 % Recipient Information
+% =========================
 \begin{flushleft}
-<Recipient Name>\\
-<Recipient Title>\\
-<Company Name>\\
-<Company Address Line 1>\\
-<Company Address Line 2>
+    \textbf{To:} \recipientName \\
+    \textbf{Position:} \targetPosition \\
+    \textbf{Company:} \targetCompany
 \end{flushleft}
 
 \vspace{0.5em}
 
 % Subject line
-\textbf{Re: <Subject / Position Title>}
+\textbf{Subject: \targetSubject}
 
-\vspace{0.5em}
+\vspace{1.5em}
 
-% Salutation
-Dear <Mr./Ms./Mx.> <Last Name>,
+% =========================
+% Letter Body
+% =========================
+Dear \recipientName,
 
-% Opening paragraph
-<Opening paragraph introducing interest in the position and how the applicant learned about it.>
+I am writing to express my enthusiastic interest in the \targetPosition \ role at \targetCompany. With my background in software development and my passion for building scalable solutions, I am confident that I can contribute significantly to your team.
 
-% Middle paragraphs
-<Paragraph describing relevant experience, achievements, and strengths.>
-<Paragraph explaining motivation for the company and value the applicant brings.>
+At my previous experience, I focused on improving system efficiency and collaborating with cross-functional teams to deliver high-quality products. I am particularly impressed by \targetCompany's recent work in the industry and would love the opportunity to bring my skills to your projects.
 
-% Closing paragraph
-<Closing paragraph expressing enthusiasm and a call to action (interview availability).>
+I look forward to the possibility of discussing my application with you in an interview. Thank you for your time and consideration.
 
-% Sign-off
-\vspace{0.5em}
-Sincerely,
+\vspace{2.0em}
 
-\vspace{2em}
-
-\textbf{<FULL NAME>}
-
-\vspace{0.5em}
+Sincerely,\\
+\textbf{\myname}
 
 \end{document}

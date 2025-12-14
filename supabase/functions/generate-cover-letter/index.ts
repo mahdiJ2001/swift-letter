@@ -142,141 +142,138 @@ LANGUAGE: ${language}
 ${language === 'french' ? 'IMPORTANT: Generate the entire cover letter in French. Use proper French business letter format and professional French language.' : 'Generate the cover letter in English.'}
 
 TEMPLATE TO FOLLOW EXACTLY:
-You must create a complete LaTeX document that follows this exact structure. Fill in ALL bracketed placeholders with relevant information:
+You must create a complete LaTeX document that follows this EXACT structure. Replace the recipient data and letter body content, but keep ALL formatting exactly as shown:
 
-\\documentclass[letterpaper,11pt]{article}
+\\documentclass[11pt,a4paper]{article}
+
+% Core packages
 \\usepackage[utf8]{inputenc}
 \\usepackage[T1]{fontenc}
+\\usepackage[margin=0.75in]{geometry}
+\\usepackage{hyperref}
+\\usepackage{xcolor}
 
-% Manual page setup instead of fullpage package
-\\setlength{\\oddsidemargin}{-0.5in}
-\\setlength{\\evensidemargin}{-0.5in}
-\\setlength{\\textwidth}{7.0in}
-\\setlength{\\topmargin}{-0.75in}
-\\setlength{\\textheight}{9.5in}
-\\setlength{\\headheight}{0pt}
-\\setlength{\\headsep}{0pt}
-\\setlength{\\footskip}{0.5in}
+% --- USER DATA (Change these) ---
+\\newcommand{\\myname}{${profile.full_name}}
+\\newcommand{\\mylocation}{${profile.location || 'Remote'}}
+\\newcommand{\\myemail}{${profile.email}}
+\\newcommand{\\myphone}{${profile.phone}}
+\\newcommand{\\mylinkedin}{${profile.linkedin ? profile.linkedin.replace('https://', '').replace('http://', '') : 'linkedin.com/in/profile'}}
 
-% Remove page numbers
+% --- RECIPIENT DATA (Change these) ---
+\\newcommand{\\recipientName}{Hiring Manager}
+\\newcommand{\\targetPosition}{Software Engineer}
+\\newcommand{\\targetCompany}{Innovative Tech Solutions}
+\\newcommand{\\targetSubject}{Application for \\targetPosition \\ at \\targetCompany}
+
+% Professional color scheme
+\\definecolor{accentcolor}{RGB}{0, 51, 102}
+\\definecolor{lightgray}{RGB}{100, 100, 100}
+
+% Hyperlink styling
+\\hypersetup{
+    colorlinks=true,
+    urlcolor=accentcolor,
+    linkcolor=accentcolor
+}
+
 \\pagestyle{empty}
 
-% Text alignment
-\\raggedbottom
-\\raggedright
+% Spacing adjustments
+\\setlength{\\parindent}{0pt}
+\\setlength{\\parskip}{0.85em}
+\\renewcommand{\\baselinestretch}{1.15}
+
+% Custom commands for styling
+\\newcommand{\\headername}[1]{{\\fontsize{18}{22}\\selectfont\\textbf{\\textcolor{accentcolor}{#1}}}}
+\\newcommand{\\contactline}[1]{{\\small\\textcolor{lightgray}{#1}}}
 
 \\begin{document}
 
-\\noindent \\today
+% =========================
+% Header
+% =========================
+\\begin{center}
+    \\headername{\\myname} \\\\
+    \\vspace{0.5em}
+    \\contactline{\\mylocation \\ • \\href{mailto:\\myemail}{\\myemail} \\ • \\myphone \\ • \\href{https://\\mylinkedin}{LinkedIn}}
+\\end{center}
 
-\\vspace{10pt}
+\\vspace{1.5em}
 
-\\noindent ${profile.full_name} \\\\
-${profile.email} \\\\
-${profile.linkedin ? profile.linkedin + ' \\\\' : ''}${profile.portfolio ? profile.portfolio + ' \\\\' : ''}
+% Date
+{\\small\\textcolor{lightgray}{\\today}}
 
-\\vspace{10pt}
+\\vspace{1em}
 
-${language === 'french' ? `\\\\noindent À l'équipe de recrutement de [Company's Name],
+% =========================
+% Recipient Information
+% =========================
+\\begin{flushleft}
+    \\textbf{To:} \\recipientName \\\\
+    \\textbf{Position:} \\targetPosition \\\\
+    \\textbf{Company:} \\targetCompany
+\\end{flushleft}
 
-\\\\vspace{5pt}
+\\vspace{0.5em}
 
-\\\\noindent Je vous contacte au sujet du poste de [Job Title] chez [Company's Name]. J'ai travaillé sur [current work or recent focus from user profile], et quand j'ai découvert cette opportunité, j'ai tout de suite pensé que c'était exactement le genre de poste que je recherchais. [Brief personal connection or genuine interest in the role].
+% Subject line
+\\textbf{Subject: \\targetSubject}
 
-\\\\vspace{5pt}
+\\vspace{1.5em}
 
-\\\\noindent Ce poste me semble être une étape naturelle dans ma carrière. J'ai [mention current experience level or stage], et je suis vraiment intéressé par [specific aspect of the role that advances career]. Prendre en charge [specific responsibility from job description] serait un excellent moyen de [how it helps build their career or skills they want to develop].
+% =========================
+% Letter Body
+% =========================
+Dear \\recipientName,
 
-\\\\vspace{5pt}
+I am writing to express my enthusiastic interest in the \\targetPosition \\ role at \\targetCompany. With my background in software development and my passion for building scalable solutions, I am confident that I can contribute significantly to your team.
 
-\\\\noindent [Mini-story about problem solved]. La partie la plus délicate était [specific technical challenge]. Cela m'a pris un certain temps pour comprendre [what you tried], mais une fois que j'ai [solution], tout s'est bien passé. Ce que j'ai appris de cette expérience était [key insight or skill gained].
+At my previous experience, I focused on improving system efficiency and collaborating with cross-functional teams to deliver high-quality products. I am particularly impressed by \\targetCompany's recent work in the industry and would love the opportunity to bring my skills to your projects.
 
-\\\\vspace{5pt}
+I look forward to the possibility of discussing my application with you in an interview. Thank you for your time and consideration.
 
-\\\\noindent Je suis tombé sur [specific company thing you found]. C'est exactement ce qui m'intéresse - [natural connection to your experience]. La partie [specific aspect] a particulièrement attiré mon attention parce que [personal reason why it matters to you].
+\\vspace{2.0em}
 
-\\\\vspace{5pt}
-
-\\\\noindent D'après ce que je peux voir, vous recherchez quelqu'un qui peut [key requirement from job description]. C'est exactement le genre de travail que j'ai fait récemment, et je pense que je pourrais me rendre utile assez rapidement.
-
-\\\\vspace{5pt}
-
-\\\\noindent J'aimerais en savoir plus sur ce poste. N'hésitez pas à me contacter au ${profile.phone} ou ${profile.email}.
-
-\\\\vspace{10pt}
-
-\\\\noindent Cordialement, \\\\\\\\
-\\\\vspace{5pt}
-${profile.full_name}` : `\\\\noindent To the [Company's Name] hiring team,
-
-\\\\vspace{5pt}
-
-\\\\noindent I'm reaching out about the [Job Title] role at [Company's Name]. I've been [current work or recent focus from user profile], and when I came across this opening, it felt like exactly the kind of opportunity I've been looking for. [Brief personal connection or genuine interest in the role].
-
-\\\\vspace{5pt}
-
-\\\\noindent This role feels like a natural next step for me. I've been [mention current experience level or stage], and I'm really interested in [specific aspect of the role that advances career]. Taking on [specific responsibility from job description] would be a great way to [how it helps build their career or skills they want to develop].
-
-\\\\vspace{5pt}
-
-\\\\noindent [Mini-story about problem solved]. The trickiest part was [specific technical challenge]. Took me a while to figure out [what you tried], but once I [solution], it worked pretty smoothly. What I learned from that whole experience was [key insight or skill gained].
-
-\\\\vspace{5pt}
-
-\\\\noindent I came across [specific company thing you found]. That's pretty much what I'm interested in - [natural connection to your experience]. The [specific aspect] part especially caught my attention because [personal reason why it matters to you].
-
-\\\\vspace{5pt}
-
-\\\\noindent From what I can tell, you're looking for someone who can [key requirement from job description]. That's exactly the kind of work I've been doing lately, and I think I could jump in and be useful pretty quickly.
-
-\\\\vspace{5pt}
-
-\\\\noindent I'd be interested in talking more about the role. Feel free to reach me at ${profile.phone} or ${profile.email}.
-
-\\\\vspace{10pt}
-
-\\\\noindent Thanks for your time, \\\\\\\\
-\\\\vspace{5pt}
-${profile.full_name}`}
+${language === 'french' ? 'Cordialement' : 'Sincerely'},\\\\
+\\textbf{\\myname}
 
 \\end{document}
 
-INSTRUCTIONS:
-1. Extract job title and company name from job description
-2. Fill in [current work or recent focus from user profile] - What they're currently doing based ONLY on their profile info
-3. Fill in [Brief personal connection or genuine interest in the role] - Why this specific role caught their attention
-4. Fill in [current experience level or stage] - Where they are in their career based ONLY on user profile
-5. Fill in [specific aspect of the role that advances career] - What part of the job helps them grow
-6. Fill in [specific responsibility from job description] - Key responsibility from the job posting
-7. Fill in [how it helps build their career or skills they want to develop] - Career benefit this role provides
-8. Fill in [Mini-story about problem solved] - Tell actual story of real problem they solved using casual language
-9. Fill in [specific technical challenge] - The hardest part of the problem
-10. Fill in [what you tried] - What approaches you attempted first
-11. Fill in [solution] - How you actually solved it, mention tech naturally (e.g., "built the frontend in Angular" not "Angular skills")
-12. Fill in [key insight or skill gained] - What you learned from solving that problem
-13. Fill in [specific company thing you found] - ONE real thing about company (blog post, GitHub repo, product update, news). Use phrases like "your recent blog post about X" or "you just shipped Y feature"
-14. Fill in [natural connection to your experience] - Connect it casually like "Same kind of problem I dealt with" or "That's the work I've been doing"
-15. Fill in [specific aspect] - Specific part of what you found about the company
-16. Fill in [personal reason why it matters to you] - Why that specific thing interests you personally
-17. Fill in [key requirement from job description] - Main thing they're looking for in the role
+CRITICAL INSTRUCTIONS:
+1. Extract the job title and company name from the job description
+2. Update ONLY these lines in the template:
+   - \\newcommand{\\targetPosition}{[Replace with actual job title]}
+   - \\newcommand{\\targetCompany}{[Replace with actual company name]}
+3. Replace the letter body content (the 3 paragraphs between "Dear \\recipientName," and "\\vspace{2.0em}") with personalized content
+4. Write ${language === 'french' ? 'in French' : 'in English'} using information from the user profile and job description
+5. Keep ALL other LaTeX formatting, commands, and structure EXACTLY as shown
+6. Do NOT add any extra LaTeX commands like \\noindent or \\vspace in the letter body
+7. Write natural paragraphs - the spacing is handled by the template structure
 
 LANGUAGE REQUIREMENTS:
 - Use casual phrases: "just wrapped up", "figured out", "the [tech] work", "pretty smoothly", "took me a while", "pretty much"
 - BANNED WORDS: "leverage", "cutting-edge", "scalable", "drive efficiency", "add value", "passionate about", "excited to", "utilize", "implement"
 - Say "figured out" not "implemented"
 - Say "I'd be interested in" not "I would love to"
-- Keep under 300 words total (longer template now)
+- Keep under 300 words total
 - Technical details come from describing problems, not listing skills
 - ONLY use information that exists in the user's profile - DO NOT invent experiences, skills, or details
 - Make it sound like a natural career progression, not forced
 - Focus on genuine career growth motivations
 - Sound like a normal person, not a robot
 
+CRITICAL OUTPUT FORMAT:
+- Return ONLY the complete LaTeX document starting with \\documentclass
+- Do NOT wrap in markdown code blocks (no \`\`\`latex or \`\`\`)
+- Do NOT include any explanations or additional text
+- Do NOT add \\noindent, \\vspace, or other LaTeX commands in the letter body
+- The response must be pure, compilable LaTeX
+- Escape special characters: % becomes \\%, & becomes \\&, # becomes \\#, $ becomes \\$, _ becomes \\_
 
+Your response should start exactly with: \\documentclass[11pt,a4paper]{article}`;
 
-CRITICAL: Return ONLY the complete LaTeX document. Do not include any explanations, markdown formatting, or additional text. The response must be valid LaTeX that can be compiled directly.
-
-IMPORTANT: When writing percentages, always use \\% instead of % to avoid LaTeX compilation errors. Also escape other special characters: & becomes \\&, # becomes \\#, $ becomes \\$, _ becomes \\_`;
+    console.log('🔍 Sending prompt to Claude with template structure...');
 
     // Prepare request for AWS Bedrock (Claude 3 Sonnet format)
     const requestBody = JSON.stringify({
@@ -343,9 +340,34 @@ IMPORTANT: When writing percentages, always use \\% instead of % to avoid LaTeX 
     console.log('Bedrock response received');
 
     // Extract content from Claude response
-    const coverLetter = responseBody.content[0].text;
+    let coverLetter = responseBody.content[0].text;
 
-    console.log('✅ Cover letter generated successfully');
+    console.log('📝 Raw Claude response length:', coverLetter.length);
+    console.log('📝 First 200 chars:', coverLetter.substring(0, 200));
+
+    // Clean up the LaTeX content to ensure proper formatting
+    coverLetter = coverLetter
+      .trim() // Remove leading/trailing whitespace
+      .replace(/^```latex\n?/, '') // Remove opening latex code block
+      .replace(/\n?```$/, '') // Remove closing code block
+      .replace(/^\s*latex\s*\n/, '') // Remove standalone "latex" line
+      .replace(/\\\\noindent/g, '') // Remove malformed noindent commands
+      .replace(/\\noindent\s*/g, '') // Remove all noindent commands  
+      .replace(/\\vspace\{?5pt\}?/g, '') // Remove manual vspace commands
+      .replace(/\\vspace\{?10pt\}?/g, '') // Remove manual vspace commands
+      .trim();
+
+    console.log('🧹 Cleaned LaTeX length:', coverLetter.length);
+    console.log('🧹 First 200 chars after cleanup:', coverLetter.substring(0, 200));
+    
+    // Validate that it starts with \\documentclass
+    if (!coverLetter.startsWith('\\documentclass')) {
+      console.error('❌ Generated content does not start with \\documentclass');
+      console.log('Full content:', coverLetter);
+      throw new Error('Generated LaTeX content is malformed - missing document class');
+    }
+
+    console.log('✅ Cover letter generated and validated successfully');
 
     return new Response(
       JSON.stringify({
