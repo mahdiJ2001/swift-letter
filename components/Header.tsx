@@ -71,6 +71,12 @@ export default function Header() {
                             >
                                 Feedback
                             </Link>
+                            <Link
+                                href="/contact"
+                                className="text-gray-600 hover:text-green-600 font-medium transition-colors"
+                            >
+                                Contact
+                            </Link>
                         </nav>
                     </div>
 
@@ -165,6 +171,13 @@ export default function Header() {
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Feedback
+                        </Link>
+                        <Link
+                            href="/contact"
+                            className="block text-gray-600 hover:text-green-600 font-medium transition-colors px-2 py-1"
+                            onClick={() => setIsMenuOpen(false)}
+                        >
+                            Contact
                         </Link>
                         {user ? (
                             <>

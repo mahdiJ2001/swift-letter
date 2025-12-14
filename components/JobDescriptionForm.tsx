@@ -47,6 +47,12 @@ export default function JobDescriptionForm() {
     const [isEditingLetter, setIsEditingLetter] = useState(false)
     const [editableLetter, setEditableLetter] = useState('')
     const [isUploadingResume, setIsUploadingResume] = useState(false)
+    const [showErrorPopup, setShowErrorPopup] = useState(false)
+    const [errorMessage, setErrorMessage] = useState('')
+    const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+    const [showFeedbackForm, setShowFeedbackForm] = useState(false)
+    const [feedbackText, setFeedbackText] = useState('')
+    const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
     const router = useRouter()
     const { user } = useAuth()
 
@@ -75,9 +81,11 @@ export default function JobDescriptionForm() {
 
         setIsUploadingResume(true)
         setError('')
-        setSuccess('Processing resume, this will update your profile...')
+        setSuccess('Processing PDF, please wait...')
 
         try {
+            console.log('Starting PDF processing...')
+
             // Create FormData to send the file to API
             const formData = new FormData()
             formData.append('file', file)
@@ -93,17 +101,29 @@ export default function JobDescriptionForm() {
             setSuccess('Processing with AI...')
 
             if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.error || 'Failed to process PDF')
+                let errorMessage = 'Failed to process PDF'
+                try {
+                    const errorData = await response.json()
+                    errorMessage = errorData.error || errorMessage
+                } catch {
+                    // If we can't parse the error response, provide a helpful message
+                    if (response.status === 500) {
+                        errorMessage = 'Server error while processing PDF. This might be due to a large file or temporary server issue. Please try again with a smaller PDF or wait a moment and retry.'
+                    }
+                }
+                throw new Error(errorMessage)
             }
 
             const responseData = await response.json()
+            console.log('API Response:', responseData)
+
             const extractedData = responseData.data
+            console.log('Extracted data:', extractedData)
 
             // Format arrays for display
             const { formatSkillsArray, formatLanguagesArray } = await import('@/lib/resume-parser')
 
-            // Prepare profile data for update
+            // Prepare profile data for automatic save
             const updatedProfile = {
                 full_name: extractedData.full_name || '',
                 email: extractedData.email || '',
@@ -122,39 +142,87 @@ export default function JobDescriptionForm() {
                 ].filter(Boolean).join('\n')
             }
 
-            // Save to profile
+            // Automatically save to profile
             if (user) {
                 const { data: { session } } = await supabase.auth.getSession()
                 if (session) {
+                    // First check if profile exists in database
+                    const checkResponse = await fetch(`/api/profile?userId=${user.id}`)
+                    let existingProfile = null
+                    if (checkResponse.ok) {
+                        existingProfile = await checkResponse.json()
+                    }
+
                     const updateResponse = await fetch('/api/profile', {
-                        method: profile ? 'PUT' : 'POST',
+                        method: existingProfile ? 'PUT' : 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${session.access_token}`
                         },
                         body: JSON.stringify({
                             ...updatedProfile,
-                            ...(profile ? { id: profile.id } : {})
+                            ...(existingProfile ? { id: existingProfile.id } : {})
                         })
                     })
 
                     if (updateResponse.ok) {
                         const savedProfile = await updateResponse.json()
                         setProfile(savedProfile)
-                        setSuccess('Resume processed and profile updated successfully!')
+                        setSuccess('Resume processed and profile automatically saved!')
+                        setShowSuccessPopup(true)
                     } else {
-                        throw new Error('Failed to save profile')
+                        const errorData = await updateResponse.json()
+                        throw new Error(`Failed to save profile: ${errorData.error || 'Unknown error'}`)
                     }
+                } else {
+                    throw new Error('No active session found')
                 }
+            } else {
+                throw new Error('User not authenticated')
             }
 
             // Clear the file input
             event.target.value = ''
         } catch (error: any) {
             console.error('Resume processing error:', error)
-            setError(error.message || 'Failed to process resume. Please try again.')
+            setErrorMessage(error.message || 'Failed to process resume. Please try again.')
+            setShowErrorPopup(true)
+            setError('')
+            setSuccess('')
         } finally {
             setIsUploadingResume(false)
+        }
+    }
+
+    const handleFeedbackSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!feedbackText.trim()) return
+
+        setIsSubmittingFeedback(true)
+        try {
+            const response = await fetch('/api/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    feedback: feedbackText.trim(),
+                    page: 'generator',
+                    user_id: user?.id || null
+                })
+            })
+
+            if (response.ok) {
+                setFeedbackText('')
+                setShowFeedbackForm(false)
+                setSuccess('Thank you for your feedback!')
+            } else {
+                setError('Failed to submit feedback. Please try again.')
+            }
+        } catch (error) {
+            setError('Failed to submit feedback. Please try again.')
+        } finally {
+            setIsSubmittingFeedback(false)
         }
     }
 
@@ -735,6 +803,122 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                     </div>
                 )}
             </CardContent>
+
+            {/* Error Popup Modal */}
+            {showErrorPopup && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Saving Profile</h3>
+                            <p className="text-gray-600 mb-6">{errorMessage}</p>
+                            <Button
+                                onClick={() => {
+                                    setShowErrorPopup(false)
+                                    setErrorMessage('')
+                                }}
+                                className="w-full bg-red-600 hover:bg-red-700"
+                            >
+                                Close
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Success Popup Modal */}
+            {showSuccessPopup && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Profile Updated Successfully!</h3>
+                            <p className="text-gray-600 mb-6">
+                                Your resume has been processed and your profile has been automatically updated.
+                                You can check the extracted information or edit it from the profile interface.
+                            </p>
+                            <div className="flex space-x-3">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowSuccessPopup(false)}
+                                    className="flex-1"
+                                >
+                                    Continue
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        setShowSuccessPopup(false)
+                                        router.push('/profile')
+                                    }}
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                >
+                                    View Profile
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Feedback Form Modal */}
+            {showFeedbackForm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <form onSubmit={handleFeedbackSubmit}>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Share Your Feedback</h3>
+                            <textarea
+                                value={feedbackText}
+                                onChange={(e) => setFeedbackText(e.target.value)}
+                                placeholder="Tell us about your experience, report bugs, or suggest improvements..."
+                                className="w-full h-32 p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                required
+                            />
+                            <div className="flex space-x-3 mt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setShowFeedbackForm(false)
+                                        setFeedbackText('')
+                                    }}
+                                    className="flex-1"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={isSubmittingFeedback || !feedbackText.trim()}
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                >
+                                    {isSubmittingFeedback ? 'Sending...' : 'Send Feedback'}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Feedback Bubble */}
+            <button
+                onClick={() => setShowFeedbackForm(true)}
+                className="fixed bottom-6 right-6 bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-105 z-40 group"
+                title="Send Feedback"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 21l1.98-5.874A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
+                </svg>
+                <span className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-sm py-1 px-2 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    Send Feedback
+                </span>
+            </button>
         </Card>
     )
 }
