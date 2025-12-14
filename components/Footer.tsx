@@ -17,13 +17,13 @@ export default function Footer() {
                             Land your dream job with personalized, AI-powered cover letters.
                         </p>
                         <div className="flex space-x-4 mt-6">
-                            <a href="#" className="text-secondary-400 hover:text-primary-400 transition-colors">
+                            <a href="https://www.linkedin.com/in/mahdi-jellali-849858285/" target="_blank" rel="noopener noreferrer" className="text-secondary-400 hover:text-primary-400 transition-colors">
                                 <Github className="h-5 w-5" />
                             </a>
-                            <a href="#" className="text-secondary-400 hover:text-primary-400 transition-colors">
+                            <a href="https://x.com/mahdi_builds" target="_blank" rel="noopener noreferrer" className="text-secondary-400 hover:text-primary-400 transition-colors">
                                 <Twitter className="h-5 w-5" />
                             </a>
-                            <a href="#" className="text-secondary-400 hover:text-primary-400 transition-colors">
+                            <a href="mailto:contact@swiftletter.com" className="text-secondary-400 hover:text-primary-400 transition-colors">
                                 <Mail className="h-5 w-5" />
                             </a>
                         </div>
