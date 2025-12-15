@@ -4,6 +4,14 @@ import { cookies } from 'next/headers'
 
 export async function GET(request: NextRequest) {
     try {
+        // Check if Supabase environment variables are available
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+            return NextResponse.json(
+                { error: 'Service temporarily unavailable' },
+                { status: 503 }
+            )
+        }
+        
         const supabase = createRouteHandlerClient({ cookies })
         
         // Get the current user
@@ -55,6 +63,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
+        // Check if Supabase environment variables are available
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+            return NextResponse.json(
+                { error: 'Service temporarily unavailable' },
+                { status: 503 }
+            )
+        }
+        
         const supabase = createRouteHandlerClient({ cookies })
         
         // Get the current user
@@ -95,6 +111,14 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
     try {
+        // Check if Supabase environment variables are available
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+            return NextResponse.json(
+                { error: 'Service temporarily unavailable' },
+                { status: 503 }
+            )
+        }
+        
         const supabase = createRouteHandlerClient({ cookies })
         
         // Get the current user

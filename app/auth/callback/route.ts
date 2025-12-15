@@ -8,6 +8,11 @@ export async function GET(request: NextRequest) {
     const code = requestUrl.searchParams.get('code')
 
     if (code) {
+        // Check if Supabase environment variables are available
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+            return NextResponse.redirect(new URL('/auth/login?error=service_unavailable', requestUrl.origin))
+        }
+        
         const supabase = createRouteHandlerClient({ cookies })
         
         try {

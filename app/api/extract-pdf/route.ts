@@ -6,6 +6,14 @@ import { promisify } from 'util'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Supabase environment variables are available
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return NextResponse.json(
+        { error: 'Service temporarily unavailable' },
+        { status: 503 }
+      )
+    }
+    
     const supabase = createRouteHandlerClient({ cookies })
     
     // Check if user is authenticated
