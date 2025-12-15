@@ -117,6 +117,9 @@ export default function GeneratorPage() {
             return
         }
 
+        // Scroll to top of page
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+
         setIsGenerating(true)
         setError('')
 

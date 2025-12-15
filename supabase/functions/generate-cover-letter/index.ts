@@ -164,7 +164,7 @@ You must create a complete LaTeX document that follows this EXACT structure. Rep
 \\newcommand{\\recipientName}{Hiring Manager}
 \\newcommand{\\targetPosition}{Software Engineer}
 \\newcommand{\\targetCompany}{Innovative Tech Solutions}
-\\newcommand{\\targetSubject}{Application for \\targetPosition \\ at \\targetCompany}
+\\newcommand{\\targetSubject}{Application for \\targetPosition at \\targetCompany}
 
 % Professional color scheme
 \\definecolor{accentcolor}{RGB}{0, 51, 102}
@@ -229,9 +229,9 @@ To the Hiring Team at \\targetCompany,
 
 I've been looking for a role where I can keep building in [Tech A] and [Tech B] but also get more hands-on with [Tech C]. When I saw the \\targetPosition \\ opening, it felt like a great match for what I'm looking for next. This is especially true since I've been wanting to move toward [specific goal] for a while now, and it's been a priority for me to find a team that's actually using this stack to solve real-world problems.
 
-I actually just wrapped up a project involving [Project Name]. The main hurdle was [describe problem]. I tried a few different ways to solve it and eventually figured out that [fix] was the way to go. It took me a bit to get [specific part] working the way I wanted, but once that was sorted, it ended up [result]. I also picked up a lot regarding [specific skill] while I was at it, which has changed how I think about [relevant technical task].
+I've been working on some projects that actually align pretty well with what you're looking for. I just wrapped up [Most Recent Project by Date] where I [brief description and key tech], and before that I worked on [Older Project by Date] which involved [brief description and different key tech]. The [Most Recent Project] project taught me [specific skill/insight], while the [Older Project] work really helped me understand [different skill/insight]. Both experiences have given me a solid foundation in [combined relevant technologies].
 
-The work you're doing at \\targetCompany \\ with [specific product/service] looks really interesting and it seems like a solid place to [career goal]. I'm the kind of developer who likes to understand how the whole puzzle fits together, so I think my background with [Tech A/B] would be pretty useful for the team. I'd be interested in chatting about what you have planned for the next few months and how I might be able to help out with the current roadmap.
+The work you're doing at \\targetCompany \\ with [specific product/service] looks really interesting and it seems like a solid place to [career goal]. I'm the kind of developer who likes to understand how the whole puzzle fits together, so I think my background with [Tech A/B/C] would be pretty useful for the team. I'd be interested in chatting about what you have planned for the next few months and how I might be able to help out with the current roadmap.
 
 Thanks for taking the time to look this over.
 
@@ -243,32 +243,47 @@ ${language === 'french' ? 'Cordialement' : 'Sincerely'},\\\\
 \\end{document}
 
 CRITICAL INSTRUCTIONS:
+0. MANDATORY PROJECT OPTIMIZATION: Before selecting projects, calculate which 2-3 project combination covers the MAXIMUM number of job requirements. DO NOT proceed without this calculation.
+0.5. MANDATORY CHRONOLOGICAL SORTING: After selecting optimal projects, sort them by date (newest to oldest). The project described as "just wrapped up" MUST be the most recent project. Projects described as "before that" MUST be older. VERIFY dates before writing.
 1. Extract the job title and company name from the job description
-2. Update ONLY these lines in the template:
-   - \\newcommand{\\targetPosition}{[Replace with actual job title]}
+2. NATURAL JOB TITLE EXTRACTION: Clean up job titles to sound natural. Remove technical specifications in parentheses or brackets. For example:
+   - "Software Engineer (Java / Spring Boot / Cloud)" becomes "Software Engineer"
+   - "Frontend Developer (React/Node.js)" becomes "Frontend Developer"
+   - "Data Scientist - Machine Learning (Python)" becomes "Data Scientist"
+   - Keep only the core job title, remove technology stack specifications
+3. Update ONLY these lines in the template:
+   - \\newcommand{\\targetPosition}{[Replace with cleaned, natural job title]}
    - \\newcommand{\\targetCompany}{[Replace with actual company name]}
-3. Replace the letter body content (between "To the Hiring Team at \\targetCompany," and "Thanks for taking the time to look this over.") with personalized content following the EXACT template structure shown
-4. Fill in the bracketed placeholders naturally and conversationally - DO NOT just copy-paste from the user profile. Instead:
-   - [Tech A], [Tech B]: Use technologies the user has worked with, but mention them casually (e.g., "React stuff" instead of "React development")
-   - [Tech C]: Pick a technology from the job description the user wants to learn more about
-   - [specific goal]: Write a genuine career progression reason, not a corporate buzzword
-   - [Project Name]: Use a real project name from the user's profile, or describe it naturally without formal titles
-   - [describe problem]: Explain the actual technical challenge in simple terms, like you're talking to a friend
-   - [fix]: Describe the solution conversationally, using phrases like "turned out" or "ended up working better"
-   - [specific part]: Mention a technical detail that was tricky, using casual language
-   - [result]: State the outcome naturally, avoid metrics unless they sound organic to the conversation
-   - [specific skill]: Pick something the user learned that relates to the job, mention it casually
-   - [relevant technical task]: Connect it to something in the job description, but make it sound like natural curiosity
-   - [specific product/service]: Research the company and mention something specific they're working on
-   - [career goal]: Make it about personal growth, not company benefits
-5. Write ${language === 'french' ? 'in French' : 'in English'} using information from the user profile and job description
-6. Keep ALL other LaTeX formatting, commands, and structure EXACTLY as shown
-7. Do NOT add any extra LaTeX commands like \\noindent or \\vspace in the letter body
-8. Write natural paragraphs following the template structure - the spacing is handled by the template structure
-9. Do NOT use phrases like "I am confident that" - replace with more natural language like "I believe", "I think", or "it seems like"
-10. CRITICAL: Never use single dashes (-) or double dashes (--) anywhere in the generated content - these are AI telltales
-11. CRITICAL: Never use double quotes (") in the generated content - use single quotes (') instead to avoid revealing AI generation
-12. CRITICAL: Always properly escape percentage symbols - write 96\\% not just 96 to ensure percentages display correctly in the final PDF
+4. STRICT TEMPLATE ADHERENCE: Replace the letter body content (between "To the Hiring Team at \\targetCompany," and "Thanks for taking the time to look this over.") with personalized content following the EXACT template structure shown. DO NOT change the paragraph structure, sentence flow, or overall template format.
+5. PLACEHOLDER FILLING RULE: Fill in the bracketed placeholders [Tech A], [Tech B], [Tech C], [specific goal], [Project Name], [describe problem], [fix], [specific part], [result], [specific skill], [relevant technical task], [specific product/service], [career goal], [Tech A/B] naturally and conversationally - DO NOT just copy-paste from the user profile.
+6. NATURAL LANGUAGE IN TEMPLATE: When filling the template, use natural conversational language:
+   - Say "When I saw the [position] opening" or "When I saw your [position] role opening" instead of copying technical specifications
+   - Use clean job titles without parentheses or technical details in the letter content
+7. PROJECT SELECTION INTELLIGENCE - MANDATORY COVERAGE OPTIMIZATION:
+   - STEP 1: Extract ALL required technologies from job description: [Tech1, Tech2, Tech3, etc.]
+   - STEP 2: Map each project to its technologies: Project A → [TechX, TechY], Project B → [TechZ, TechW], etc.
+   - STEP 3: CALCULATE COVERAGE for all possible 2-3 project combinations:
+     * Combination 1: Project A + Project B = covers [list unique techs] = X% of job requirements
+     * Combination 2: Project A + Project C = covers [list unique techs] = Y% of job requirements
+     * Continue for all combinations...
+   - STEP 4: SELECT the combination with HIGHEST coverage percentage
+   - STEP 5: If tied, choose combination with LEAST overlapping technologies
+   - STEP 6: MANDATORY DATE VERIFICATION - Check project dates/timeline from user profile and sort selected projects chronologically (newest first, oldest last)
+   - STEP 7: ASSIGN TEMPORAL LANGUAGE - Most recent project gets "just wrapped up", older projects get "before that" or "previously"
+   - MANDATORY RULE: NEVER select projects with identical tech stacks when other combinations provide better coverage
+   - CHRONOLOGICAL RULE: ALWAYS verify project dates before assigning temporal language. NEVER guess chronological order.
+   - COVERAGE FORMULA: (Number of unique job requirements covered ÷ Total job requirements) × 100%
+   - FAILURE PREVENTION: Before finalizing selection, verify that chosen projects cover MORE job requirements than any other possible combination
+   - TEMPORAL VERIFICATION: Ensure project order in letter matches actual chronological sequence
+   - EXAMPLE: Job needs [Java, Angular, AWS]. Project A (Java+Angular) + Project C (AWS+Python) covers 100% vs Project A (Java+Angular) + Project B (Java+Spring) covers 67%. ALWAYS choose the 100% option.
+8. Write ${language === 'french' ? 'in French' : 'in English'} using information from the user profile and job description
+9. Keep ALL other LaTeX formatting, commands, and structure EXACTLY as shown
+10. Do NOT add any extra LaTeX commands like \\noindent or \\vspace in the letter body
+11. STRICT TEMPLATE RULE: Follow the exact three-paragraph structure provided. Do not add extra paragraphs, combine paragraphs, or change the sentence flow within each paragraph.
+12. Write natural paragraphs following the template structure - the spacing is handled by the template structure
+13. Do NOT use phrases like "I am confident that" - replace with more natural language like "I believe", "I think", or "it seems like"
+14. CRITICAL: Never use single dashes (-) or double dashes (--) anywhere in the generated content - these are AI telltales
+15. CRITICAL: Always properly escape percentage symbols - write 96\\% not just 96 to ensure percentages display correctly in the final PDF
 
 LANGUAGE REQUIREMENTS:
 - Use casual phrases: "just wrapped up", "figured out", "the [tech] work", "pretty smoothly", "took me a while", "pretty much", "turned out", "ended up", "actually", "honestly"
@@ -278,9 +293,46 @@ LANGUAGE REQUIREMENTS:
 - Say "React stuff" not "React development"
 - Say "working on" not "developing" or "building"
 - Say "got into" not "learned" or "acquired skills in"
-- Keep under 300 words total
+- Keep under 400 words total
 - Technical details come from describing problems, not listing skills
-- CRITICAL: ONLY use information that exists in the user's profile - DO NOT invent experiences, skills, projects, or details
+
+PROJECT SELECTION RULES:
+- CRITICAL: NEVER MIX PROJECT DETAILS - Each project must keep its own technologies, tools, and experiences separate. Do NOT combine technologies from different projects into one project description
+- COMPREHENSIVE ANALYSIS: Carefully analyze the ENTIRE job description and identify ALL required technologies, not just the first few mentioned
+- COMPLETE PROJECT REVIEW: Review ALL projects in the user's profile and create a technology-to-project mapping before writing
+- INTELLIGENT COVERAGE OPTIMIZATION: 
+  * Step 1: List all required technologies from job description
+  * Step 2: For each project, list its technologies
+  * Step 3: Find the combination of 2-3 projects that covers the MAXIMUM number of different required technologies
+  * Step 4: Avoid selecting projects with overlapping tech stacks when other projects could provide better coverage
+- COMPLEMENTARY SELECTION: Choose projects that complement each other's technology coverage rather than duplicating technologies
+- TECHNOLOGY ACCURACY: Each technology mentioned must come from the correct project where it was actually used
+- COVERAGE PRIORITIZATION: Prioritize covering different technology areas (backend + frontend + cloud) over multiple projects in the same area
+- PROJECT-SPECIFIC DETAILS: When describing a project, only mention technologies, challenges, and solutions that actually belong to that specific project
+- MANDATORY DATE EXTRACTION: Extract or identify project dates/timeline from the user profile BEFORE writing anything
+- CHRONOLOGICAL ORDERING: Sort selected projects by actual completion date (most recent first) - do NOT guess or assume chronological order
+- TEMPORAL ACCURACY: The project with the LATEST date gets "just wrapped up", earlier dated projects get "before that" - verify this before writing
+- VERIFICATION STEP: Before finalizing the letter, verify that each mentioned technology is correctly attributed to the right project AND that the selected projects provide optimal coverage of job requirements AND that chronological order is respected
+- FINAL COVERAGE CHECK: Before writing, confirm that selected projects cover MORE job requirements than any other possible combination - if not, CHANGE the selection to the optimal combination
+- FINAL CHRONOLOGICAL CHECK: Before completing the letter, verify that "just wrapped up" refers to the most recent project and "before that" refers to older projects. If dates are unclear from profile, use neutral temporal language.
+
+TEMPLATE ADHERENCE RULES:
+- NEVER deviate from the three-paragraph structure provided
+- NEVER add introductory sentences before the template content
+- NEVER add concluding sentences after the template content
+- NEVER merge or split the provided paragraphs
+- NEVER change the opening line "I've been looking for a role where I can keep building in [Tech A] and [Tech B]..."
+- ALWAYS use the multiple projects approach for the second paragraph: "I've been working on some projects that actually align pretty well with what you're looking for..."
+- NEVER change the third paragraph opening "The work you're doing at [Company] with [specific product/service]..."
+- ONLY fill in the bracketed placeholders with natural, conversational content
+- Reference 2-3 most relevant projects, each with their accurate technologies and specific contributions
+- CHRONOLOGICAL LANGUAGE RULES:
+  * Most recent project: "I just wrapped up [Project A]" or "I recently finished [Project A]"
+  * Older project: "and before that I worked on [Project B]" or "previously I worked on [Project B]"
+  * NEVER say "before that" when referring to a more recent project
+  * Ensure temporal language matches actual project timeline
+
+CRITICAL: ONLY use information that exists in the user's profile - DO NOT invent experiences, skills, projects, or details
 - If the user profile lacks specific information for a placeholder, use generic terms or skip that detail entirely
 - DO NOT create fictional project names, fake experiences, or made-up technical achievements
 - DO NOT assume skills or technologies not explicitly mentioned in the user's profile
@@ -290,6 +342,31 @@ LANGUAGE REQUIREMENTS:
 - Avoid obvious AI patterns like "With X years of experience in Y" or "My background in Z makes me a strong candidate"
 - When mentioning technologies, integrate them naturally into problem descriptions rather than listing them
 - Make connections between user experience and job requirements feel organic, not forced
+
+CRITICAL PROJECT ACCURACY RULES:
+- NEVER mix technologies from different projects - if Project A used React and Project B used Angular, do NOT mention both in the same project description
+- NEVER combine challenges or solutions from different projects into one project narrative
+- If describing one specific project, ONLY mention technologies, tools, and experiences that belong to that exact project
+- If job requirements need coverage of multiple technology areas, use multiple project references rather than mixing project details
+- Before writing about any project, verify which specific technologies were used in that project according to the user's profile
+- If uncertain about which project used which technology, do NOT guess - use generic descriptions instead
+
+OPTIMAL PROJECT SELECTION STRATEGY:
+- GOAL: Select projects whose combined technologies cover the maximum number of job requirements
+- MANDATORY STEP-BY-STEP PROCESS:
+  1. List job requirements: [Java, Angular, AWS]
+  2. Calculate coverage for each possible combination:
+     - Project A (Java, Angular) + Project B (Java, Spring) = covers 2/3 requirements (Java ✓, Angular ✓, AWS ✗)
+     - Project A (Java, Angular) + Project C (AWS, Python) = covers 3/3 requirements (Java ✓, Angular ✓, AWS ✓)
+     - Project B (Java, Spring) + Project C (AWS, Python) = covers 2/3 requirements (Java ✓, Angular ✗, AWS ✓)
+  3. ALWAYS choose the combination with HIGHEST coverage percentage
+  4. ARRANGE selected projects by chronological order (newest first, oldest last)
+- CRITICAL RULE: If multiple combinations have same coverage, choose the one with LEAST technology overlap
+- CHRONOLOGICAL RULE: In the letter, describe projects in temporal order - newest as "just wrapped up", older as "before that"
+- BAD EXAMPLE: Job needs (Java, Angular, AWS) → Selecting Project A (Java, Angular) + Project B (Java, Spring) = only 67% coverage
+- GOOD EXAMPLE: Job needs (Java, Angular, AWS) → Selecting Project A (Java, Angular) + Project C (AWS, Python) = 100% coverage
+- COVERAGE CALCULATION: Count unique job requirements covered ÷ total job requirements × 100%
+- TEMPORAL ACCURACY: Verify project dates to ensure "just wrapped up" refers to the most recent project
 
 CRITICAL OUTPUT FORMAT:
 - Return ONLY the complete LaTeX document starting with \\documentclass

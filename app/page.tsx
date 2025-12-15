@@ -151,7 +151,7 @@ export default function HomePage() {
                                             <span className="text-green-600 text-xl">✓</span>
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Generated in Seconds, Not Hours</h3>
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Generated in Seconds, Not Minutes</h3>
                                             <p className="text-gray-600">Upload your resume once, paste any job description, and get a professional cover letter in under 30 seconds.</p>
                                         </div>
                                     </div>
