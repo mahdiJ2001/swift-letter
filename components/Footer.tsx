@@ -23,9 +23,6 @@ export default function Footer() {
                             <a href="https://x.com/mahdi_builds" target="_blank" rel="noopener noreferrer" className="text-secondary-400 hover:text-primary-400 transition-colors">
                                 <Twitter className="h-5 w-5" />
                             </a>
-                            <a href="mailto:contact@swiftletter.com" className="text-secondary-400 hover:text-primary-400 transition-colors">
-                                <Mail className="h-5 w-5" />
-                            </a>
                         </div>
                     </div>
 
@@ -56,24 +53,9 @@ export default function Footer() {
                         <h3 className="text-white font-semibold mb-4">Support</h3>
                         <ul className="space-y-2">
                             <li>
-                                <a href="#" className="hover:text-primary-400 transition-colors">
-                                    Help Center
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" className="hover:text-primary-400 transition-colors">
+                                <Link href="/contact" className="hover:text-primary-400 transition-colors">
                                     Contact Us
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" className="hover:text-primary-400 transition-colors">
-                                    Privacy Policy
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" className="hover:text-primary-400 transition-colors">
-                                    Terms of Service
-                                </a>
+                                </Link>
                             </li>
                         </ul>
                     </div>
