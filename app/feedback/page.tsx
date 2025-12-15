@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea'
 import { MessageSquare, Send } from 'lucide-react'
 import Header from '@/components/Header'
+import type { Database } from '@/types/supabase'
 
 export default function FeedbackPage() {
     const [feedback, setFeedback] = useState('')
@@ -25,14 +26,14 @@ export default function FeedbackPage() {
         setSuccess('')
 
         try {
+            const feedbackData = {
+                user_id: user?.id || null,
+                feedback: feedback.trim()
+            }
+
             const { error } = await supabase
                 .from('user_feedback')
-                .insert([
-                    {
-                        user_id: user?.id || null,
-                        feedback: feedback.trim()
-                    }
-                ])
+                .insert(feedbackData as any)
 
             if (error) throw error
 
