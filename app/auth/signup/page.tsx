@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase-client'
 import { useAuth } from '@/lib/auth-context'
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft } from 'lucide-react'
 import Header from '@/components/Header'

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase-client'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { Button } from '@/components/ui/button'
