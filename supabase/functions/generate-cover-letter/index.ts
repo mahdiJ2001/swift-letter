@@ -103,7 +103,7 @@ serve(async (req: Request) => {
     const modelId = "anthropic.claude-3-sonnet-20240229-v1:0";
     const endpoint = `https://bedrock-runtime.${region}.amazonaws.com/model/${modelId}/invoke`;
 
-    // Create the prompt for Claude - generate complete LaTeX document using specific template
+    // Create the pppppprompt for Claude - generate complete LaTeX document using specific template
     const prompt = `You are an expert cover letter writer. You must fill in the following template with relevant information from the candidate profile and job description. Follow this EXACT template structure:
 
 CANDIDATE PROFILE:
