@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase-client'
 
 interface AuthContextType {
     user: User | null
@@ -20,10 +20,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        // Skip auth setup during SSR/build
+        if (typeof window === 'undefined') {
+            setLoading(false)
+            return
+        }
+
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session)
             setUser(session?.user ?? null)
+            setLoading(false)
+        }).catch((error) => {
+            console.warn('Auth session error:', error)
             setLoading(false)
         })
 

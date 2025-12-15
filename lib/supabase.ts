@@ -6,14 +6,17 @@ import { Database } from '@/types/supabase'
 export const supabase = createClientComponentClient<Database>()
 
 // Legacy client for backward compatibility
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables')
+// Only throw error if we're not in build/static generation mode
+if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
+    console.warn('Missing Supabase environment variables')
 }
 
-export const supabaseLegacy = createClient<Database>(supabaseUrl, supabaseAnonKey)
+export const supabaseLegacy = supabaseUrl && supabaseAnonKey 
+    ? createClient<Database>(supabaseUrl, supabaseAnonKey)
+    : null
 
 // For server-side operations only (Node.js environment)
 export const createSupabaseAdmin = () => {
@@ -22,12 +25,14 @@ export const createSupabaseAdmin = () => {
     }
 
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (!serviceRoleKey) {
-        throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
+    const adminSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    
+    if (!serviceRoleKey || !adminSupabaseUrl) {
+        throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL environment variable')
     }
 
     return createClient<Database>(
-        supabaseUrl,
+        adminSupabaseUrl,
         serviceRoleKey,
         {
             auth: {
