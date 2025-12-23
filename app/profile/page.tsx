@@ -90,9 +90,16 @@ export default function ProfilePage() {
 
     if (loading || isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-b from-green-100 via-green-50 to-white">
+            <div className="min-h-screen premium-bg">
+                {/* Background Elements */}
+                <div className="fixed inset-0 pointer-events-none">
+                    <div className="floating-orb floating-orb-1"></div>
+                    <div className="floating-orb floating-orb-2"></div>
+                    <div className="floating-orb floating-orb-3"></div>
+                    <div className="grid-pattern"></div>
+                </div>
                 <Header />
-                <div className="flex items-center justify-center py-20">
+                <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6 relative z-10">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
                         <p className="text-gray-600">Loading profile...</p>
@@ -108,9 +115,16 @@ export default function ProfilePage() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-b from-green-100 via-green-50 to-white">
+            <div className="min-h-screen premium-bg">
+                {/* Background Elements */}
+                <div className="fixed inset-0 pointer-events-none">
+                    <div className="floating-orb floating-orb-1"></div>
+                    <div className="floating-orb floating-orb-2"></div>
+                    <div className="floating-orb floating-orb-3"></div>
+                    <div className="grid-pattern"></div>
+                </div>
                 <Header />
-                <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6">
+                <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6 relative z-10">
                     <div className="text-center">
                         <p className="text-red-600">{error}</p>
                         <button
@@ -126,11 +140,18 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-green-100 via-green-50 to-white">
+        <div className="min-h-screen premium-bg">
+            {/* Background Elements */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="floating-orb floating-orb-1"></div>
+                <div className="floating-orb floating-orb-2"></div>
+                <div className="floating-orb floating-orb-3"></div>
+                <div className="grid-pattern"></div>
+            </div>
             <Header />
 
-            <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6">
-                <div className="mb-8 text-center">
+            <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6 relative z-10">
+                <div className="mb-2 text-center">
                     <h1 className="text-3xl font-bold text-gray-900">Your Profile</h1>
                     <p className="text-gray-600 mt-2">
                         Complete your profile to generate personalized cover letters

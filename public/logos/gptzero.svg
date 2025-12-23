@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50">
+  <defs>
+    <linearGradient id="gptGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2"/>
+      <stop offset="100%" style="stop-color:#357ABD"/>
+    </linearGradient>
+  </defs>
+  <circle cx="25" cy="25" r="20" fill="url(#gptGrad)"/>
+  <circle cx="25" cy="25" r="12" fill="white"/>
+  <circle cx="25" cy="25" r="6" fill="#4A90E2"/>
+  <text x="55" y="32" font-family="Arial, sans-serif" font-weight="bold" font-size="24" fill="#2C3E50">GPT<tspan fill="#4A90E2">Zero</tspan></text>
+</svg>

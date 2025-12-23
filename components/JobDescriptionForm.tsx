@@ -527,10 +527,10 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
 
 
     return (
-        <Card className="w-full max-w-none mx-auto shadow-lg border-0 bg-white">
+        <Card className="w-full max-w-none mx-auto glass-card-strong rounded-2xl border-0">
             <CardHeader className="text-left pb-4">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-gray-900">
+                    <CardTitle className="text-lg font-semibold text-slate-900">
                         Generate Cover Letter
                     </CardTitle>
                     <Button
@@ -539,10 +539,10 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                         size="sm"
                         onClick={() => document.getElementById('resume-upload')?.click()}
                         disabled={isUploadingResume}
-                        className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 font-medium"
+                        className="bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 font-medium transition-all duration-200"
                     >
                         {isUploadingResume ? (
-                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                            <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mr-2"></div>
                         ) : (
                             <Upload className="h-4 w-4 mr-2" />
                         )}

@@ -42,6 +42,105 @@ export default function GeneratorPage() {
     const { session, loading } = useAuth()
     const router = useRouter()
 
+    // Function to convert LaTeX to readable text
+    const parseLatexToReadable = (latex: string): string => {
+        if (!latex) return ''
+
+        try {
+            // First, extract all newcommand definitions
+            const commands: { [key: string]: string } = {}
+            const commandMatches = latex.matchAll(/\\newcommand\{\\([^}]*)\}\{([^}]*)\}/g)
+            for (const match of commandMatches) {
+                commands[match[1]] = match[2]
+            }
+
+            // Also handle commands that reference other commands (like targetSubject)
+            // Resolve nested command references
+            const resolveCommand = (value: string): string => {
+                let resolved = value
+                for (const [cmd, val] of Object.entries(commands)) {
+                    resolved = resolved.replace(new RegExp(`\\\\${cmd}(?![a-zA-Z])`, 'g'), val)
+                }
+                // Handle \\ at for "at" text
+                resolved = resolved.replace(/\\ at /g, ' at ')
+                resolved = resolved.replace(/\\ /g, ' ')
+                return resolved
+            }
+
+            // Resolve all commands
+            for (const [cmd, value] of Object.entries(commands)) {
+                commands[cmd] = resolveCommand(value)
+            }
+
+            // Extract content between \begin{document} and \end{document}
+            const documentMatch = latex.match(/\\begin\{document\}([\s\S]*)\\end\{document\}/)
+            let content = documentMatch ? documentMatch[1] : latex
+
+            // Replace command usages with their values
+            for (const [cmd, value] of Object.entries(commands)) {
+                const regex = new RegExp(`\\\\${cmd}(?![a-zA-Z])`, 'g')
+                content = content.replace(regex, value)
+            }
+
+            // Remove comments
+            content = content.replace(/%[^\n]*\n/g, '\n')
+
+            // Remove LaTeX environment commands
+            content = content.replace(/\\begin\{center\}|\\end\{center\}/g, '')
+            content = content.replace(/\\begin\{flushleft\}|\\end\{flushleft\}/g, '')
+
+            // Handle vspace commands
+            content = content.replace(/\\vspace\{[^}]*\}/g, '\n')
+
+            // Handle custom commands
+            content = content.replace(/\\headername\{([^}]*)\}/g, '$1')
+            content = content.replace(/\\contactline\{([^}]*)\}/g, '$1')
+
+            // Handle href commands
+            content = content.replace(/\\href\{mailto:([^}]*)\}\{([^}]*)\}/g, '$2')
+            content = content.replace(/\\href\{https?:\/\/[^}]*\}\{([^}]*)\}/g, '$1')
+
+            // Handle text formatting
+            content = content.replace(/\\textbf\{([^}]*)\}/g, '$1')
+            content = content.replace(/\\textcolor\{[^}]*\}\{([^}]*)\}/g, '$1')
+            content = content.replace(/\{\\small\\textcolor\{[^}]*\}\{([^}]*)\}\}/g, '$1')
+            content = content.replace(/\{\\small([^}]*)\}/g, '$1')
+            content = content.replace(/\\small/g, '')
+            content = content.replace(/\{\\fontsize\{[^}]*\}\{[^}]*\}\\selectfont\\textbf\{\\textcolor\{[^}]*\}\{([^}]*)\}\}\}/g, '$1')
+
+            // Handle today command
+            content = content.replace(/\\today/g, new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }))
+
+            // Clean up remaining LaTeX
+            content = content.replace(/\\\\/g, '\n')
+            content = content.replace(/\\%/g, '%')
+            content = content.replace(/\\_/g, '_')
+            content = content.replace(/\\&/g, '&')
+            content = content.replace(/\\#/g, '#')
+            content = content.replace(/\\\$/g, '$')
+            content = content.replace(/\\ /g, ' ')
+            content = content.replace(/\\•/g, '•')
+            content = content.replace(/ • /g, ' | ')
+
+            // Remove any remaining backslash commands
+            content = content.replace(/\\[a-zA-Z]+\{[^}]*\}/g, '')
+            content = content.replace(/\\[a-zA-Z]+/g, '')
+
+            // Clean up braces
+            content = content.replace(/\{|\}/g, '')
+
+            // Clean up excessive whitespace
+            content = content.replace(/[ \t]+/g, ' ')
+            content = content.replace(/\n\s*\n\s*\n/g, '\n\n')
+            content = content.trim()
+
+            return content
+        } catch (error) {
+            console.error('Error parsing LaTeX:', error)
+            return 'Error displaying cover letter. Please download the PDF to view it.'
+        }
+    }
+
     useEffect(() => {
         if (!loading && !session) {
             router.push('/auth/login?redirectTo=/generator')
@@ -253,7 +352,14 @@ export default function GeneratorPage() {
 
     if (loading || isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-b from-green-100 via-green-50 to-white">
+            <div className="min-h-screen premium-bg">
+                {/* Background Elements */}
+                <div className="fixed inset-0 pointer-events-none">
+                    <div className="floating-orb floating-orb-1"></div>
+                    <div className="floating-orb floating-orb-2"></div>
+                    <div className="floating-orb floating-orb-3"></div>
+                    <div className="grid-pattern"></div>
+                </div>
                 <Header />
                 <div className="flex items-center justify-center py-20">
                     <div className="text-center">
@@ -270,11 +376,18 @@ export default function GeneratorPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-green-100 via-green-50 to-white">
+        <div className="min-h-screen premium-bg">
+            {/* Background Elements */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="floating-orb floating-orb-1"></div>
+                <div className="floating-orb floating-orb-2"></div>
+                <div className="floating-orb floating-orb-3"></div>
+                <div className="grid-pattern"></div>
+            </div>
             <Header />
 
-            <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6">
-                <div className="mb-8 text-center">
+            <div className="max-w-4xl mx-auto py-1 px-4 sm:px-6 relative z-10">
+                <div className="mb-2 text-center">
                     <h1 className="text-3xl font-bold text-gray-900">Cover Letter Generator</h1>
                     <p className="text-gray-600 mt-2">
                         Generate your personalized cover letter powered by AI
@@ -349,52 +462,115 @@ export default function GeneratorPage() {
                     </Card>
                 )}
 
-                {/* Generated Cover Letter Display */}
+                {/* Generated Cover Letter Modal */}
                 {generatedLetter && (
-                    <Card className="mb-6">
-                        <CardHeader>
-                            <CardTitle className="flex items-center space-x-2">
-                                <FileText className="h-5 w-5 text-green-600" />
-                                <span>Your Generated Cover Letter</span>
-                            </CardTitle>
-                            <CardDescription>
-                                Review and customize your generated cover letter below.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="bg-gray-50 p-4 rounded-md">
-                                <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">
-                                    {generatedLetter}
-                                </pre>
+                    <>
+                        {/* Modal Backdrop with fade-in animation */}
+                        <div
+                            className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/70 to-black/80 backdrop-blur-md z-[9998] animate-in fade-in duration-300"
+                            onClick={handleNewGeneration}
+                        />
+
+                        {/* Modal Content with slide-up animation */}
+                        <div
+                            className="fixed inset-0 flex items-center justify-center z-[9999] p-4 sm:p-6 pointer-events-none animate-in zoom-in-95 fade-in duration-300"
+                        >
+                            <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col pointer-events-auto overflow-hidden">
+
+                                {/* Modern Header with gradient accent */}
+                                <div className="relative px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex items-center space-x-3 mb-2">
+                                                <div className="p-2 bg-green-50 rounded-lg">
+                                                    <FileText className="h-6 w-6 text-green-600" />
+                                                </div>
+                                                <div>
+                                                    <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">Cover Letter Preview</h2>
+                                                    <p className="text-sm text-gray-500 mt-0.5">Generated with AI • Ready to download</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={handleNewGeneration}
+                                            className="ml-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                            aria-label="Close modal"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Letter Content - Styled like actual letter paper */}
+                                <div className="flex-1 overflow-y-auto bg-gray-50 px-8 py-6">
+                                    <div className="max-w-4xl mx-auto">
+                                        {/* Letter Paper Effect */}
+                                        <div className="bg-white shadow-lg rounded-lg p-12 border border-gray-200" style={{
+                                            background: 'linear-gradient(to bottom, #ffffff 0%, #ffffff 100%)',
+                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)'
+                                        }}>
+                                            <div className="prose prose-gray max-w-none">
+                                                <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800 font-serif tracking-wide" style={{ lineHeight: '1.8' }}>
+                                                    {parseLatexToReadable(generatedLetter)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Modern Footer with action buttons */}
+                                <div className="px-8 py-5 border-t border-gray-100 bg-white">
+                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <p className="text-sm text-gray-500">
+                                            💡 <span className="font-medium">Tip:</span> Review carefully before downloading
+                                        </p>
+                                        <div className="flex items-center gap-3">
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(parseLatexToReadable(generatedLetter))
+                                                    setSuccess('✓ Copied to clipboard!')
+                                                }}
+                                                className="border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all"
+                                            >
+                                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                                </svg>
+                                                Copy Text
+                                            </Button>
+                                            <Button
+                                                onClick={handleDownloadPdf}
+                                                disabled={isPdfGenerating || !generatedLatex}
+                                                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isPdfGenerating ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                                        Generating...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Download className="h-4 w-4 mr-2" />
+                                                        Download PDF
+                                                    </>
+                                                )}
+                                            </Button>
+                                            <Button
+                                                onClick={handleNewGeneration}
+                                                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all"
+                                            >
+                                                <Zap className="h-4 w-4 mr-2" />
+                                                New Letter
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
-                            <div className="mt-4 flex justify-end space-x-2">
-                                <Button variant="outline" onClick={() => navigator.clipboard.writeText(generatedLetter)}>
-                                    Copy to Clipboard
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={handleDownloadPdf}
-                                    disabled={isPdfGenerating || !generatedLatex}
-                                    className="bg-red-600 text-white hover:bg-red-700"
-                                >
-                                    {isPdfGenerating ? (
-                                        <>
-                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                            Generating PDF...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Download className="h-4 w-4 mr-2" />
-                                            Download PDF
-                                        </>
-                                    )}
-                                </Button>
-                                <Button onClick={handleNewGeneration}>
-                                    Generate Another
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </>
                 )}
 
             </div>

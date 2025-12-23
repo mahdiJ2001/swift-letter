@@ -59,10 +59,17 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-green-100 via-green-50 to-white">
+        <div className="min-h-screen premium-bg">
+            {/* Background Elements */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="floating-orb floating-orb-1"></div>
+                <div className="floating-orb floating-orb-2"></div>
+                <div className="floating-orb floating-orb-3"></div>
+                <div className="grid-pattern"></div>
+            </div>
             <Header />
 
-            <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="w-full max-w-md">
                     {/* Back Button */}
                     <Link

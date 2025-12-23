@@ -1,89 +1,138 @@
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import JobDescriptionForm from '@/components/JobDescriptionForm'
+import AIDetectorCarousel from '@/components/AIDetectorCarousel'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Zap, Shield, Clock } from 'lucide-react'
+import { ArrowRight, Zap, Shield, Clock, Sparkles, Target, Rocket, CheckCircle } from 'lucide-react'
+import Link from 'next/link'
 
 export default function HomePage() {
     return (
-        <div className="min-h-screen bg-gradient-to-b from-green-100 via-green-50 to-white">
+        <div className="min-h-screen premium-bg">
+            {/* Background Elements */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="floating-orb floating-orb-1"></div>
+                <div className="floating-orb floating-orb-2"></div>
+                <div className="floating-orb floating-orb-3"></div>
+                <div className="grid-pattern"></div>
+            </div>
+
             <Header />
-            <div className="h-10 sm:h-14" />
-            <main>
+            <main className="relative z-10">
                 {/* Hero Section */}
-                <section className="pt-12 pb-6 px-4 sm:px-6">
+                <section className="pt-8 pb-8 px-4 sm:px-6">
                     <div className="max-w-7xl mx-auto text-center">
-                        <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-                            Generate{' '}
-                            <span className="bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">Human-Like</span>{' '}
-                            Personalized Cover Letters in Seconds
+                        {/* Premium Tag */}
+                        <div className="inline-flex items-center gap-2 premium-badge px-4 py-2 rounded-full mb-6">
+                            <Sparkles className="h-4 w-4 text-emerald-600" />
+                            <span className="text-sm font-medium text-slate-700">AI-Powered Cover Letter Generator</span>
+                        </div>
+
+                        <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 mb-4 tracking-tight leading-[1.1]">
+                            Create{' '}
+                            <span className="premium-gradient-text">Professional</span>
+                            <br className="hidden sm:block" />
+                            Cover Letters in Seconds
                         </h1>
-                        <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto">
-                            The only AI tool that creates truly personalized cover letters that sound naturally human-written, not robotic. Perfect for mass job applications - each letter is uniquely tailored to match your experience with specific job requirements.
+                        <p className="text-xl md:text-2xl text-slate-600 mb-8 max-w-3xl mx-auto leading-relaxed font-light">
+                            Generate personalized, ATS-optimized cover letters with human-like writing that bypasses AI detection.
+                            Perfect for mass job applications.
                         </p>
-                        <div className="flex flex-wrap justify-center gap-4 mb-12">
-                            <div className="flex items-center bg-white px-6 py-3 rounded-full shadow-md border border-green-100">
-                                <Zap className="h-5 w-5 text-green-600 mr-2" />
-                                <span className="text-sm font-semibold text-gray-800">100% Personalized Content</span>
+
+                        {/* Key Features Badges */}
+                        <div className="flex flex-wrap justify-center gap-4 mb-16">
+                            <div className="premium-badge flex items-center px-6 py-3 rounded-full">
+                                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center mr-3 shadow-sm">
+                                    <Clock className="h-4 w-4 text-white" />
+                                </div>
+                                <span className="text-sm font-semibold text-slate-700">30-Second Generation</span>
                             </div>
-                            <div className="flex items-center bg-white px-6 py-3 rounded-full shadow-md border border-green-100">
-                                <Shield className="h-5 w-5 text-green-600 mr-2" />
-                                <span className="text-sm font-semibold text-gray-800">Sounds Human-Written</span>
+                            <div className="premium-badge flex items-center px-6 py-3 rounded-full">
+                                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center mr-3 shadow-sm">
+                                    <Shield className="h-4 w-4 text-white" />
+                                </div>
+                                <span className="text-sm font-semibold text-slate-700">Undetectable by AI</span>
                             </div>
-                            <div className="flex items-center bg-white px-6 py-3 rounded-full shadow-md border border-green-100">
-                                <Clock className="h-5 w-5 text-green-600 mr-2" />
-                                <span className="text-sm font-semibold text-gray-800">Generated in 30 Seconds</span>
+                            <div className="premium-badge flex items-center px-6 py-3 rounded-full">
+                                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center mr-3 shadow-sm">
+                                    <Target className="h-4 w-4 text-white" />
+                                </div>
+                                <span className="text-sm font-semibold text-slate-700">Personalized for Each Job</span>
+                            </div>
+                            <div className="premium-badge flex items-center px-6 py-3 rounded-full">
+                                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center mr-3 shadow-sm">
+                                    <CheckCircle className="h-4 w-4 text-white" />
+                                </div>
+                                <span className="text-sm font-semibold text-slate-700">ATS-Optimized Keywords</span>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 {/* Job Description Form */}
-                <section className="py-2 px-4 sm:px-6">
+                <section id="generator" className="py-2 px-4 sm:px-6 scroll-mt-20">
                     <div className="max-w-6xl mx-auto">
                         <JobDescriptionForm />
                     </div>
-                </section>                {/* How It Works */}
-                <section className="py-20 px-4 sm:px-6 bg-gray-50">
-                    <div className="max-w-7xl mx-auto">
-                        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">
-                            How It Works
-                        </h2>
+                </section>
+
+                {/* AI Detector Bypass Section */}
+                <AIDetectorCarousel />
+
+                {/* How It Works */}
+                <section className="py-24 px-4 sm:px-6 relative">
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-50/50 to-transparent"></div>
+                    <div className="max-w-7xl mx-auto relative z-10">
+                        <div className="text-center mb-16">
+                            <div className="inline-flex items-center gap-2 premium-badge px-4 py-2 rounded-full mb-4">
+                                <Sparkles className="h-4 w-4 text-emerald-600" />
+                                <span className="text-sm font-medium text-slate-700">Simple Process</span>
+                            </div>
+                            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+                                How It Works
+                            </h2>
+                            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                                Three simple steps to create your perfect cover letter
+                            </p>
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <span className="text-2xl font-bold text-green-600">1</span>
+                            {/* Step 1 */}
+                            <div className="glass-card rounded-2xl p-8 text-center group hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+                                <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
+                                    <span className="text-2xl font-bold text-white">1</span>
                                 </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                                    Upload Resume & Job Description
+                                <h3 className="text-xl font-bold text-slate-900 mb-4">
+                                    Paste Job Description
                                 </h3>
-                                <p className="text-gray-600">
-                                    Upload your resume or fill your profile once, then paste any job description. Our AI analyzes both to understand the perfect match.
+                                <p className="text-slate-600 leading-relaxed">
+                                    Simply copy and paste the job posting you're applying for. Our AI will analyze the requirements and key skills.
                                 </p>
                             </div>
 
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <span className="text-2xl font-bold text-green-600">2</span>
+                            {/* Step 2 */}
+                            <div className="glass-card rounded-2xl p-8 text-center group hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+                                <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
+                                    <span className="text-2xl font-bold text-white">2</span>
                                 </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                                    AI Creates Human-Like, Personalized Letters
+                                <h3 className="text-xl font-bold text-slate-900 mb-4">
+                                    Add Your Details
                                 </h3>
-                                <p className="text-gray-600">
-                                    Our advanced AI doesn't use templates. It writes each letter from scratch, matching your specific experience with job requirements to create natural, conversational content that recruiters can't tell was AI-generated.
+                                <p className="text-slate-600 leading-relaxed">
+                                    Share your relevant experience, skills, and achievements. The more context you provide, the better your cover letter.
                                 </p>
                             </div>
 
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <span className="text-2xl font-bold text-green-600">3</span>
+                            {/* Step 3 */}
+                            <div className="glass-card rounded-2xl p-8 text-center group hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+                                <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
+                                    <span className="text-2xl font-bold text-white">3</span>
                                 </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                                    Download Professional PDF
+                                <h3 className="text-xl font-bold text-slate-900 mb-4">
+                                    Get Your Cover Letter
                                 </h3>
-                                <p className="text-gray-600">
-                                    Get a beautifully formatted, ATS-friendly PDF cover letter ready to submit. Edit and regenerate as many times as needed.
+                                <p className="text-slate-600 leading-relaxed">
+                                    Receive a professional, personalized cover letter in seconds. Download, customize if needed, and submit with confidence.
                                 </p>
                             </div>
                         </div>
@@ -91,77 +140,96 @@ export default function HomePage() {
                 </section>
 
                 {/* What We Solve Section */}
-                <section className="py-20 px-4 sm:px-6">
+                <section className="py-24 px-4 sm:px-6">
                     <div className="max-w-7xl mx-auto">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                                Perfect for Mass Job Applications
+                            <div className="inline-flex items-center gap-2 premium-badge px-4 py-2 rounded-full mb-4">
+                                <Sparkles className="h-4 w-4 text-emerald-600" />
+                                <span className="text-sm font-medium text-slate-700">Why Choose Us</span>
+                            </div>
+                            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+                                Perfect for Mass Applications
                             </h2>
-                            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                                Unlike other tools, we generate truly personalized content that sounds human-written - not robotic templates that recruiters instantly recognize as AI-generated.
+                            <p className="text-lg text-slate-600 max-w-3xl mx-auto">
+                                Whether you're applying to 10 jobs or 100, our tool helps you create unique, personalized cover letters for each application in seconds.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                            <div>
-                                <div className="space-y-8">
-                                    <div className="flex items-start space-x-4">
-                                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <span className="text-red-600 text-xl">✗</span>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                            {/* Problems */}
+                            <div className="glass-card rounded-2xl p-8 border-red-100/50">
+                                <div className="flex items-center gap-3 mb-8">
+                                    <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                                        <span className="text-red-500 text-lg">✗</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-900">Traditional Approach</h3>
+                                </div>
+                                <div className="space-y-6">
+                                    <div className="flex items-start space-x-4 p-4 rounded-xl bg-red-50/50 border border-red-100">
+                                        <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <span className="text-red-500 text-sm">✗</span>
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Robotic AI-Generated Letters Recruiters Spot Instantly</h3>
-                                            <p className="text-gray-600">Most AI tools generate obvious, template-based content that sounds robotic and gets immediately flagged by recruiters as AI-written.</p>
+                                            <h4 className="font-semibold text-slate-900 mb-1">Generic Templates</h4>
+                                            <p className="text-slate-600 text-sm">Using the same template for every job makes you blend in with hundreds of other applicants.</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-start space-x-4">
-                                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <span className="text-red-600 text-xl">✗</span>
+                                    <div className="flex items-start space-x-4 p-4 rounded-xl bg-red-50/50 border border-red-100">
+                                        <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <span className="text-red-500 text-sm">✗</span>
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Time-Consuming Manual Writing</h3>
-                                            <p className="text-gray-600">Writing personalized cover letters from scratch takes hours and often sounds robotic or unprofessional.</p>
+                                            <h4 className="font-semibold text-slate-900 mb-1">Time-Consuming Writing</h4>
+                                            <p className="text-slate-600 text-sm">Spending hours crafting individual cover letters limits the number of applications you can submit.</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-start space-x-4">
-                                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <span className="text-red-600 text-xl">✗</span>
+                                    <div className="flex items-start space-x-4 p-4 rounded-xl bg-red-50/50 border border-red-100">
+                                        <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <span className="text-red-500 text-sm">✗</span>
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">ATS Rejection Due to Poor Formatting</h3>
-                                            <p className="text-gray-600">Many cover letters get rejected by Applicant Tracking Systems due to incompatible formats or missing keywords.</p>
+                                            <h4 className="font-semibold text-slate-900 mb-1">Missing Keywords</h4>
+                                            <p className="text-slate-600 text-sm">Not addressing specific job requirements and keywords can get your application filtered out by ATS systems.</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div>
-                                <div className="space-y-8">
-                                    <div className="flex items-start space-x-4">
-                                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <span className="text-green-600 text-xl">✓</span>
+                            {/* Solutions */}
+                            <div className="glass-card-strong rounded-2xl p-8 border-emerald-100/50 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-400/20 to-transparent rounded-full blur-2xl"></div>
+                                <div className="flex items-center gap-3 mb-8 relative z-10">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-green-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                                        <span className="text-white text-lg">✓</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-900">Swift Letter Solution</h3>
+                                </div>
+                                <div className="space-y-6 relative z-10">
+                                    <div className="flex items-start space-x-4 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
+                                        <div className="w-6 h-6 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                                            <span className="text-white text-sm">✓</span>
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Human-Like, Personalized Letters That Pass Every Test</h3>
-                                            <p className="text-gray-600">Our AI creates genuinely personalized content that sounds naturally human-written. Each letter reads like you personally wrote it, using your specific experience and casual, conversational language.</p>
+                                            <h4 className="font-semibold text-slate-900 mb-1">Personalized Content</h4>
+                                            <p className="text-slate-600 text-sm">Every letter is uniquely crafted to match the specific job requirements and company culture.</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-start space-x-4">
-                                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <span className="text-green-600 text-xl">✓</span>
+                                    <div className="flex items-start space-x-4 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
+                                        <div className="w-6 h-6 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                                            <span className="text-white text-sm">✓</span>
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Generated in Seconds, Not Minutes</h3>
-                                            <p className="text-gray-600">Upload your resume once, paste any job description, and get a professional cover letter in under 30 seconds.</p>
+                                            <h4 className="font-semibold text-slate-900 mb-1">Lightning Speed</h4>
+                                            <p className="text-slate-600 text-sm">Generate professional cover letters in seconds, allowing you to apply to more positions in less time.</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-start space-x-4">
-                                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <span className="text-green-600 text-xl">✓</span>
+                                    <div className="flex items-start space-x-4 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
+                                        <div className="w-6 h-6 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                                            <span className="text-white text-sm">✓</span>
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">ATS-Optimized Professional Format</h3>
-                                            <p className="text-gray-600">Every cover letter is generated in a clean, professional PDF format that passes through all major ATS systems.</p>
+                                            <h4 className="font-semibold text-slate-900 mb-1">ATS Optimization</h4>
+                                            <p className="text-slate-600 text-sm">Our AI ensures your cover letter includes relevant keywords and formatting that passes ATS screening.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -171,21 +239,32 @@ export default function HomePage() {
                 </section>
 
                 {/* CTA Section */}
-                <section className="py-20 px-4 sm:px-6 bg-green-600">
-                    <div className="max-w-6xl mx-auto text-center">
-                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                            Ready to Land Your Dream Job?
+                <section className="py-24 px-4 sm:px-6 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600"></div>
+                    <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>
+                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+
+                    <div className="max-w-4xl mx-auto text-center relative z-10">
+                        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-8 border border-white/20">
+                            <Rocket className="h-4 w-4 text-white" />
+                            <span className="text-sm font-medium text-white/90">Start Your Journey</span>
+                        </div>
+                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                            Ready to Stand Out?
                         </h2>
-                        <p className="text-xl text-green-100 mb-8">
-                            Join thousands of job seekers who've successfully landed interviews with Swift Letter.
+                        <p className="text-xl text-emerald-100 mb-10 max-w-2xl mx-auto">
+                            Join thousands of job seekers who've landed interviews with our AI-powered cover letters.
                         </p>
-                        <Button
-                            size="lg"
-                            className="bg-white text-green-600 hover:bg-green-50 text-lg px-8 py-4 h-auto"
-                        >
-                            <span>Start Generating</span>
-                            <ArrowRight className="h-5 w-5 ml-2" />
-                        </Button>
+                        <Link href="#generator">
+                            <Button
+                                size="lg"
+                                className="bg-white text-emerald-600 hover:bg-emerald-50 text-lg px-10 py-6 h-auto rounded-xl font-semibold shadow-xl shadow-emerald-900/20 hover:shadow-2xl hover:shadow-emerald-900/30 transition-all duration-300 hover:-translate-y-0.5"
+                            >
+                                <span>Start Creating Now</span>
+                                <ArrowRight className="h-5 w-5 ml-2" />
+                            </Button>
+                        </Link>
                     </div>
                 </section>
             </main>

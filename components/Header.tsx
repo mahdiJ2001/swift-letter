@@ -35,47 +35,43 @@ export default function Header() {
     }, [user])
 
     return (
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 sticky top-0 z-50 shadow-sm shadow-slate-200/50">
             <div className="w-full px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                     <div className="flex items-center space-x-8">
                         {/* Logo */}
-                        <Link href="/" className="flex items-center space-x-2">
-                            <FileText className="h-8 w-8 text-green-600" />
-                            <span className="text-xl font-bold text-gray-900">Swift Letter</span>
+                        <Link href="/" className="flex items-center space-x-2 group">
+                            <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200/50 group-hover:shadow-emerald-300/60 transition-all duration-300">
+                                <FileText className="h-5 w-5 text-white" />
+                            </div>
+                            <span className="text-xl font-bold text-slate-900">Swift Letter</span>
                         </Link>
 
                         {/* Desktop Navigation */}
                         <nav className="hidden md:flex items-center space-x-8">
                             <Link
                                 href="/"
-                                className="text-gray-600 hover:text-green-600 font-medium transition-colors"
+                                className="text-slate-600 hover:text-emerald-600 font-medium transition-colors duration-200"
                             >
                                 Generator
                             </Link>
                             <Link
                                 href="/profile"
-                                className="text-gray-600 hover:text-green-600 font-medium transition-colors"
+                                className="text-slate-600 hover:text-emerald-600 font-medium transition-colors duration-200"
                             >
                                 Profile
                             </Link>
                             <Link
                                 href="/pricing"
-                                className="text-gray-600 hover:text-green-600 font-medium transition-colors"
+                                className="text-slate-600 hover:text-emerald-600 font-medium transition-colors duration-200"
                             >
                                 Pricing
                             </Link>
                             <Link
                                 href="/feedback"
-                                className="text-gray-600 hover:text-green-600 font-medium transition-colors"
+                                className="text-slate-600 hover:text-emerald-600 font-medium transition-colors duration-200"
                             >
                                 Feedback
-                            </Link>
-                            <Link
-                                href="/contact"
-                                className="text-gray-600 hover:text-green-600 font-medium transition-colors"
-                            >
-                                Contact
                             </Link>
                         </nav>
                     </div>
@@ -172,13 +168,6 @@ export default function Header() {
                         >
                             Feedback
                         </Link>
-                        <Link
-                            href="/contact"
-                            className="block text-gray-600 hover:text-green-600 font-medium transition-colors px-2 py-1"
-                            onClick={() => setIsMenuOpen(false)}
-                        >
-                            Contact
-                        </Link>
                         {user ? (
                             <>
                                 {credits !== null && (
@@ -232,14 +221,22 @@ export default function Header() {
 
             {/* Credits Modal */}
             {showCreditsModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                <div
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99999] p-4 min-h-screen"
+                    onClick={() => setShowCreditsModal(false)}
+                >
+                    <div
+                        className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-gray-200 transform transition-all duration-200 scale-100 relative"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="text-center">
-                            <Star className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">Your Credits</h3>
-                            <div className="text-4xl font-bold text-green-600 mb-4">{credits}</div>
-                            <p className="text-gray-600 mb-6">
-                                {credits === 0 ? 'You have no credits remaining.' :
+                            <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <Star className="h-8 w-8 text-white" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-2">Your Credits</h3>
+                            <div className="text-5xl font-bold bg-gradient-to-br from-green-500 to-green-700 bg-clip-text text-transparent mb-4">{credits}</div>
+                            <p className="text-gray-600 mb-6 text-sm">
+                                {credits === 0 ? 'You have no credits remaining. Purchase more to continue generating cover letters.' :
                                     credits === 1 ? 'You have 1 credit remaining.' :
                                         `You have ${credits} credits remaining.`}
                             </p>
@@ -247,13 +244,13 @@ export default function Header() {
                                 <Button
                                     variant="outline"
                                     onClick={() => setShowCreditsModal(false)}
-                                    className="flex-1"
+                                    className="flex-1 hover:bg-gray-50"
                                 >
                                     Close
                                 </Button>
                                 <Button
                                     asChild
-                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg"
                                 >
                                     <Link href="/pricing" onClick={() => setShowCreditsModal(false)}>
                                         Buy Credits

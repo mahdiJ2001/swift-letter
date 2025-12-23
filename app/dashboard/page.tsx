@@ -19,7 +19,14 @@ export default function Dashboard() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-bg">
+            <div className="min-h-screen premium-bg">
+                {/* Background Elements */}
+                <div className="fixed inset-0 pointer-events-none">
+                    <div className="floating-orb floating-orb-1"></div>
+                    <div className="floating-orb floating-orb-2"></div>
+                    <div className="floating-orb floating-orb-3"></div>
+                    <div className="grid-pattern"></div>
+                </div>
                 <Header />
                 <div className="flex items-center justify-center py-20">
                     <div className="text-center">
@@ -36,10 +43,17 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-bg">
+        <div className="min-h-screen premium-bg">
+            {/* Background Elements */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="floating-orb floating-orb-1"></div>
+                <div className="floating-orb floating-orb-2"></div>
+                <div className="floating-orb floating-orb-3"></div>
+                <div className="grid-pattern"></div>
+            </div>
             <Header />
 
-            <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 relative z-10">
                 {/* Welcome Section */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">

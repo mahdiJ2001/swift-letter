@@ -1,13 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // App router is now stable in Next.js 14, no experimental flag needed
     experimental: {
-        // Improve build performance
         outputFileTracingIncludes: {
             '/': ['./public/**/*'],
         },
     },
-    // Add webpack configuration for better builds
     webpack: (config, { isServer }) => {
         if (!isServer) {
             config.resolve.fallback = {
@@ -17,6 +14,12 @@ const nextConfig = {
                 tls: false,
             };
         }
+
+        // Fix module resolution issues
+        config.resolve.extensionAlias = {
+            '.js': ['.js', '.ts', '.tsx'],
+        };
+
         return config;
     },
 }
