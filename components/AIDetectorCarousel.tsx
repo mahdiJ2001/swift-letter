@@ -22,7 +22,7 @@ const aiDetectors = [
     {
         name: 'Proofademic',
         logo: '/logos/proofademic.svg',
-        url: 'https://proofademic.com'
+        url: 'https://proofademic.ai/'
     }
 ]
 
@@ -76,7 +76,7 @@ export default function AIDetectorCarousel() {
                                         />
                                     </div>
                                 </a>
-                            ))}}
+                            ))}
                         </div>
                     </div>
                 </div>

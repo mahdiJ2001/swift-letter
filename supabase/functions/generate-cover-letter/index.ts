@@ -91,6 +91,39 @@ serve(async (req: Request) => {
 
     console.log('✅ Generating cover letter for authenticated user:', user.id.slice(-8));
 
+    // Check user credits and user type
+    const { data: userProfile, error: profileError } = await supabaseAdmin
+      .from('user_profiles')
+      .select('credits, user_type')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profileError) {
+      console.error('❌ Failed to fetch user profile:', profileError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to verify user credits' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Admin users have unlimited credits
+    const isAdmin = userProfile?.user_type === 'admin';
+    const currentCredits = userProfile?.credits || 0;
+
+    // Check if user has credits (admins bypass this check)
+    if (!isAdmin && currentCredits <= 0) {
+      console.log('❌ User has no credits remaining');
+      return new Response(
+        JSON.stringify({ 
+          error: 'No credits remaining. Please purchase more credits to continue generating cover letters.',
+          credits: 0
+        }),
+        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`💳 User credits: ${isAdmin ? 'UNLIMITED (admin)' : currentCredits}`);
+
     const awsAccessKeyId = Deno.env.get('AWS_ACCESS_KEY_ID');
     const awsSecretAccessKey = Deno.env.get('AWS_SECRET_ACCESS_KEY');
 
@@ -417,11 +450,53 @@ Your response should start exactly with: \\documentclass[11pt,a4paper]{article}`
     console.log('✅ Cover letter validated and fixed successfully');
     console.log('🔍 Final last 100 chars:', coverLetter.substring(coverLetter.length - 100));
 
+    // Save the generated letter to the database (this triggers stats update via database triggers)
+    try {
+      const { error: insertError } = await supabaseAdmin
+        .from('generated_letters')
+        .insert({
+          user_id: user.id,
+          job_description: jobDescription.substring(0, 10000), // Limit to prevent huge entries
+          cover_letter: coverLetter
+        });
+
+      if (insertError) {
+        console.error('⚠️ Failed to save generated letter to database:', insertError);
+        // Don't fail the request, just log the error
+      } else {
+        console.log('💾 Letter saved to database successfully');
+      }
+
+      // Deduct one credit from user (skip for admin users)
+      if (!isAdmin) {
+        const newCredits = currentCredits - 1;
+        const { error: creditError } = await supabaseAdmin
+          .from('user_profiles')
+          .update({ credits: newCredits })
+          .eq('user_id', user.id);
+
+        if (creditError) {
+          console.error('⚠️ Failed to deduct credit:', creditError);
+        } else {
+          console.log(`💳 Credit deducted successfully. Remaining: ${newCredits}`);
+        }
+      } else {
+        console.log('💳 Admin user - no credit deducted');
+      }
+    } catch (dbError) {
+      console.error('⚠️ Database operation failed:', dbError);
+      // Continue anyway - the letter was generated successfully
+    }
+
+    // Calculate remaining credits for response
+    const remainingCredits = isAdmin ? -1 : (currentCredits - 1);
+
     return new Response(
       JSON.stringify({
         success: true,
         content: coverLetter,
-        latex: coverLetter
+        latex: coverLetter,
+        credits: remainingCredits // -1 indicates unlimited (admin)
       }),
       {
         status: 200,

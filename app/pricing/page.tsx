@@ -1,197 +1,260 @@
 'use client'
 
+import { useState } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import FeedbackForm from '@/components/FeedbackForm'
-import { Check, Star, CreditCard, Zap, Shield, Clock, Users, TrendingUp, Target } from 'lucide-react'
+import { Check, Sparkles, Zap, Crown, ArrowRight } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
+import { useRouter } from 'next/navigation'
+
+const pricingPlans = [
+    {
+        id: 'starter',
+        name: 'Starter',
+        price: 5,
+        credits: 15,
+        pricePerLetter: '0.33',
+        icon: Zap,
+        popular: false,
+        color: 'emerald',
+        features: [
+            '15 AI-generated cover letters',
+            'ATS-optimized formatting',
+            'PDF download',
+            'Email support'
+        ]
+    },
+    {
+        id: 'professional',
+        name: 'Professional',
+        price: 15,
+        credits: 50,
+        pricePerLetter: '0.30',
+        icon: Sparkles,
+        popular: true,
+        color: 'violet',
+        features: [
+            '50 AI-generated cover letters',
+            'ATS-optimized formatting',
+            'PDF download',
+            'Priority support'
+        ]
+    },
+    {
+        id: 'enterprise',
+        name: 'Enterprise',
+        price: 40,
+        credits: 150,
+        pricePerLetter: '0.27',
+        icon: Crown,
+        popular: false,
+        color: 'amber',
+        features: [
+            '150 AI-generated cover letters',
+            'ATS-optimized formatting',
+            'PDF download',
+            'Priority support'
+        ]
+    }
+]
 
 export default function PricingPage() {
+    const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
+    const { user } = useAuth()
+    const router = useRouter()
+
+    const handleSelectPlan = async (planId: string) => {
+        setSelectedPlan(planId)
+        setIsLoading(true)
+
+        if (!user) {
+            router.push(`/auth/login?redirectTo=/pricing&plan=${planId}`)
+            return
+        }
+
+        // TODO: Integrate with Stripe checkout
+        setTimeout(() => {
+            setIsLoading(false)
+            alert(`Payment integration coming soon! Selected plan: ${planId}`)
+        }, 1000)
+    }
+
     return (
-        <div className="min-h-screen premium-bg">
-            {/* Background Elements */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="floating-orb floating-orb-1"></div>
-                <div className="floating-orb floating-orb-2"></div>
-                <div className="floating-orb floating-orb-3"></div>
-                <div className="grid-pattern"></div>
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+            {/* Subtle background pattern */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl" />
+                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-100/40 rounded-full blur-3xl" />
             </div>
+
             <Header />
 
-            <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6 relative z-10">
-                {/* Header Section */}
-                <div className="mb-8 text-center">
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        Simple, Transparent{' '}
-                        <span className="gradient-text">Pricing</span>
+            <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+                {/* Header */}
+                <div className="text-center mb-16">
+                    <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-full mb-6">
+                        <Sparkles className="h-4 w-4 text-emerald-600" />
+                        <span className="text-sm font-medium text-emerald-700">Simple, transparent pricing</span>
+                    </div>
+                    <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
+                        Choose your plan
                     </h1>
-                    <p className="text-gray-600 mt-2">
-                        Choose the perfect plan for your job search needs. Get more credits, save more money.
+                    <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                        Start with 3 free cover letters. Upgrade anytime to generate more.
                     </p>
                 </div>
 
                 {/* Pricing Cards */}
-                <div className="max-w-6xl mx-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+                    {pricingPlans.map((plan) => {
+                        const Icon = plan.icon
+                        const isSelected = selectedPlan === plan.id
 
-                        {/* Starter Plan */}
-                        <div className="card">
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Zap className="h-8 w-8 text-primary-600" />
-                                </div>
-                                <h3 className="text-xl font-semibold text-secondary-900 mb-2">Starter</h3>
-                                <p className="text-secondary-600 mb-6">Perfect for trying out Swift Letter</p>
-
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-secondary-900">$4.99</span>
-                                </div>
-
-                                <div className="text-center mb-6">
-                                    <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm font-medium">
-                                        5 Cover Letters
-                                    </span>
-                                </div>
-
-                                <ul className="text-left space-y-3 mb-8">
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">5 AI-generated cover letters</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">ATS-optimized content</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">PDF download</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">Email support</span>
-                                    </li>
-                                </ul>
-
-                                <button className="btn-secondary w-full">
-                                    Get Started
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Professional Plan - Most Popular */}
-                        <div className="card border-2 border-primary-600 relative">
-                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                <span className="bg-primary-600 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center">
-                                    <Star className="h-4 w-4 mr-1" />
-                                    Most Popular
-                                </span>
-                            </div>
-
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Target className="h-8 w-8 text-primary-600" />
-                                </div>
-                                <h3 className="text-xl font-semibold text-secondary-900 mb-2">Professional</h3>
-                                <p className="text-secondary-600 mb-6">Ideal for active job seekers</p>
-
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-secondary-900">$15.99</span>
-                                    <div className="text-sm text-secondary-500 mt-1">
-                                        <span className="line-through">$19.99</span> Save 20%
+                        return (
+                            <div
+                                key={plan.id}
+                                className={`
+                                    relative bg-white rounded-2xl p-8 transition-all duration-300 flex flex-col
+                                    ${plan.popular
+                                        ? 'ring-2 ring-violet-500 shadow-xl shadow-violet-500/10 scale-[1.02] md:scale-105'
+                                        : 'ring-1 ring-slate-200 shadow-lg hover:shadow-xl hover:ring-slate-300'
+                                    }
+                                `}
+                            >
+                                {/* Popular Badge */}
+                                {plan.popular && (
+                                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                                        <div className="bg-gradient-to-r from-violet-600 to-purple-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg flex items-center gap-1.5">
+                                            <Sparkles className="h-3.5 w-3.5" />
+                                            Most Popular
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
-                                <div className="text-center mb-6">
-                                    <span className="bg-primary-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                        20 Cover Letters
-                                    </span>
-                                </div>
-
-                                <ul className="text-left space-y-3 mb-8">
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">20 AI-generated cover letters</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">ATS-optimized content</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">PDF download</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">Priority support</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">Custom templates</span>
-                                    </li>
-                                </ul>
-
-                                <button className="btn-primary w-full">
-                                    Get Professional
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Enterprise Plan */}
-                        <div className="card">
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <TrendingUp className="h-8 w-8 text-primary-600" />
-                                </div>
-                                <h3 className="text-xl font-semibold text-secondary-900 mb-2">Enterprise</h3>
-                                <p className="text-secondary-600 mb-6">For serious job hunters and recruiters</p>
-
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-secondary-900">$34.99</span>
-                                    <div className="text-sm text-secondary-500 mt-1">
-                                        <span className="line-through">$49.99</span> Save 30%
+                                {/* Plan Header */}
+                                <div className="text-center mb-8">
+                                    <div className={`
+                                        w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4
+                                        ${plan.popular
+                                            ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
+                                            : plan.color === 'emerald'
+                                                ? 'bg-emerald-100 text-emerald-600'
+                                                : 'bg-amber-100 text-amber-600'
+                                        }
+                                    `}>
+                                        <Icon className="h-7 w-7" />
                                     </div>
+                                    <h3 className="text-xl font-bold text-slate-900 mb-1">{plan.name}</h3>
+                                    <p className="text-sm text-slate-500">{plan.credits} cover letters</p>
                                 </div>
 
-                                <div className="text-center mb-6">
-                                    <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm font-medium">
-                                        50 Cover Letters
-                                    </span>
+                                {/* Price */}
+                                <div className="text-center mb-8">
+                                    <div className="flex items-baseline justify-center gap-1">
+                                        <span className="text-5xl font-bold text-slate-900">${plan.price}</span>
+                                    </div>
+                                    <p className="text-sm text-slate-500 mt-2">
+                                        ${plan.pricePerLetter} per letter
+                                    </p>
                                 </div>
 
-                                <ul className="text-left space-y-3 mb-8">
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">50 AI-generated cover letters</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">ATS-optimized content</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">PDF download</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">24/7 priority support</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">Premium templates</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <Check className="h-4 w-4 text-primary-600 mr-3 flex-shrink-0" />
-                                        <span className="text-secondary-600">Bulk generation</span>
-                                    </li>
+                                {/* Features */}
+                                <ul className="space-y-4 mb-8 flex-grow">
+                                    {plan.features.map((feature, index) => (
+                                        <li key={index} className="flex items-start gap-3">
+                                            <div className={`
+                                                flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5
+                                                ${plan.popular
+                                                    ? 'bg-violet-100 text-violet-600'
+                                                    : plan.color === 'emerald'
+                                                        ? 'bg-emerald-100 text-emerald-600'
+                                                        : 'bg-amber-100 text-amber-600'
+                                                }
+                                            `}>
+                                                <Check className="h-3 w-3" strokeWidth={3} />
+                                            </div>
+                                            <span className="text-slate-600 text-sm">{feature}</span>
+                                        </li>
+                                    ))}
                                 </ul>
 
-                                <button className="btn-secondary w-full">
-                                    Get Enterprise
+                                {/* CTA Button */}
+                                <button
+                                    onClick={() => handleSelectPlan(plan.id)}
+                                    disabled={isLoading && isSelected}
+                                    className={`
+                                        w-full py-3.5 px-6 rounded-xl font-semibold text-base transition-all duration-200
+                                        flex items-center justify-center gap-2 mt-auto
+                                        ${plan.popular
+                                            ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-700 hover:to-purple-700 shadow-lg shadow-violet-500/25'
+                                            : 'bg-slate-900 text-white hover:bg-slate-800'
+                                        }
+                                        disabled:opacity-50 disabled:cursor-not-allowed
+                                    `}
+                                >
+                                    {isLoading && isSelected ? (
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <>
+                                            Get Started
+                                            <ArrowRight className="h-4 w-4" />
+                                        </>
+                                    )}
                                 </button>
                             </div>
+                        )
+                    })}
+                </div>
+
+                {/* Trust Section */}
+                <div className="mt-16 text-center">
+                    <p className="text-sm text-slate-500 mb-4">
+                        🔒 Secure payment powered by Stripe • Cancel anytime • No hidden fees
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-slate-400">
+                        <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-emerald-500" />
+                            <span className="text-sm">Instant delivery</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-emerald-500" />
+                            <span className="text-sm">Credits never expire</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-emerald-500" />
+                            <span className="text-sm">Money-back guarantee</span>
                         </div>
                     </div>
                 </div>
-            </div>
+
+                {/* FAQ Section */}
+                <div className="mt-24">
+                    <h2 className="text-2xl font-bold text-slate-900 text-center mb-8">
+                        Frequently Asked Questions
+                    </h2>
+                    <div className="max-w-3xl mx-auto space-y-4">
+                        <div className="bg-white rounded-xl p-6 ring-1 ring-slate-200">
+                            <h3 className="font-semibold text-slate-900 mb-2">Do I get free credits to try?</h3>
+                            <p className="text-slate-600 text-sm">
+                                Yes! Every new user gets 3 free cover letters to try the service before purchasing.
+                            </p>
+                        </div>
+                        <div className="bg-white rounded-xl p-6 ring-1 ring-slate-200">
+                            <h3 className="font-semibold text-slate-900 mb-2">Do credits expire?</h3>
+                            <p className="text-slate-600 text-sm">
+                                No, your credits never expire. Use them whenever you need.
+                            </p>
+                        </div>
+                        <div className="bg-white rounded-xl p-6 ring-1 ring-slate-200">
+                            <h3 className="font-semibold text-slate-900 mb-2">Can I get a refund?</h3>
+                            <p className="text-slate-600 text-sm">
+                                Yes, we offer a money-back guarantee if you're not satisfied with the service.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </main>
 
             <Footer />
         </div>

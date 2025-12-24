@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Clipboard, Zap, Download, PenTool, Upload } from 'lucide-react'
+import { Clipboard, Zap, Download, PenTool, Upload, CheckCircle2, FileText } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
@@ -57,8 +57,58 @@ export default function JobDescriptionForm() {
     const [showFeedbackForm, setShowFeedbackForm] = useState(false)
     const [feedbackText, setFeedbackText] = useState('')
     const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
+    const [hasResumeAttached, setHasResumeAttached] = useState(false)
     const router = useRouter()
     const { user } = useAuth()
+
+    // Fetch user profile on mount to check if resume is attached
+    useEffect(() => {
+        const fetchProfile = async () => {
+            if (!user) {
+                setHasResumeAttached(false)
+                return
+            }
+
+            try {
+                const response = await fetch(`/api/profile?userId=${user.id}`)
+                if (response.ok) {
+                    const profileData = await response.json()
+                    // Check if profile has key fields filled (indicating resume was uploaded)
+                    const hasProfile = profileData &&
+                        profileData.full_name &&
+                        profileData.experiences &&
+                        profileData.skills
+                    setHasResumeAttached(hasProfile)
+                    if (profileData) {
+                        setProfile(profileData)
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch profile:', error)
+            }
+        }
+
+        fetchProfile()
+    }, [user])
+
+    // Prevent body scrolling when modals are open
+    useEffect(() => {
+        const isAnyModalOpen = showPdfPreview || showLanguageModal || isEditingLetter || showErrorPopup || showSuccessPopup || showFeedbackForm
+
+        if (isAnyModalOpen) {
+            document.body.style.overflow = 'hidden'
+            document.body.style.paddingRight = '17px' // Prevent layout shift
+        } else {
+            document.body.style.overflow = 'unset'
+            document.body.style.paddingRight = '0px'
+        }
+
+        // Cleanup function to restore scrolling
+        return () => {
+            document.body.style.overflow = 'unset'
+            document.body.style.paddingRight = '0px'
+        }
+    }, [showPdfPreview, showLanguageModal, isEditingLetter, showErrorPopup, showSuccessPopup, showFeedbackForm])
 
     const handlePasteFromClipboard = async () => {
         try {
@@ -172,6 +222,7 @@ export default function JobDescriptionForm() {
                     if (updateResponse.ok) {
                         const savedProfile = await updateResponse.json()
                         setProfile(savedProfile)
+                        setHasResumeAttached(true) // Mark resume as attached
                         setSuccess('Resume processed and profile automatically saved!')
                         setShowSuccessPopup(true)
                     } else {
@@ -359,9 +410,20 @@ export default function JobDescriptionForm() {
                 const subjectMatch = data.content.match(/\\newcommand\{\\targetSubject\}\{([^}]*)\}/)
                 const recipientMatch = data.content.match(/\\newcommand\{\\recipientName\}\{([^}]*)\}/)
 
-                setEditableCompany(companyMatch?.[1] || '')
-                setEditablePosition(positionMatch?.[1] || '')
-                setEditableSubject(subjectMatch?.[1] || '')
+                const extractedCompany = companyMatch?.[1] || ''
+                const extractedPosition = positionMatch?.[1] || ''
+                let extractedSubject = subjectMatch?.[1] || ''
+
+                // Replace LaTeX variables in subject with actual values
+                if (extractedSubject) {
+                    extractedSubject = extractedSubject
+                        .replace(/\\targetPosition\\?/g, extractedPosition)
+                        .replace(/\\targetCompany\\?/g, extractedCompany)
+                }
+
+                setEditableCompany(extractedCompany)
+                setEditablePosition(extractedPosition)
+                setEditableSubject(extractedSubject)
                 setEditableRecipientName(recipientMatch?.[1] || '')
                 // Generate PDF directly
                 await generatePdfAndPreview(data.latex)
@@ -527,383 +589,409 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
 
 
     return (
-        <Card className="w-full max-w-none mx-auto glass-card-strong rounded-2xl border-0">
-            <CardHeader className="text-left pb-4">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-slate-900">
-                        Generate Cover Letter
-                    </CardTitle>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => document.getElementById('resume-upload')?.click()}
-                        disabled={isUploadingResume}
-                        className="bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 font-medium transition-all duration-200"
-                    >
-                        {isUploadingResume ? (
-                            <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mr-2"></div>
-                        ) : (
-                            <Upload className="h-4 w-4 mr-2" />
-                        )}
-                        <span>{isUploadingResume ? 'Processing Resume...' : 'Attach Resume'}</span>
-                    </Button>
-                    <input
-                        id="resume-upload"
-                        type="file"
-                        accept=".pdf"
-                        className="hidden"
-                        onChange={handleResumeUpload}
-                    />
-                </div>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleGenerateCoverLetter} className="space-y-6">
-
-                    <div className="relative">
-                        <Textarea
-                            id="jobDescription"
-                            rows={20}
-                            className="resize-none text-base min-h-[500px] w-full"
-                            placeholder={
-                                "Paste the complete job description here...\n\n" +
-                                "Example:\n" +
-                                "Software Engineer - Frontend Development\n" +
-                                "ABC Tech Company\n\n" +
-                                "We are looking for a skilled Frontend Developer to join our team...\n" +
-                                "[rest of job description]"
-                            }
-                            value={jobDescription}
-                            onChange={(e) => setJobDescription(e.target.value)}
-                            required
+        <>
+            <Card className="w-full max-w-none mx-auto glass-card-strong rounded-2xl border-0">
+                <CardHeader className="text-left pb-4">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                        <CardTitle className="text-lg font-semibold text-slate-900">
+                            Generate Cover Letter
+                        </CardTitle>
+                        <div className="flex items-center gap-3">
+                            {/* Resume Status Indicator */}
+                            {hasResumeAttached && (
+                                <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                                    <span className="text-sm font-medium text-emerald-700">Resume Attached</span>
+                                </div>
+                            )}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => document.getElementById('resume-upload')?.click()}
+                                disabled={isUploadingResume}
+                                className={`
+                                    font-medium transition-all duration-200
+                                    ${hasResumeAttached
+                                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
+                                        : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700'
+                                    }
+                                `}
+                            >
+                                {isUploadingResume ? (
+                                    <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                                ) : hasResumeAttached ? (
+                                    <FileText className="h-4 w-4 mr-2" />
+                                ) : (
+                                    <Upload className="h-4 w-4 mr-2" />
+                                )}
+                                <span>
+                                    {isUploadingResume
+                                        ? 'Processing Resume...'
+                                        : hasResumeAttached
+                                            ? 'Update Resume'
+                                            : 'Attach Resume'
+                                    }
+                                </span>
+                            </Button>
+                        </div>
+                        <input
+                            id="resume-upload"
+                            type="file"
+                            accept=".pdf"
+                            className="hidden"
+                            onChange={handleResumeUpload}
                         />
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleGenerateCoverLetter} className="space-y-6">
 
-                        {/* Language Button - Top Right */}
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => setShowLanguageModal(true)}
-                            className="absolute top-4 right-4"
-                        >
-                            <span className="text-sm mr-1">🌐</span>
-                            <span>{selectedLanguage === 'english' ? 'EN' : 'FR'}</span>
-                        </Button>
+                        <div className="relative">
+                            <Textarea
+                                id="jobDescription"
+                                rows={20}
+                                className="resize-none text-base min-h-[500px] w-full"
+                                placeholder={
+                                    "Paste the complete job description here...\n\n" +
+                                    "Example:\n" +
+                                    "Software Engineer - Frontend Development\n" +
+                                    "ABC Tech Company\n\n" +
+                                    "We are looking for a skilled Frontend Developer to join our team...\n" +
+                                    "[rest of job description]"
+                                }
+                                value={jobDescription}
+                                onChange={(e) => setJobDescription(e.target.value)}
+                                required
+                            />
 
-                        {/* Paste Button - Center */}
-                        {!jobDescription && (
+                            {/* Language Button - Top Right */}
                             <Button
                                 type="button"
                                 variant="secondary"
                                 size="sm"
-                                onClick={handlePasteFromClipboard}
-                                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                                onClick={() => setShowLanguageModal(true)}
+                                className="absolute top-4 right-4"
                             >
-                                <Clipboard className="h-4 w-4 mr-2" />
-                                <span>Paste</span>
+                                <span className="text-sm mr-1">🌐</span>
+                                <span>{selectedLanguage === 'english' ? 'EN' : 'FR'}</span>
                             </Button>
+
+                            {/* Paste Button - Center */}
+                            {!jobDescription && (
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={handlePasteFromClipboard}
+                                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                                >
+                                    <Clipboard className="h-4 w-4 mr-2" />
+                                    <span>Paste</span>
+                                </Button>
+                            )}
+
+                            {/* Character Count */}
+                            <div className="absolute bottom-4 right-4 text-sm text-gray-500">
+                                {jobDescription.length} characters
+                            </div>
+                        </div>
+
+
+
+                        {/* Submit Button */}
+                        <div className="text-center">
+                            <Button
+                                type="submit"
+                                disabled={!jobDescription.trim() || isLoading || isPdfGenerating}
+                                size="lg"
+                                className="w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoading || isPdfGenerating ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                        {isPdfGenerating ? 'Generating PDF...' : 'Generating Cover Letter...'}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Zap className="h-4 w-4 mr-2" />
+                                        Generate Cover Letter
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+
+                        {/* Error and Success Messages */}
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <p className="text-red-600 text-sm">{error}</p>
+                            </div>
                         )}
 
-                        {/* Character Count */}
-                        <div className="absolute bottom-4 right-4 text-sm text-gray-500">
-                            {jobDescription.length} characters
-                        </div>
-                    </div>
-
-
-
-                    {/* Submit Button */}
-                    <div className="text-center">
-                        <Button
-                            type="submit"
-                            disabled={!jobDescription.trim() || isLoading || isPdfGenerating}
-                            size="lg"
-                            className="w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isLoading || isPdfGenerating ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                    {isPdfGenerating ? 'Generating PDF...' : 'Generating Cover Letter...'}
-                                </>
-                            ) : (
-                                <>
-                                    <Zap className="h-4 w-4 mr-2" />
-                                    Generate Cover Letter
-                                </>
-                            )}
-                        </Button>
-                    </div>
-
-                    {/* Error and Success Messages */}
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <p className="text-red-600 text-sm">{error}</p>
-                        </div>
-                    )}
-
-                    {success && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <p className="text-green-600 text-sm">{success}</p>
-                        </div>
-                    )}
-
-                    {/* Word Count & Validation */}
-                    <div className="text-center">
-                        <p className="text-sm text-gray-500">
-                            {jobDescription.trim() ? (
-                                <span className="text-green-600">✓ Ready to generate your cover letter!</span>
-                            ) : (
-                                <span>Please paste the job description to continue</span>
-                            )}
-                        </p>
-                    </div>
-                </form>
-
-                {/* Language Selection Modal */}
-                {showLanguageModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg max-w-md w-full p-6">
-                            <h3 className="text-lg font-semibold mb-4">Select Language</h3>
-                            <div className="space-y-3 mb-6">
-                                <button
-                                    onClick={() => setSelectedLanguage('english')}
-                                    className={`w-full p-3 text-left rounded-lg border-2 transition-colors ${selectedLanguage === 'english'
-                                        ? 'border-green-500 bg-green-50 text-green-700'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <div className="flex items-center">
-                                        <span className="text-xl mr-3">🇺🇸</span>
-                                        <div>
-                                            <div className="font-medium">English</div>
-                                            <div className="text-sm text-gray-500">Generate cover letter in English</div>
-                                        </div>
-                                    </div>
-                                </button>
-                                <button
-                                    onClick={() => setSelectedLanguage('french')}
-                                    className={`w-full p-3 text-left rounded-lg border-2 transition-colors ${selectedLanguage === 'french'
-                                        ? 'border-green-500 bg-green-50 text-green-700'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <div className="flex items-center">
-                                        <span className="text-xl mr-3">🇫🇷</span>
-                                        <div>
-                                            <div className="font-medium">Français</div>
-                                            <div className="text-sm text-gray-500">Générer la lettre de motivation en français</div>
-                                        </div>
-                                    </div>
-                                </button>
+                        {success && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <p className="text-green-600 text-sm">{success}</p>
                             </div>
-                            <div className="flex justify-end space-x-2">
+                        )}
+
+                        {/* Word Count & Validation */}
+                        <div className="text-center">
+                            <p className="text-sm text-gray-500">
+                                {jobDescription.trim() ? (
+                                    <span className="text-green-600">✓ Ready to generate your cover letter!</span>
+                                ) : (
+                                    <span>Please paste the job description to continue</span>
+                                )}
+                            </p>
+                        </div>
+                    </form>
+
+                </CardContent>
+            </Card>
+
+            {/* Language Selection Modal - Outside Card for proper fixed positioning */}
+            {showLanguageModal && (
+                <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <h3 className="text-lg font-semibold mb-4">Select Language</h3>
+                        <div className="space-y-3 mb-6">
+                            <button
+                                onClick={() => setSelectedLanguage('english')}
+                                className={`w-full p-3 text-left rounded-lg border-2 transition-colors ${selectedLanguage === 'english'
+                                    ? 'border-green-500 bg-green-50 text-green-700'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                            >
+                                <div className="flex items-center">
+                                    <span className="text-xl mr-3">🇺🇸</span>
+                                    <div>
+                                        <div className="font-medium">English</div>
+                                        <div className="text-sm text-gray-500">Generate cover letter in English</div>
+                                    </div>
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setSelectedLanguage('french')}
+                                className={`w-full p-3 text-left rounded-lg border-2 transition-colors ${selectedLanguage === 'french'
+                                    ? 'border-green-500 bg-green-50 text-green-700'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                            >
+                                <div className="flex items-center">
+                                    <span className="text-xl mr-3">🇫🇷</span>
+                                    <div>
+                                        <div className="font-medium">Français</div>
+                                        <div className="text-sm text-gray-500">Générer la lettre de motivation en français</div>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowLanguageModal(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={() => setShowLanguageModal(false)}
+                                className="bg-green-600 hover:bg-green-700"
+                            >
+                                Select
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Cover Letter Modal - Higher z-index to appear above PDF Preview */}
+            {isEditingLetter && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 10000 }}>
+                    <div className="bg-white rounded-lg max-w-5xl w-full max-h-[95vh] flex flex-col shadow-2xl">
+                        <div className="flex items-center justify-between p-6 border-b">
+                            <h3 className="text-xl font-semibold text-gray-900">Edit Cover Letter</h3>
+                            <div className="flex items-center space-x-3">
+                                <Button
+                                    onClick={() => generatePdfFromText(editableLetter, editableRecipientName, editableCompany, editablePosition, editableSubject)}
+                                    disabled={isPdfGenerating}
+                                    className="bg-green-600 text-white hover:bg-green-700"
+                                >
+                                    {isPdfGenerating ? 'Recompiling...' : 'Recompile & Preview'}
+                                </Button>
                                 <Button
                                     variant="outline"
-                                    onClick={() => setShowLanguageModal(false)}
+                                    onClick={() => setIsEditingLetter(false)}
                                 >
                                     Cancel
                                 </Button>
+                            </div>
+                        </div>
+                        <div className="flex-1 p-6 overflow-auto">
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Recipient Information
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">To (Recipient)</label>
+                                            <Input
+                                                placeholder="Hiring Manager"
+                                                value={editableRecipientName}
+                                                onChange={(e) => setEditableRecipientName(e.target.value)}
+                                                className="text-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Company Name</label>
+                                            <Input
+                                                placeholder="Company Name"
+                                                value={editableCompany}
+                                                onChange={(e) => {
+                                                    setEditableCompany(e.target.value)
+                                                    // Also update in letter content
+                                                    const updated = editableLetter.replace(
+                                                        /To the Hiring Team at [^,\n]+/,
+                                                        `To the Hiring Team at ${e.target.value}`
+                                                    )
+                                                    setEditableLetter(updated)
+                                                }}
+                                                className="text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Position</label>
+                                            <Input
+                                                placeholder="Software Engineer"
+                                                value={editablePosition}
+                                                onChange={(e) => {
+                                                    setEditablePosition(e.target.value)
+                                                    // Also update in letter content
+                                                    const updated = editableLetter.replace(
+                                                        /saw the ([^,\n]+) opening/,
+                                                        `saw the ${e.target.value} opening`
+                                                    )
+                                                    setEditableLetter(updated)
+                                                }}
+                                                className="text-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Subject</label>
+                                            <Input
+                                                placeholder="Application for Position at Company"
+                                                value={editableSubject}
+                                                onChange={(e) => setEditableSubject(e.target.value)}
+                                                className="text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Cover Letter Content
+                                    </label>
+                                    <Textarea
+                                        value={editableLetter}
+                                        onChange={(e) => setEditableLetter(e.target.value)}
+                                        className="w-full min-h-[500px] resize-none text-sm leading-relaxed"
+                                        placeholder="Edit your cover letter content here..."
+                                    />
+                                    <p className="text-xs text-gray-500 mt-2">
+                                        Edit the text naturally - formatting will be handled automatically when you recompile.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* PDF Preview Modal - Modern Design - Properly outside Card for full page blur */}
+            {showPdfPreview && pdfUrl && (
+                <div className="fixed inset-0 bg-black/85 backdrop-blur-xl backdrop-saturate-150 flex items-center justify-center p-2 sm:p-4" style={{ zIndex: 9999, backdropFilter: 'blur(20px) saturate(180%)' }}>
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[96vh] sm:max-h-[95vh] flex flex-col overflow-hidden border border-gray-200">
+                        {/* Modern Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-green-50 to-emerald-50">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                                    <Zap className="h-5 w-5 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900">Your Cover Letter</h3>
+                                    <p className="text-sm text-gray-500">AI-generated • Professional format</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
                                 <Button
-                                    onClick={() => setShowLanguageModal(false)}
-                                    className="bg-green-600 hover:bg-green-700"
+                                    onClick={() => setIsEditingLetter(true)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                                    size="sm"
                                 >
-                                    Select
+                                    <PenTool className="h-4 w-4 mr-2" />
+                                    Edit Letter
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        const a = document.createElement('a')
+                                        a.href = pdfUrl
+                                        a.download = 'cover-letter.pdf'
+                                        document.body.appendChild(a)
+                                        a.click()
+                                        document.body.removeChild(a)
+                                    }}
+                                    className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                                    size="sm"
+                                >
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Download PDF
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => {
+                                        setShowPdfPreview(false)
+                                        URL.revokeObjectURL(pdfUrl)
+                                        setPdfUrl('')
+                                    }}
+                                    className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2"
+                                    size="sm"
+                                >
+                                    ✕
                                 </Button>
                             </div>
                         </div>
-                    </div>
-                )}
 
-                {/* Edit Cover Letter Modal */}
-                {isEditingLetter && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-                        <div className="bg-white rounded-lg max-w-5xl w-full max-h-[95vh] flex flex-col shadow-2xl">
-                            <div className="flex items-center justify-between p-6 border-b">
-                                <h3 className="text-xl font-semibold text-gray-900">Edit Cover Letter</h3>
-                                <div className="flex items-center space-x-3">
-                                    <Button
-                                        onClick={() => generatePdfFromText(editableLetter, editableRecipientName, editableCompany, editablePosition, editableSubject)}
-                                        disabled={isPdfGenerating}
-                                        className="bg-green-600 text-white hover:bg-green-700"
-                                    >
-                                        {isPdfGenerating ? 'Recompiling...' : 'Recompile & Preview'}
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setIsEditingLetter(false)}
-                                    >
-                                        Cancel
-                                    </Button>
-                                </div>
+                        {/* PDF Viewer Container */}
+                        <div className="flex-1 bg-gray-50 p-2 sm:p-4 relative overflow-hidden">
+                            <div className="relative w-full h-full bg-white rounded-xl shadow-inner border border-gray-200 overflow-hidden">
+                                <iframe
+                                    src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                                    className="w-full h-full border-0"
+                                    title="Cover Letter Preview"
+                                    style={{
+                                        height: 'calc(96vh - 180px)',
+                                        minHeight: '400px'
+                                    }}
+                                />
                             </div>
-                            <div className="flex-1 p-6 overflow-auto">
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Recipient Information
-                                        </label>
-                                        <div className="grid grid-cols-2 gap-4 mb-4">
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-600 mb-1">To (Recipient)</label>
-                                                <Input
-                                                    placeholder="Hiring Manager"
-                                                    value={editableRecipientName}
-                                                    onChange={(e) => setEditableRecipientName(e.target.value)}
-                                                    className="text-sm"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-600 mb-1">Company Name</label>
-                                                <Input
-                                                    placeholder="Company Name"
-                                                    value={editableCompany}
-                                                    onChange={(e) => {
-                                                        setEditableCompany(e.target.value)
-                                                        // Also update in letter content
-                                                        const updated = editableLetter.replace(
-                                                            /To the Hiring Team at [^,\n]+/,
-                                                            `To the Hiring Team at ${e.target.value}`
-                                                        )
-                                                        setEditableLetter(updated)
-                                                    }}
-                                                    className="text-sm"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-600 mb-1">Position</label>
-                                                <Input
-                                                    placeholder="Software Engineer"
-                                                    value={editablePosition}
-                                                    onChange={(e) => {
-                                                        setEditablePosition(e.target.value)
-                                                        // Also update in letter content
-                                                        const updated = editableLetter.replace(
-                                                            /saw the ([^,\n]+) opening/,
-                                                            `saw the ${e.target.value} opening`
-                                                        )
-                                                        setEditableLetter(updated)
-                                                    }}
-                                                    className="text-sm"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-600 mb-1">Subject</label>
-                                                <Input
-                                                    placeholder="Application for Position at Company"
-                                                    value={editableSubject}
-                                                    onChange={(e) => setEditableSubject(e.target.value)}
-                                                    className="text-sm"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Cover Letter Content
-                                        </label>
-                                        <Textarea
-                                            value={editableLetter}
-                                            onChange={(e) => setEditableLetter(e.target.value)}
-                                            className="w-full min-h-[500px] resize-none text-sm leading-relaxed"
-                                            placeholder="Edit your cover letter content here..."
-                                        />
-                                        <p className="text-xs text-gray-500 mt-2">
-                                            Edit the text naturally - formatting will be handled automatically when you recompile.
-                                        </p>
-                                    </div>
+                            {/* Success Message */}
+                            <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
+                                <div className="bg-green-100 border border-green-200 text-green-800 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
+                                    ✓ Cover letter generated successfully!
                                 </div>
                             </div>
                         </div>
                     </div>
-                )}
-
-                {/* PDF Preview Modal */}
-                {showPdfPreview && pdfUrl && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9000 }}>
-                        <div className="bg-white rounded-lg max-w-6xl w-full max-h-[95vh] flex flex-col">
-                            <div className="flex items-center justify-between p-4 border-b">
-                                <div className="flex items-center space-x-2">
-                                    <Zap className="h-5 w-5 text-green-600" />
-                                    <h3 className="text-lg font-semibold text-gray-900">Your Cover Letter</h3>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <Button
-                                        onClick={() => setIsEditingLetter(true)}
-                                        className="bg-blue-600 text-white hover:bg-blue-700"
-                                    >
-                                        <PenTool className="h-4 w-4 mr-2" />
-                                        Edit Cover
-                                    </Button>
-                                    <Button
-                                        onClick={() => {
-                                            const a = document.createElement('a')
-                                            a.href = pdfUrl
-                                            a.download = 'cover-letter.pdf'
-                                            document.body.appendChild(a)
-                                            a.click()
-                                            document.body.removeChild(a)
-                                        }}
-                                        className="bg-red-600 text-white hover:bg-red-700"
-                                    >
-                                        <Download className="h-4 w-4 mr-2" />
-                                        Download PDF
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setShowPdfPreview(false)
-                                            URL.revokeObjectURL(pdfUrl)
-                                            setPdfUrl('')
-                                            setGeneratedLetter('')
-                                            setGeneratedLatex('')
-                                            setJobDescription('')
-                                        }}
-                                    >
-                                        Generate Another
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setShowPdfPreview(false)
-                                            URL.revokeObjectURL(pdfUrl)
-                                            setPdfUrl('')
-                                        }}
-                                    >
-                                        ✕
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="flex-1 p-2 relative overflow-hidden">
-                                <div className="relative w-full h-full">
-                                    <iframe
-                                        src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                                        className="w-full border-0 rounded"
-                                        title="Cover Letter Preview"
-                                        style={{
-                                            height: 'calc(95vh - 60px)',
-                                            marginTop: '-40px',
-                                            paddingTop: '40px',
-                                            border: 'none'
-                                        }}
-                                    />
-                                    {/* Overlay to hide any remaining toolbar */}
-                                    <div
-                                        className="absolute top-0 left-0 w-full bg-white z-10"
-                                        style={{ height: '40px' }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </CardContent>
+                </div>
+            )}
 
             {/* Error Popup Modal */}
             {showErrorPopup && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
                     <div className="bg-white rounded-lg max-w-md w-full p-6">
                         <div className="text-center">
                             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -929,7 +1017,7 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
 
             {/* Success Popup Modal */}
             {showSuccessPopup && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
                     <div className="bg-white rounded-lg max-w-md w-full p-6">
                         <div className="text-center">
                             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -967,7 +1055,7 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
 
             {/* Feedback Form Modal */}
             {showFeedbackForm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
                     <div className="bg-white rounded-lg max-w-md w-full p-6">
                         <form onSubmit={handleFeedbackSubmit}>
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Share Your Feedback</h3>
@@ -1016,6 +1104,6 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                     Send Feedback
                 </span>
             </button>
-        </Card>
+        </>
     )
 }

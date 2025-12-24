@@ -164,6 +164,23 @@ export default function GeneratorPage() {
         }
     }, [session, loading, router])
 
+    // Prevent body scrolling when generated letter modal is open
+    useEffect(() => {
+        if (generatedLetter) {
+            document.body.style.overflow = 'hidden'
+            document.body.style.paddingRight = '17px' // Prevent layout shift
+        } else {
+            document.body.style.overflow = 'unset'
+            document.body.style.paddingRight = '0px'
+        }
+
+        // Cleanup function to restore scrolling
+        return () => {
+            document.body.style.overflow = 'unset'
+            document.body.style.paddingRight = '0px'
+        }
+    }, [generatedLetter])
+
     const fetchProfile = async () => {
         try {
             setIsLoading(true)
@@ -462,120 +479,123 @@ export default function GeneratorPage() {
                     </Card>
                 )}
 
-                {/* Generated Cover Letter Modal */}
-                {generatedLetter && (
-                    <>
-                        {/* Modal Backdrop with fade-in animation */}
-                        <div
-                            className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/70 to-black/80 backdrop-blur-md z-[9998] animate-in fade-in duration-300"
-                            onClick={handleNewGeneration}
-                        />
-
-                        {/* Modal Content with slide-up animation */}
-                        <div
-                            className="fixed inset-0 flex items-center justify-center z-[9999] p-4 sm:p-6 pointer-events-none animate-in zoom-in-95 fade-in duration-300"
-                        >
-                            <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col pointer-events-auto overflow-hidden">
-
-                                {/* Modern Header with gradient accent */}
-                                <div className="relative px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-center space-x-3 mb-2">
-                                                <div className="p-2 bg-green-50 rounded-lg">
-                                                    <FileText className="h-6 w-6 text-green-600" />
-                                                </div>
-                                                <div>
-                                                    <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">Cover Letter Preview</h2>
-                                                    <p className="text-sm text-gray-500 mt-0.5">Generated with AI • Ready to download</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={handleNewGeneration}
-                                            className="ml-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
-                                            aria-label="Close modal"
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Letter Content - Styled like actual letter paper */}
-                                <div className="flex-1 overflow-y-auto bg-gray-50 px-8 py-6">
-                                    <div className="max-w-4xl mx-auto">
-                                        {/* Letter Paper Effect */}
-                                        <div className="bg-white shadow-lg rounded-lg p-12 border border-gray-200" style={{
-                                            background: 'linear-gradient(to bottom, #ffffff 0%, #ffffff 100%)',
-                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)'
-                                        }}>
-                                            <div className="prose prose-gray max-w-none">
-                                                <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-gray-800 font-serif tracking-wide" style={{ lineHeight: '1.8' }}>
-                                                    {parseLatexToReadable(generatedLetter)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Modern Footer with action buttons */}
-                                <div className="px-8 py-5 border-t border-gray-100 bg-white">
-                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                        <p className="text-sm text-gray-500">
-                                            💡 <span className="font-medium">Tip:</span> Review carefully before downloading
-                                        </p>
-                                        <div className="flex items-center gap-3">
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(parseLatexToReadable(generatedLetter))
-                                                    setSuccess('✓ Copied to clipboard!')
-                                                }}
-                                                className="border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all"
-                                            >
-                                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                                </svg>
-                                                Copy Text
-                                            </Button>
-                                            <Button
-                                                onClick={handleDownloadPdf}
-                                                disabled={isPdfGenerating || !generatedLatex}
-                                                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                {isPdfGenerating ? (
-                                                    <>
-                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                                        Generating...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Download className="h-4 w-4 mr-2" />
-                                                        Download PDF
-                                                    </>
-                                                )}
-                                            </Button>
-                                            <Button
-                                                onClick={handleNewGeneration}
-                                                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all"
-                                            >
-                                                <Zap className="h-4 w-4 mr-2" />
-                                                New Letter
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </>
-                )}
-
             </div>
 
             <Footer />
+
+            {/* Generated Cover Letter Modal - Outside all containers for proper fixed positioning */}
+            {generatedLetter && (
+                <>
+                    {/* Modal Backdrop with fade-in animation */}
+                    <div
+                        className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/70 to-black/80 backdrop-blur-md z-[9998] animate-in fade-in duration-300"
+                        onClick={handleNewGeneration}
+                    />
+
+                    {/* Modal Content with slide-up animation */}
+                    <div
+                        className="fixed inset-0 flex items-center justify-center z-[9999] p-2 sm:p-4 pointer-events-none animate-in zoom-in-95 fade-in duration-300"
+                    >
+                        <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[96vh] sm:max-h-[92vh] flex flex-col pointer-events-auto overflow-hidden">
+
+                            {/* Modern Header with gradient accent */}
+                            <div className="relative px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+                                <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                        <div className="flex items-center space-x-3 mb-2">
+                                            <div className="p-2 bg-green-50 rounded-lg">
+                                                <FileText className="h-6 w-6 text-green-600" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">Cover Letter Preview</h2>
+                                                <p className="text-sm text-gray-500 mt-0.5">Generated with AI • Ready to download</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleNewGeneration}
+                                        className="ml-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                        aria-label="Close modal"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Letter Content - Styled like actual letter paper */}
+                            <div className="flex-1 overflow-y-auto bg-gray-50 px-4 sm:px-8 py-4 sm:py-6">
+                                <div className="max-w-4xl mx-auto">
+                                    {/* Letter Paper Effect */}
+                                    <div className="bg-white shadow-lg rounded-lg p-6 sm:p-12 border border-gray-200" style={{
+                                        background: 'linear-gradient(to bottom, #ffffff 0%, #ffffff 100%)',
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05)'
+                                    }}>
+                                        <div className="prose prose-gray max-w-none">
+                                            <div className="whitespace-pre-wrap text-sm sm:text-[15px] leading-relaxed text-gray-800 font-serif tracking-wide" style={{ lineHeight: '1.8' }}>
+                                                {parseLatexToReadable(generatedLetter)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modern Footer with action buttons */}
+                            <div className="px-4 sm:px-8 py-4 sm:py-5 border-t border-gray-100 bg-white shrink-0">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                                    <p className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
+                                        💡 <span className="font-medium">Tip:</span> Review carefully before downloading
+                                    </p>
+                                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(parseLatexToReadable(generatedLetter))
+                                                setSuccess('✓ Copied to clipboard!')
+                                            }}
+                                            className="border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all text-xs sm:text-sm"
+                                            size="sm"
+                                        >
+                                            <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                            </svg>
+                                            Copy Text
+                                        </Button>
+                                        <Button
+                                            onClick={handleDownloadPdf}
+                                            disabled={isPdfGenerating || !generatedLatex}
+                                            className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
+                                            size="sm"
+                                        >
+                                            {isPdfGenerating ? (
+                                                <>
+                                                    <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1 sm:mr-2"></div>
+                                                    Generating...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                                    Download PDF
+                                                </>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            onClick={handleNewGeneration}
+                                            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all text-xs sm:text-sm"
+                                            size="sm"
+                                        >
+                                            <Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                            New Letter
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     )
 }

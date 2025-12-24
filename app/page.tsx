@@ -103,10 +103,10 @@ export default function HomePage() {
                                     <span className="text-2xl font-bold text-white">1</span>
                                 </div>
                                 <h3 className="text-xl font-bold text-slate-900 mb-4">
-                                    Paste Job Description
+                                    Add Your Details
                                 </h3>
                                 <p className="text-slate-600 leading-relaxed">
-                                    Simply copy and paste the job posting you're applying for. Our AI will analyze the requirements and key skills.
+                                    Share your relevant experience, skills, and achievements. The more context you provide, the better your cover letter.
                                 </p>
                             </div>
 
@@ -116,10 +116,10 @@ export default function HomePage() {
                                     <span className="text-2xl font-bold text-white">2</span>
                                 </div>
                                 <h3 className="text-xl font-bold text-slate-900 mb-4">
-                                    Add Your Details
+                                    Paste Job Description
                                 </h3>
                                 <p className="text-slate-600 leading-relaxed">
-                                    Share your relevant experience, skills, and achievements. The more context you provide, the better your cover letter.
+                                    Simply copy and paste the job posting you're applying for. Our AI will analyze the requirements and key skills.
                                 </p>
                             </div>
 
@@ -171,7 +171,7 @@ export default function HomePage() {
                                         </div>
                                         <div>
                                             <h4 className="font-semibold text-slate-900 mb-1">Generic Templates</h4>
-                                            <p className="text-slate-600 text-sm">Using the same template for every job makes you blend in with hundreds of other applicants.</p>
+                                            <p className="text-slate-600 text-sm">Using the same template for every job makes you blend in with hundreds of other applicants, and often gets denied by AI detectors.</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start space-x-4 p-4 rounded-xl bg-red-50/50 border border-red-100">

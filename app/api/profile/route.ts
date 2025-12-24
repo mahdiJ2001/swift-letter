@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
             .insert({
                 ...profileData,
                 user_id: session.user.id,
-                credits: 5
+                credits: 3 // 3 free credits for new users
             })
             .select()
             .single()
