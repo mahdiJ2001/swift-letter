@@ -22,6 +22,11 @@ const progressBarStyles = `
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
   }
+  
+  @keyframes progressGlow {
+    0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(147, 51, 234, 0.7); }
+  }
 `
 
 type UserProfile = {
@@ -72,6 +77,7 @@ export default function JobDescriptionForm() {
     const [feedbackText, setFeedbackText] = useState('')
     const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
     const [hasResumeAttached, setHasResumeAttached] = useState(false)
+    const [loadingProgress, setLoadingProgress] = useState(0)
     const router = useRouter()
     const { user } = useAuth()
 
@@ -104,6 +110,34 @@ export default function JobDescriptionForm() {
 
         fetchProfile()
     }, [user])
+
+    // Progress animation effect
+    useEffect(() => {
+        let interval: NodeJS.Timeout
+        if (isLoading || isPdfGenerating) {
+            setLoadingProgress(0)
+            const duration = 30000 // 30 seconds
+            const steps = 100
+            const stepDuration = duration / steps
+
+            interval = setInterval(() => {
+                setLoadingProgress(prev => {
+                    if (prev >= 100) {
+                        return 100
+                    }
+                    // Simulate realistic progress with some randomness
+                    const increment = Math.random() * 3 + 0.5 // 0.5 to 3.5% per step
+                    return Math.min(100, prev + increment)
+                })
+            }, stepDuration)
+        } else {
+            setLoadingProgress(0)
+        }
+
+        return () => {
+            if (interval) clearInterval(interval)
+        }
+    }, [isLoading, isPdfGenerating])
 
     // Prevent body scrolling when modals are open
     useEffect(() => {
@@ -758,18 +792,24 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                                             <div className="w-5 h-5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin mr-3"></div>
                                         </div>
                                         <div className="flex flex-col items-start">
-                                            <span className="font-medium">
-                                                {isPdfGenerating ? 'Generating PDF...' : 'Creating your cover letter...'}
-                                            </span>
-                                            <div className="flex items-center mt-1">
-                                                <div className="w-32 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-full"
+                                            <div className="flex items-center space-x-3">
+                                                <span className="font-medium">
+                                                    {isPdfGenerating ? 'Generating PDF...' : 'Creating your cover letter...'}
+                                                </span>
+                                                <span className="text-sm font-bold text-blue-600">
+                                                    {Math.round(loadingProgress)}%
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center mt-2 w-full">
+                                                <div className="w-40 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-full transition-all duration-300 ease-out"
                                                         style={{
-                                                            animation: 'progressBar 3s ease-in-out infinite',
+                                                            width: `${loadingProgress}%`,
+                                                            animation: 'progressGlow 2s ease-in-out infinite',
                                                             backgroundSize: '200% 200%'
                                                         }}></div>
                                                 </div>
-                                                <span className="text-xs text-gray-500 ml-2">
+                                                <span className="text-xs text-gray-500 ml-3">
                                                     {isLoading ? 'AI is writing...' : 'Compiling...'}
                                                 </span>
                                             </div>
