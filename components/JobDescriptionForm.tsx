@@ -10,6 +10,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
+// Add custom CSS for progress bar animation
+const progressBarStyles = `
+  @keyframes progressBar {
+    0% { width: 10%; opacity: 0.8; }
+    50% { width: 80%; opacity: 1; }
+    100% { width: 70%; opacity: 0.8; }
+  }
+  
+  @keyframes loadingPulse {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+`
+
 type UserProfile = {
     id: string
     full_name: string
@@ -426,6 +440,12 @@ export default function JobDescriptionForm() {
                 const extractedPosition = positionMatch?.[1] || ''
                 let extractedSubject = subjectMatch?.[1] || ''
 
+                console.log('Subject extraction debug:', {
+                    subjectMatch,
+                    extractedSubject,
+                    rawContent: data.content.substring(0, 500)
+                })
+
                 // Replace LaTeX variables in subject with actual values
                 if (extractedSubject) {
                     extractedSubject = extractedSubject
@@ -438,7 +458,12 @@ export default function JobDescriptionForm() {
                         .replace(/\\\$/g, '$')
                         .replace(/\\_/g, '_')
                         .trim()
+                } else {
+                    // Fallback subject if extraction fails
+                    extractedSubject = `Application for ${extractedPosition} at ${extractedCompany}`
                 }
+
+                console.log('Final extracted subject:', extractedSubject)
 
                 setEditableCompany(extractedCompany)
                 setEditablePosition(extractedPosition)
@@ -609,6 +634,7 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
 
     return (
         <>
+            <style jsx>{progressBarStyles}</style>
             <Card className="w-full max-w-none mx-auto glass-card-strong rounded-2xl border-0">
                 <CardHeader className="text-left pb-4">
                     <div className="flex items-center justify-between flex-wrap gap-3">
@@ -727,10 +753,28 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                                 className="w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isLoading || isPdfGenerating ? (
-                                    <>
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                        {isPdfGenerating ? 'Generating PDF...' : 'Generating Cover Letter...'}
-                                    </>
+                                    <div className="flex items-center justify-center">
+                                        <div className="relative">
+                                            <div className="w-5 h-5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin mr-3"></div>
+                                        </div>
+                                        <div className="flex flex-col items-start">
+                                            <span className="font-medium">
+                                                {isPdfGenerating ? 'Generating PDF...' : 'Creating your cover letter...'}
+                                            </span>
+                                            <div className="flex items-center mt-1">
+                                                <div className="w-32 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-full"
+                                                        style={{
+                                                            animation: 'progressBar 3s ease-in-out infinite',
+                                                            backgroundSize: '200% 200%'
+                                                        }}></div>
+                                                </div>
+                                                <span className="text-xs text-gray-500 ml-2">
+                                                    {isLoading ? 'AI is writing...' : 'Compiling...'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 ) : (
                                     <>
                                         <Zap className="h-4 w-4 mr-2" />
