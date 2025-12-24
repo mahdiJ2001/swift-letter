@@ -133,27 +133,54 @@ export async function PUT(request: NextRequest) {
 
         const { id, ...profileData } = await request.json()
         
-        // Use upsert for more robust handling - update if exists, insert if not
-        const result = await supabase
+        // First, check if a profile exists for this user
+        const { data: existingProfile, error: fetchError } = await supabase
             .from('user_profiles')
-            .upsert(
-                {
-                    ...(id && { id }), // Include id if provided
-                    user_id: session.user.id, // Always set user_id for security
+            .select('id, user_id')
+            .eq('user_id', session.user.id)
+            .maybeSingle()
+
+        if (fetchError) {
+            console.error('Error checking existing profile:', fetchError)
+            return NextResponse.json(
+                { error: 'Failed to check existing profile' },
+                { status: 500 }
+            )
+        }
+
+        let result;
+        
+        if (existingProfile) {
+            // Update existing profile
+            result = await supabase
+                .from('user_profiles')
+                .update({
                     ...profileData,
                     updated_at: new Date().toISOString()
-                },
-                {
-                    onConflict: 'user_id', // Use user_id as the conflict column
-                    ignoreDuplicates: false
-                }
-            )
-            .select()
-            .single()
+                })
+                .eq('user_id', session.user.id)  // Use user_id instead of id for WHERE clause
+                .select()
+                .single()
+        } else {
+            // Create new profile
+            result = await supabase
+                .from('user_profiles')
+                .insert({
+                    user_id: session.user.id,
+                    ...profileData,
+                    credits: 3, // 3 free credits for new users
+                    updated_at: new Date().toISOString()
+                })
+                .select()
+                .single()
+        }
 
         if (result.error) {
-            console.error('Profile upsert error:', result.error)
-            throw result.error
+            console.error('Profile operation error:', result.error)
+            return NextResponse.json(
+                { error: result.error.message || 'Failed to save profile' },
+                { status: 500 }
+            )
         }
 
         return NextResponse.json(result.data)
