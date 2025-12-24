@@ -127,10 +127,19 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                 throw new Error(errorData.error || 'Failed to extract PDF content')
             }
 
-            const data = await response.json()
+            const responseData = await response.json()
 
-            if (data.success && data.profile) {
-                const extractedProfile = data.profile
+            // API returns { data: extractedProfile }
+            const extractedProfile = responseData.data
+
+            if (extractedProfile) {
+                // Format arrays if they're returned as arrays
+                const formatArray = (value: any): string => {
+                    if (Array.isArray(value)) {
+                        return value.join(', ')
+                    }
+                    return value || ''
+                }
 
                 // Update form data with extracted information
                 setFormData(prev => ({
@@ -141,15 +150,15 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                     location: extractedProfile.location || prev.location,
                     experiences: extractedProfile.experiences || prev.experiences,
                     projects: extractedProfile.projects || prev.projects,
-                    skills: extractedProfile.skills || prev.skills,
+                    skills: formatArray(extractedProfile.skills) || prev.skills,
                     education: extractedProfile.education || prev.education,
                     certifications: extractedProfile.certifications || prev.certifications,
-                    languages: extractedProfile.languages || prev.languages,
+                    languages: formatArray(extractedProfile.languages) || prev.languages,
                 }))
 
                 setSuccess('Resume processed successfully! Review and customize the extracted information.')
             } else {
-                throw new Error(data.error || 'Failed to extract information from PDF')
+                throw new Error(responseData.error || 'Failed to extract information from PDF')
             }
         } catch (error: any) {
             console.error('Error uploading resume:', error)
@@ -291,8 +300,8 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         {/* PDF Upload Section */}
                         <div>
                             <label htmlFor="resume-pdf-upload" className={`group relative flex justify-center px-8 py-10 border-2 border-dashed rounded-xl transition-all duration-300 ${isUploadingResume
-                                    ? 'border-green-400 bg-green-50/50 cursor-not-allowed'
-                                    : 'border-green-300 hover:border-green-400 cursor-pointer bg-white hover:bg-green-50/30'
+                                ? 'border-green-400 bg-green-50/50 cursor-not-allowed'
+                                : 'border-green-300 hover:border-green-400 cursor-pointer bg-white hover:bg-green-50/30'
                                 }`}>
                                 <div className="space-y-2 text-center">
                                     {isUploadingResume ? (

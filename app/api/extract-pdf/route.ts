@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData()
-    const file = formData.get('file') as File
+    // Accept both 'file' and 'pdf' field names for compatibility
+    const file = (formData.get('file') || formData.get('pdf')) as File
     
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -153,10 +154,22 @@ export async function POST(request: NextRequest) {
       console.log('Edge function response:', data)
       return NextResponse.json({ data })
 
-    } catch (pdfError) {
+    } catch (pdfError: any) {
       console.error('PDF parsing error:', pdfError)
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to parse PDF. Please ensure the file is a valid PDF document.'
+      
+      if (pdfError.message?.includes('Invalid PDF') || pdfError.message?.includes('header')) {
+        errorMessage = 'The file appears to be corrupted or is not a valid PDF.'
+      } else if (pdfError.message?.includes('password') || pdfError.message?.includes('encrypted')) {
+        errorMessage = 'This PDF is password-protected. Please provide an unprotected PDF.'
+      } else if (pdfError.message?.includes('stream')) {
+        errorMessage = 'The PDF file format is not supported. Try saving it as a new PDF and uploading again.'
+      }
+      
       return NextResponse.json({ 
-        error: 'Failed to parse PDF. Please ensure the file is a valid PDF document.' 
+        error: errorMessage
       }, { status: 400 })
     }
 
