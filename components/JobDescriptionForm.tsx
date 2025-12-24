@@ -383,23 +383,35 @@ export default function JobDescriptionForm() {
                 // Extract text content from LaTeX for editing
                 const textMatch = data.content.match(/% Letter Body[\s\S]*?% =========================\s*([\s\S]*?)\s*\\vspace{2\.0em}/)
                 if (textMatch) {
-                    const textContent = textMatch[1]
+                    // First get the actual values for replacement
+                    const companyMatch = data.content.match(/\\newcommand\{\\targetCompany\}\{([^}]*)\}/)
+                    const positionMatch = data.content.match(/\\newcommand\{\\targetPosition\}\{([^}]*)\}/)
+                    const extractedCompany = companyMatch?.[1] || ''
+                    const extractedPosition = positionMatch?.[1] || ''
+
+                    let textContent = textMatch[1]
                         .replace(/\\noindent\s*/g, '')
                         .replace(/\\vspace{[^}]*}/g, '\n')
                         .replace(/\\\\\s*/g, '\n')
                         .replace(/\\textbf\{([^}]*)\}/g, '$1')
                         .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')
-                        .replace(/\\targetCompany\s*\\\s*/g, '')
-                        .replace(/\\targetPosition\s*\\\s*/g, '')
+                        .replace(/\\targetCompany(?![a-zA-Z])/g, extractedCompany)
+                        .replace(/\\targetPosition(?![a-zA-Z])/g, extractedPosition)
                         .replace(/\\myname/g, profile?.full_name || '')
                         .replace(/\\mylocation/g, profile?.location || '')
                         .replace(/\\myemail/g, profile?.email || '')
                         .replace(/\\myphone/g, profile?.phone || '')
+                        .replace(/\\today/g, new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }))
                         .replace(/\\%/g, '%')
                         .replace(/\\_/g, '_')
                         .replace(/\\&/g, '&')
                         .replace(/\\#/g, '#')
                         .replace(/\\\$/g, '$')
+                        .replace(/\\ /g, ' ')
+                        .replace(/\\•/g, '•')
+                        .replace(/\{|\}/g, '')
+                        .replace(/[ \t]+/g, ' ')
+                        .replace(/\n\s*\n\s*\n/g, '\n\n')
                         .trim()
                     setEditableLetter(textContent)
                 }
@@ -417,8 +429,15 @@ export default function JobDescriptionForm() {
                 // Replace LaTeX variables in subject with actual values
                 if (extractedSubject) {
                     extractedSubject = extractedSubject
-                        .replace(/\\targetPosition\\?/g, extractedPosition)
-                        .replace(/\\targetCompany\\?/g, extractedCompany)
+                        .replace(/\\targetPosition(?![a-zA-Z])/g, extractedPosition)
+                        .replace(/\\targetCompany(?![a-zA-Z])/g, extractedCompany)
+                        .replace(/\\myname/g, profile?.full_name || '')
+                        .replace(/\\&/g, '&')
+                        .replace(/\\%/g, '%')
+                        .replace(/\\#/g, '#')
+                        .replace(/\\\$/g, '$')
+                        .replace(/\\_/g, '_')
+                        .trim()
                 }
 
                 setEditableCompany(extractedCompany)
