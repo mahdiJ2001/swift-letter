@@ -251,19 +251,26 @@ export default function JobDescriptionForm() {
                     // First check if profile exists in database
                     const checkResponse = await fetch(`/api/profile?userId=${user.id}`)
                     let existingProfile = null
+                    let hasExistingProfile = false
+
                     if (checkResponse.ok) {
-                        existingProfile = await checkResponse.json()
+                        const profileData = await checkResponse.json()
+                        // Check if we got actual profile data (not null or empty)
+                        if (profileData && profileData.id) {
+                            existingProfile = profileData
+                            hasExistingProfile = true
+                        }
                     }
 
                     const updateResponse = await fetch('/api/profile', {
-                        method: existingProfile ? 'PUT' : 'POST',
+                        method: hasExistingProfile ? 'PUT' : 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${session.access_token}`
                         },
                         body: JSON.stringify({
                             ...updatedProfile,
-                            ...(existingProfile ? { id: existingProfile.id } : {})
+                            ...(hasExistingProfile && existingProfile?.id ? { id: existingProfile.id } : {})
                         })
                     })
 
