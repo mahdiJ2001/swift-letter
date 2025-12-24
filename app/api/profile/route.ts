@@ -133,32 +133,26 @@ export async function PUT(request: NextRequest) {
 
         const { id, ...profileData } = await request.json()
         
-        // Ensure user can only update their own profile
-        const { data: existingProfile, error: fetchError } = await supabase
-            .from('user_profiles')
-            .select('user_id')
-            .eq('id', id)
-            .single()
-
-        if (fetchError) {
-            throw fetchError
-        }
-
-        if (existingProfile.user_id !== session.user.id) {
-            return NextResponse.json(
-                { error: 'Forbidden' },
-                { status: 403 }
-            )
-        }
-
+        // Use upsert for more robust handling - update if exists, insert if not
         const result = await supabase
             .from('user_profiles')
-            .update(profileData)
-            .eq('id', id)
+            .upsert(
+                {
+                    ...(id && { id }), // Include id if provided
+                    user_id: session.user.id, // Always set user_id for security
+                    ...profileData,
+                    updated_at: new Date().toISOString()
+                },
+                {
+                    onConflict: 'user_id', // Use user_id as the conflict column
+                    ignoreDuplicates: false
+                }
+            )
             .select()
             .single()
 
         if (result.error) {
+            console.error('Profile upsert error:', result.error)
             throw result.error
         }
 
@@ -166,7 +160,7 @@ export async function PUT(request: NextRequest) {
     } catch (error: any) {
         console.error('Profile update error:', error)
         return NextResponse.json(
-            { error: error.message },
+            { error: error.message || 'Failed to save profile' },
             { status: 500 }
         )
     }
