@@ -33,14 +33,14 @@ export async function GET(request: NextRequest) {
         users_last_week,
         users_this_month,
         users_last_month,
-        total_letters_generated,
+        total_generated_letters,
         letters_generated_today,
         letters_generated_this_week,
         letters_generated_this_month,
         total_pdfs_compiled,
         total_pdf_downloads,
-        successful_compilations,
-        failed_compilations,
+        successful_letter_compilations,
+        failed_letter_compilations,
         last_user_registered_at,
         last_letter_generated_at
       `)
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
         
         // Letter Statistics
         letters: {
-          total: stats.total_letters_generated || 0,
+          total: stats.total_generated_letters || 0,
           today: stats.letters_generated_today || 0,
           thisWeek: stats.letters_generated_this_week || 0,
           thisMonth: stats.letters_generated_this_month || 0
@@ -76,8 +76,8 @@ export async function GET(request: NextRequest) {
         pdfs: {
           totalCompiled: stats.total_pdfs_compiled || 0,
           totalDownloads: stats.total_pdf_downloads || 0,
-          successful: stats.successful_compilations || 0,
-          failed: stats.failed_compilations || 0
+          successful: stats.successful_letter_compilations || 0,
+          failed: stats.failed_letter_compilations || 0
         },
         
         // Timestamps

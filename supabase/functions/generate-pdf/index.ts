@@ -17,6 +17,30 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Client for internal operations (service role key) - bypasses RLS
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+// Helper function to increment total PDFs compiled stat
+async function incrementTotalPdfsCompiled() {
+  try {
+    await supabaseAdmin.rpc('increment_app_stat', { 
+      stat_column: 'total_pdfs_compiled', 
+      amount: 1 
+    });
+  } catch (error) {
+    console.error('Failed to increment total PDFs compiled stat:', error);
+  }
+}
+
+// Helper function to increment successful compilations stat
+async function incrementSuccessfulCompilations() {
+  try {
+    await supabaseAdmin.rpc('increment_app_stat', { 
+      stat_column: 'successful_letter_compilations', 
+      amount: 1 
+    });
+  } catch (error) {
+    console.error('Failed to increment successful compilations stat:', error);
+  }
+}
+
 // Helper function to increment failed compilations stat
 async function incrementFailedCompilations() {
   try {
@@ -161,7 +185,9 @@ serve(async (req: Request) => {
 
     console.log('✅ PDF generated successfully, size:', Math.round(base64Pdf.length * 0.75), 'bytes');
 
-    // Track successful PDF download
+    // Track successful PDF compilation and download
+    await incrementTotalPdfsCompiled();
+    await incrementSuccessfulCompilations();
     await incrementPdfDownloads();
 
     // Return JSON with base64 PDF data
@@ -178,7 +204,8 @@ serve(async (req: Request) => {
 
   } catch (error: any) {
     console.error('Error generating PDF:', error);
-    
+     and total attempts
+    await incrementTotalPdfsCompiled();
     // Track failed compilation
     await incrementFailedCompilations();
     

@@ -20,8 +20,8 @@ const pricingPlans = [
         features: [
             '15 AI-generated cover letters',
             'ATS-optimized formatting',
-            'PDF download',
-            'Email support'
+            'PDF download'
+
         ]
     },
     {
@@ -36,8 +36,8 @@ const pricingPlans = [
         features: [
             '50 AI-generated cover letters',
             'ATS-optimized formatting',
-            'PDF download',
-            'Priority support'
+            'PDF download'
+
         ]
     },
     {
@@ -52,8 +52,7 @@ const pricingPlans = [
         features: [
             '150 AI-generated cover letters',
             'ATS-optimized formatting',
-            'PDF download',
-            'Priority support'
+            'PDF download'
         ]
     }
 ]
@@ -246,12 +245,7 @@ export default function PricingPage() {
                                 No, your credits never expire. Use them whenever you need.
                             </p>
                         </div>
-                        <div className="bg-white rounded-xl p-6 ring-1 ring-slate-200">
-                            <h3 className="font-semibold text-slate-900 mb-2">Can I get a refund?</h3>
-                            <p className="text-slate-600 text-sm">
-                                Yes, we offer a money-back guarantee if you're not satisfied with the service.
-                            </p>
-                        </div>
+
                     </div>
                 </div>
             </main>
