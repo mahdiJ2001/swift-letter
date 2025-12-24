@@ -49,7 +49,7 @@ export default function GeneratorPage() {
         try {
             // First, extract all newcommand definitions
             const commands: { [key: string]: string } = {}
-            const commandMatches = latex.matchAll(/\\newcommand\{\\([^}]*)\}\{([^}]*)\}/g)
+            const commandMatches = Array.from(latex.matchAll(/\\newcommand\{\\([^}]*)\}\{([^}]*)\}/g))
             for (const match of commandMatches) {
                 commands[match[1]] = match[2]
             }
