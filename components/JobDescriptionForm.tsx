@@ -659,7 +659,6 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
 
                 setPdfUrl(url)
                 setShowPdfPreview(true)
-                setSuccess('Cover letter generated successfully!')
             } else {
                 throw new Error(data.error || 'Failed to generate PDF')
             }
