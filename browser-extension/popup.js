@@ -272,12 +272,12 @@ function updateGenerateButton() {
 
 function openLoginPage(e) {
     e.preventDefault();
-    chrome.tabs.create({ url: `${CONFIG.API_BASE_URL}/auth/login?extension=true` });
+    chrome.tabs.create({ url: `${CONFIG.API_BASE_URL}/auth/login?extension=true&redirect_to=${CONFIG.API_BASE_URL}/auth/callback/extension` });
 }
 
 function openSignupPage(e) {
     e.preventDefault();
-    chrome.tabs.create({ url: `${CONFIG.API_BASE_URL}/auth/signup?extension=true` });
+    chrome.tabs.create({ url: `${CONFIG.API_BASE_URL}/auth/signup?extension=true&redirect_to=${CONFIG.API_BASE_URL}/auth/callback/extension` });
 }
 
 // Resume Upload

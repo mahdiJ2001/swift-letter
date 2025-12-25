@@ -409,6 +409,20 @@ export default function GeneratorPage() {
                     <p className="text-gray-600 mt-2">
                         Generate your personalized cover letter powered by AI
                     </p>
+
+                    {/* Browser Extension Download Button */}
+                    <div className="mt-4">
+                        <Button
+                            onClick={() => window.open('/api/download-extension', '_blank')}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 mx-auto"
+                        >
+                            <Download className="h-4 w-4" />
+                            Get Browser Extension
+                        </Button>
+                        <p className="text-sm text-gray-500 mt-1">
+                            Generate cover letters directly from job sites like LinkedIn
+                        </p>
+                    </div>
                 </div>
 
                 {/* Back button if no job description */}

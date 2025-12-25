@@ -60,8 +60,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 // Listen for auth callback from web app
 chrome.webNavigation?.onCompleted?.addListener(async (details) => {
     // Check if this is our auth callback page
-    if (details.url.includes(`${CONFIG.API_BASE_URL}/auth/callback`) &&
-        details.url.includes('extension=true')) {
+    if (details.url.includes(`${CONFIG.API_BASE_URL}/auth/callback/extension`)) {
         try {
             // Inject script to extract auth data
             chrome.scripting.executeScript({
@@ -74,25 +73,80 @@ chrome.webNavigation?.onCompleted?.addListener(async (details) => {
     }
 }, { url: [{ urlContains: 'swiftletter' }] });
 
+// Also listen for messages from auth callback page
+chrome.runtime.onMessageExternal?.addListener((message, sender, sendResponse) => {
+    if (message.type === 'SWIFT_LETTER_AUTH_SUCCESS') {
+        // Forward to popup
+        chrome.runtime.sendMessage({
+            type: 'AUTH_SUCCESS',
+            session: message.session,
+            user: message.user
+        });
+        sendResponse({ success: true });
+    }
+});
+
 // Function injected into auth callback page to extract session
 function extractAuthFromPage() {
-    // Look for session data in localStorage
-    const sessionKey = 'supabase.auth.token';
-    const sessionData = localStorage.getItem(sessionKey);
+    // Try multiple possible session storage keys
+    const possibleKeys = [
+        'sb-' + window.location.hostname.replace(/\./g, '-') + '-auth-token',
+        'supabase.auth.token',
+        'sb-auth-token'
+    ];
+
+    let sessionData = null;
+    for (const key of possibleKeys) {
+        const data = localStorage.getItem(key);
+        if (data) {
+            sessionData = data;
+            break;
+        }
+    }
+
+    // Also try to get from the URL params (common in auth callbacks)
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
 
     if (sessionData) {
         try {
             const parsed = JSON.parse(sessionData);
-            // Send to extension
             chrome.runtime.sendMessage({
                 type: 'AUTH_SUCCESS',
-                session: parsed.currentSession,
-                user: parsed.currentSession?.user
+                session: parsed,
+                user: parsed.user
             });
         } catch (e) {
             console.error('Failed to parse session:', e);
         }
+    } else if (accessToken) {
+        // Create session from URL params
+        chrome.runtime.sendMessage({
+            type: 'AUTH_SUCCESS',
+            session: {
+                access_token: accessToken,
+                refresh_token: refreshToken
+            },
+            user: null // Will be fetched later
+        });
+    } else {
+        // Try to trigger Supabase auth state change
+        setTimeout(() => {
+            window.postMessage({ type: 'EXTENSION_AUTH_REQUEST' }, '*');
+        }, 1000);
     }
+
+    // Listen for messages from the auth callback page
+    window.addEventListener('message', function (event) {
+        if (event.data.type === 'SWIFT_LETTER_AUTH_SUCCESS') {
+            chrome.runtime.sendMessage({
+                type: 'AUTH_SUCCESS',
+                session: event.data.session,
+                user: event.data.user
+            });
+        }
+    });
 }
 
 // Context menu for quick access
