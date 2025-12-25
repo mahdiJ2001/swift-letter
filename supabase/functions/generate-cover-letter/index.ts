@@ -267,9 +267,9 @@ You must create a complete LaTeX document that follows this EXACT structure. Rep
 % =========================
 Hey \\targetCompany\\ hiring team,
 
-Lately, I've spent time reflecting on where my engineering path should go. And I have decided that sharpening my skills in [Tech A] and [Tech B] while diving into [Tech C] and [related Tech C area] is the way to go. Your \\targetPosition\\ role showed up at just the right moment. It lines up with my goals closely enough that ignoring it didn't feel like an option.
+Lately, I've spent time reflecting on where my engineering path should go. And I have decided that sharpening my skills in [Tech A] and [Tech B] while diving into [Tech C] and [related Tech C area] is the way to go. Your \\targetPosition\\ role showed up at just the right moment and It lines up with my goals closely enough that ignoring it didn't feel like an option.
 
-A project I recently completed lines up closely with your needs. Take [Year] - I finished building [Most Recent Project] powered by [key tech stack] under the hood. Before that, in [Year], I worked on [Older Project] [brief description with key tech]. That [Most Recent Project domain] work showed me [specific skill/insight].On the other hand, The [Older Project domain] deepened my skills around [different skill/insight]. Honestly? Both cases rooted me firmly in [combined relevant technologies].
+A project I recently completed lines up closely with your needs. Take [Year] - I finished building [Most Recent Project] powered by [key tech stack] under the hood. Before that, in [Year], I worked on [Older Project] [brief description with key tech]. That [Most Recent Project domain] work showed me [specific skill/insight].On the other hand, The [Older Project domain] deepened my skills around [different skill/insight]. Honestly, Both cases rooted me firmly in [combined relevant technologies].
 
 Right now, my career vision pulls me toward growing as a \\targetPosition\\ at \\targetCompany\\ . With skills rooted in [Tech A], [Tech B], and [Tech C], joining feels like stepping into meaningful work and I am both : delighted to start solving problems from the get go and enthusiastic about how I can fit in your current roadmap.
 

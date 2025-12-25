@@ -1,0 +1,50 @@
+/* Swift Letter Browser Extension - Content Script Styles */
+
+/* Floating button hover states */
+#swift-letter-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+}
+
+#swift-letter-btn:active {
+    transform: scale(0.98);
+}
+
+#swift-letter-btn svg {
+    flex-shrink: 0;
+}
+
+/* Toast animation */
+#swift-letter-toast {
+    animation: swiftLetterSlideIn 0.3s ease forwards;
+}
+
+@keyframes swiftLetterSlideIn {
+    from {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes swiftLetterSlideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+}
+
+/* Ensure our elements are always on top */
+#swift-letter-btn,
+#swift-letter-toast {
+    z-index: 2147483647 !important;
+}
