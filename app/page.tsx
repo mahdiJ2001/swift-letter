@@ -28,42 +28,42 @@ export default function HomePage() {
                             <span className="text-sm font-medium text-slate-700">AI-Powered Cover Letter Generator</span>
                         </div>
 
-                        <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 mb-4 tracking-tight leading-[1.1]">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-slate-900 mb-4 tracking-tight leading-[1.1]">
                             Create{' '}
                             <span className="premium-gradient-text">Professional</span>
                             <br className="hidden sm:block" />
                             Cover Letters in Seconds
                         </h1>
-                        <p className="text-xl md:text-2xl text-slate-600 mb-8 max-w-3xl mx-auto leading-relaxed font-light">
+                        <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-600 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed font-light px-2">
                             Generate personalized, ATS-optimized cover letters with human-like writing that bypasses AI detection.
                             Perfect for mass job applications.
                         </p>
 
                         {/* Key Features Badges */}
-                        <div className="flex flex-wrap justify-center gap-4 mb-16">
-                            <div className="premium-badge flex items-center px-6 py-3 rounded-full">
-                                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center mr-3 shadow-sm">
-                                    <Clock className="h-4 w-4 text-white" />
+                        <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-8 sm:mb-12 md:mb-16 px-2">
+                            <div className="premium-badge flex items-center px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-full">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center mr-2 sm:mr-3 shadow-sm">
+                                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <span className="text-sm font-semibold text-slate-700">30-Second Generation</span>
+                                <span className="text-xs sm:text-sm font-semibold text-slate-700">30-Second Generation</span>
                             </div>
-                            <div className="premium-badge flex items-center px-6 py-3 rounded-full">
-                                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center mr-3 shadow-sm">
-                                    <Shield className="h-4 w-4 text-white" />
+                            <div className="premium-badge flex items-center px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-full">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center mr-2 sm:mr-3 shadow-sm">
+                                    <Shield className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <span className="text-sm font-semibold text-slate-700">Undetectable by AI</span>
+                                <span className="text-xs sm:text-sm font-semibold text-slate-700">Undetectable by AI</span>
                             </div>
-                            <div className="premium-badge flex items-center px-6 py-3 rounded-full">
-                                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center mr-3 shadow-sm">
-                                    <Target className="h-4 w-4 text-white" />
+                            <div className="premium-badge flex items-center px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-full">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center mr-2 sm:mr-3 shadow-sm">
+                                    <Target className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <span className="text-sm font-semibold text-slate-700">Personalized for Each Job</span>
+                                <span className="text-xs sm:text-sm font-semibold text-slate-700">Personalized</span>
                             </div>
-                            <div className="premium-badge flex items-center px-6 py-3 rounded-full">
-                                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center mr-3 shadow-sm">
-                                    <CheckCircle className="h-4 w-4 text-white" />
+                            <div className="premium-badge flex items-center px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-full">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-emerald-400 to-green-500 rounded-lg flex items-center justify-center mr-2 sm:mr-3 shadow-sm">
+                                    <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <span className="text-sm font-semibold text-slate-700">ATS-Optimized Keywords</span>
+                                <span className="text-xs sm:text-sm font-semibold text-slate-700">ATS-Optimized</span>
                             </div>
                         </div>
                     </div>
@@ -83,15 +83,15 @@ export default function HomePage() {
                 <section className="py-24 px-4 sm:px-6 relative">
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-50/50 to-transparent"></div>
                     <div className="max-w-7xl mx-auto relative z-10">
-                        <div className="text-center mb-16">
+                        <div className="text-center mb-8 sm:mb-12 md:mb-16 px-2">
                             <div className="inline-flex items-center gap-2 premium-badge px-4 py-2 rounded-full mb-4">
                                 <Sparkles className="h-4 w-4 text-emerald-600" />
                                 <span className="text-sm font-medium text-slate-700">Simple Process</span>
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+                            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
                                 How It Works
                             </h2>
-                            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
                                 Three simple steps to create your perfect cover letter
                             </p>
                         </div>
@@ -142,15 +142,15 @@ export default function HomePage() {
                 {/* What We Solve Section */}
                 <section className="py-24 px-4 sm:px-6">
                     <div className="max-w-7xl mx-auto">
-                        <div className="text-center mb-16">
+                        <div className="text-center mb-8 sm:mb-12 md:mb-16 px-2">
                             <div className="inline-flex items-center gap-2 premium-badge px-4 py-2 rounded-full mb-4">
                                 <Sparkles className="h-4 w-4 text-emerald-600" />
                                 <span className="text-sm font-medium text-slate-700">Why Choose Us</span>
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+                            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
                                 Perfect for Mass Applications
                             </h2>
-                            <p className="text-lg text-slate-600 max-w-3xl mx-auto">
+                            <p className="text-base sm:text-lg text-slate-600 max-w-3xl mx-auto">
                                 Whether you're applying to 10 jobs or 100, our tool helps you create unique, personalized cover letters for each application in seconds.
                             </p>
                         </div>
@@ -245,15 +245,15 @@ export default function HomePage() {
                     <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
                     <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
 
-                    <div className="max-w-4xl mx-auto text-center relative z-10">
-                        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-8 border border-white/20">
+                    <div className="max-w-4xl mx-auto text-center relative z-10 px-4">
+                        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 sm:mb-8 border border-white/20">
                             <Rocket className="h-4 w-4 text-white" />
                             <span className="text-sm font-medium text-white/90">Start Your Journey</span>
                         </div>
-                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6">
                             Ready to Stand Out?
                         </h2>
-                        <p className="text-xl text-emerald-100 mb-10 max-w-2xl mx-auto">
+                        <p className="text-base sm:text-lg md:text-xl text-emerald-100 mb-6 sm:mb-8 md:mb-10 max-w-2xl mx-auto">
                             Join thousands of job seekers who've landed interviews with our AI-powered cover letters.
                         </p>
                         <Link href="#generator">

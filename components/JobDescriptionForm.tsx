@@ -678,11 +678,11 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
             <style jsx>{progressBarStyles}</style>
             <Card className="w-full max-w-none mx-auto glass-card-strong rounded-2xl border-0">
                 <CardHeader className="text-left pb-4">
-                    <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <CardTitle className="text-lg font-semibold text-slate-900">
                             Generate Cover Letter
                         </CardTitle>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                             {/* Resume Status Indicator */}
                             {hasResumeAttached && (
                                 <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
@@ -736,8 +736,8 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                         <div className="relative">
                             <Textarea
                                 id="jobDescription"
-                                rows={20}
-                                className="resize-none text-base min-h-[500px] w-full"
+                                rows={12}
+                                className="resize-none text-sm sm:text-base min-h-[300px] sm:min-h-[400px] md:min-h-[500px] w-full"
                                 placeholder={
                                     "Paste the complete job description here...\n\n" +
                                     "Example:\n" +
@@ -916,33 +916,34 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
 
             {/* Edit Cover Letter Modal - Higher z-index to appear above PDF Preview */}
             {isEditingLetter && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 10000 }}>
-                    <div className="bg-white rounded-lg max-w-5xl w-full max-h-[95vh] flex flex-col shadow-2xl">
-                        <div className="flex items-center justify-between p-6 border-b">
-                            <h3 className="text-xl font-semibold text-gray-900">Edit Cover Letter</h3>
-                            <div className="flex items-center space-x-3">
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4" style={{ zIndex: 10000 }}>
+                    <div className="bg-white rounded-lg sm:rounded-xl w-full max-w-5xl max-h-[98vh] sm:max-h-[95vh] flex flex-col shadow-2xl">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-6 border-b gap-3">
+                            <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Edit Cover Letter</h3>
+                            <div className="flex items-center gap-2 sm:space-x-3">
                                 <Button
                                     onClick={() => generatePdfFromText(editableLetter, editableRecipientName, editableCompany, editablePosition, editableSubject)}
                                     disabled={isPdfGenerating}
-                                    className="bg-green-600 text-white hover:bg-green-700"
+                                    className="bg-green-600 text-white hover:bg-green-700 text-xs sm:text-sm flex-1 sm:flex-none"
                                 >
                                     {isPdfGenerating ? 'Recompiling...' : 'Recompile & Preview'}
                                 </Button>
                                 <Button
                                     variant="outline"
                                     onClick={() => setIsEditingLetter(false)}
+                                    className="text-xs sm:text-sm"
                                 >
                                     Cancel
                                 </Button>
                             </div>
                         </div>
-                        <div className="flex-1 p-6 overflow-auto">
-                            <div className="space-y-6">
+                        <div className="flex-1 p-3 sm:p-6 overflow-auto">
+                            <div className="space-y-4 sm:space-y-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Recipient Information
                                     </label>
-                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                                         <div>
                                             <label className="block text-xs font-medium text-gray-600 mb-1">To (Recipient)</label>
                                             <Input
@@ -970,7 +971,7 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                                             />
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         <div>
                                             <label className="block text-xs font-medium text-gray-600 mb-1">Position</label>
                                             <Input
@@ -1007,7 +1008,7 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                                     <Textarea
                                         value={editableLetter}
                                         onChange={(e) => setEditableLetter(e.target.value)}
-                                        className="w-full min-h-[500px] resize-none text-sm leading-relaxed"
+                                        className="w-full min-h-[300px] sm:min-h-[400px] md:min-h-[500px] resize-none text-sm leading-relaxed"
                                         placeholder="Edit your cover letter content here..."
                                     />
                                     <p className="text-xs text-gray-500 mt-2">
@@ -1023,26 +1024,26 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
             {/* PDF Preview Modal - Modern Design - Properly outside Card for full page blur */}
             {showPdfPreview && pdfUrl && (
                 <div className="fixed inset-0 bg-black/85 backdrop-blur-xl backdrop-saturate-150 flex items-center justify-center p-2 sm:p-4" style={{ zIndex: 9999, backdropFilter: 'blur(20px) saturate(180%)' }}>
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[96vh] sm:max-h-[95vh] flex flex-col overflow-hidden border border-gray-200">
+                    <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-6xl max-h-[98vh] sm:max-h-[95vh] flex flex-col overflow-hidden border border-gray-200">
                         {/* Modern Header */}
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-green-50 to-emerald-50">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-6 border-b border-gray-100 bg-gradient-to-r from-green-50 to-emerald-50 gap-3">
                             <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                                    <Zap className="h-5 w-5 text-white" />
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                                    <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-900">Your Cover Letter</h3>
-                                    <p className="text-sm text-gray-500">AI-generated • Professional format</p>
+                                    <h3 className="text-base sm:text-xl font-bold text-gray-900">Your Cover Letter</h3>
+                                    <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">AI-generated • Professional format</p>
                                 </div>
                             </div>
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center justify-end gap-2 sm:space-x-3">
                                 <Button
                                     onClick={() => setIsEditingLetter(true)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3"
                                     size="sm"
                                 >
-                                    <PenTool className="h-4 w-4 mr-2" />
-                                    Edit Letter
+                                    <PenTool className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                                    <span className="hidden sm:inline">Edit Letter</span>
                                 </Button>
                                 <Button
                                     onClick={() => {
@@ -1053,11 +1054,11 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                                         a.click()
                                         document.body.removeChild(a)
                                     }}
-                                    className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                                    className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3"
                                     size="sm"
                                 >
-                                    <Download className="h-4 w-4 mr-2" />
-                                    Download PDF
+                                    <Download className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                                    <span className="hidden sm:inline">Download PDF</span>
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -1076,14 +1077,14 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
 
                         {/* PDF Viewer Container */}
                         <div className="flex-1 bg-gray-50 p-2 sm:p-4 relative overflow-hidden">
-                            <div className="relative w-full h-full bg-white rounded-xl shadow-inner border border-gray-200 overflow-hidden">
+                            <div className="relative w-full h-full bg-white rounded-lg sm:rounded-xl shadow-inner border border-gray-200 overflow-hidden">
                                 <iframe
                                     src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
                                     className="w-full h-full border-0"
                                     title="Cover Letter Preview"
                                     style={{
-                                        height: 'calc(96vh - 180px)',
-                                        minHeight: '400px'
+                                        height: 'calc(98vh - 140px)',
+                                        minHeight: '300px'
                                     }}
                                 />
                             </div>

@@ -69,22 +69,22 @@ export default function LoginPage() {
             </div>
             <Header />
 
-            <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="w-full max-w-md">
                     {/* Back Button */}
                     <Link
                         href="/"
-                        className="inline-flex items-center space-x-2 text-secondary-600 hover:text-primary-600 mb-8"
+                        className="inline-flex items-center space-x-2 text-secondary-600 hover:text-primary-600 mb-6 sm:mb-8"
                     >
                         <ArrowLeft className="h-4 w-4" />
-                        <span>Back to home</span>
+                        <span className="text-sm sm:text-base">Back to home</span>
                     </Link>
 
                     {/* Form */}
                     <div className="card">
-                        <div className="text-center mb-8">
-                            <h1 className="text-2xl font-bold text-secondary-900">Welcome back</h1>
-                            <p className="text-secondary-600 mt-2">Sign in to your account</p>
+                        <div className="text-center mb-6 sm:mb-8">
+                            <h1 className="text-xl sm:text-2xl font-bold text-secondary-900">Welcome back</h1>
+                            <p className="text-secondary-600 mt-2 text-sm sm:text-base">Sign in to your account</p>
                         </div>
 
                         {error && (
@@ -98,7 +98,7 @@ export default function LoginPage() {
                             type="button"
                             onClick={handleGoogleSignIn}
                             disabled={isOAuthLoading || isLoading}
-                            className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="w-full flex items-center justify-center px-4 py-3.5 sm:py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                         >
                             {isOAuthLoading ? (
                                 <div className="w-5 h-5 border-2 border-gray-300 border-t-primary-600 rounded-full animate-spin mr-3"></div>

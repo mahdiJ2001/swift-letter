@@ -139,82 +139,84 @@ export default function Header() {
 
                 {/* Mobile Navigation */}
                 {isMenuOpen && (
-                    <div className="md:hidden border-t border-gray-200 py-4 space-y-4">
+                    <div className="md:hidden border-t border-gray-200 py-4 space-y-2 animate-in slide-in-from-top duration-200">
                         <Link
                             href="/"
-                            className="block text-gray-600 hover:text-green-600 font-medium transition-colors px-2 py-1"
+                            className="block text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 font-medium transition-all duration-200 px-4 py-3 rounded-lg"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Generator
                         </Link>
                         <Link
                             href="/profile"
-                            className="block text-gray-600 hover:text-green-600 font-medium transition-colors px-2 py-1"
+                            className="block text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 font-medium transition-all duration-200 px-4 py-3 rounded-lg"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Profile
                         </Link>
                         <Link
                             href="/pricing"
-                            className="block text-gray-600 hover:text-green-600 font-medium transition-colors px-2 py-1"
+                            className="block text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 font-medium transition-all duration-200 px-4 py-3 rounded-lg"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Pricing
                         </Link>
                         <Link
                             href="/feedback"
-                            className="block text-gray-600 hover:text-green-600 font-medium transition-colors px-2 py-1"
+                            className="block text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 font-medium transition-all duration-200 px-4 py-3 rounded-lg"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Feedback
                         </Link>
-                        {user ? (
-                            <>
-                                {credits !== null && (
-                                    <div className="flex items-center space-x-2 px-2 py-2">
-                                        <Star className="h-4 w-4 text-green-600" />
-                                        <span className="text-sm font-medium text-green-700">Credits: {credits}</span>
-                                    </div>
-                                )}
-                                <Button
-                                    variant="ghost"
-                                    className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-                                    onClick={() => {
-                                        signOut()
-                                        setIsMenuOpen(false)
-                                    }}
-                                >
-                                    <LogOut className="h-4 w-4 mr-2" />
-                                    Sign Out
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <Button
-                                    variant="ghost"
-                                    className="w-full justify-start"
-                                    asChild
-                                >
-                                    <Link
-                                        href="/auth/login"
-                                        onClick={() => setIsMenuOpen(false)}
+                        <div className="border-t border-gray-100 my-2 pt-2">
+                            {user ? (
+                                <>
+                                    {credits !== null && (
+                                        <div className="flex items-center space-x-2 px-4 py-3 bg-emerald-50 rounded-lg mx-2 mb-2">
+                                            <Star className="h-5 w-5 text-emerald-600" />
+                                            <span className="text-sm font-semibold text-emerald-700">Credits: {credits}</span>
+                                        </div>
+                                    )}
+                                    <Button
+                                        variant="ghost"
+                                        className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 py-3 px-4"
+                                        onClick={() => {
+                                            signOut()
+                                            setIsMenuOpen(false)
+                                        }}
                                     >
-                                        Sign In
-                                    </Link>
-                                </Button>
-                                <Button
-                                    className="w-full"
-                                    asChild
-                                >
-                                    <Link
-                                        href="/auth/signup"
-                                        onClick={() => setIsMenuOpen(false)}
+                                        <LogOut className="h-5 w-5 mr-3" />
+                                        Sign Out
+                                    </Button>
+                                </>
+                            ) : (
+                                <div className="space-y-2 px-2">
+                                    <Button
+                                        variant="outline"
+                                        className="w-full justify-center py-3 text-base"
+                                        asChild
                                     >
-                                        Get Started
-                                    </Link>
-                                </Button>
-                            </>
-                        )}
+                                        <Link
+                                            href="/auth/login"
+                                            onClick={() => setIsMenuOpen(false)}
+                                        >
+                                            Sign In
+                                        </Link>
+                                    </Button>
+                                    <Button
+                                        className="w-full justify-center py-3 text-base bg-emerald-600 hover:bg-emerald-700"
+                                        asChild
+                                    >
+                                        <Link
+                                            href="/auth/signup"
+                                            onClick={() => setIsMenuOpen(false)}
+                                        >
+                                            Get Started
+                                        </Link>
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

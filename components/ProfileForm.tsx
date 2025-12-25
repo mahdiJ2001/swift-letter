@@ -272,7 +272,6 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
             }
 
             onProfileUpdate(convertedProfile)
-
         } catch (error: any) {
             setError(error.message)
         } finally {
@@ -284,37 +283,37 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
         <div className="space-y-8">
             {/* Quick Setup Card */}
             <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
-                <CardHeader>
-                    <CardTitle className="flex items-center space-x-3 text-xl">
-                        <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <Sparkles className="h-5 w-5 text-white" />
+                <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="flex items-center space-x-2 sm:space-x-3 text-lg sm:text-xl">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                         </div>
                         <span className="text-gray-900">Quick Setup</span>
                     </CardTitle>
-                    <CardDescription className="text-gray-600 text-base">
+                    <CardDescription className="text-gray-600 text-sm sm:text-base mt-1">
                         Upload your resume PDF to auto-fill your profile fields, then customize as needed
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="space-y-6">
+                <CardContent className="p-4 sm:p-6 pt-0">
+                    <div className="space-y-4 sm:space-y-6">
                         {/* PDF Upload Section */}
                         <div>
-                            <label htmlFor="resume-pdf-upload" className={`group relative flex justify-center px-8 py-10 border-2 border-dashed rounded-xl transition-all duration-300 ${isUploadingResume
+                            <label htmlFor="resume-pdf-upload" className={`group relative flex justify-center px-4 sm:px-8 py-6 sm:py-10 border-2 border-dashed rounded-lg sm:rounded-xl transition-all duration-300 ${isUploadingResume
                                 ? 'border-green-400 bg-green-50/50 cursor-not-allowed'
                                 : 'border-green-300 hover:border-green-400 cursor-pointer bg-white hover:bg-green-50/30'
                                 }`}>
                                 <div className="space-y-2 text-center">
                                     {isUploadingResume ? (
-                                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+                                        <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-green-600 mx-auto"></div>
                                     ) : (
-                                        <Upload className="mx-auto h-12 w-12 text-green-500 group-hover:text-green-600 transition-colors" />
+                                        <Upload className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-green-500 group-hover:text-green-600 transition-colors" />
                                     )}
-                                    <div className="flex text-lg font-medium text-gray-700">
+                                    <div className="flex text-base sm:text-lg font-medium text-gray-700">
                                         <span className={`${isUploadingResume ? 'text-green-700' : 'text-green-600 group-hover:text-green-700'} transition-colors`}>
                                             {isUploadingResume ? 'Processing PDF...' : 'Upload your resume'}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-gray-500">PDF files only, max 10MB</p>
+                                    <p className="text-xs sm:text-sm text-gray-500">PDF files only, max 10MB</p>
                                     <input
                                         id="resume-pdf-upload"
                                         name="resume-pdf-upload"
@@ -333,29 +332,29 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
 
             {/* Main Profile Form */}
             <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-white">
-                <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-lg border-b border-gray-200">
-                    <CardTitle className="flex items-center space-x-3 text-xl">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <User className="h-5 w-5 text-white" />
+                <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-lg border-b border-gray-200 p-4 sm:p-6">
+                    <CardTitle className="flex items-center space-x-2 sm:space-x-3 text-lg sm:text-xl">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                            <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                         </div>
                         <span className="text-gray-900">Profile Information</span>
                     </CardTitle>
-                    <CardDescription className="text-gray-600 text-base mt-2">
+                    <CardDescription className="text-gray-600 text-sm sm:text-base mt-2">
                         Fill in your details to generate personalized cover letters that match your background
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="p-8">
-                    <form onSubmit={handleSubmit} className="space-y-8">
+                <CardContent className="p-4 sm:p-8">
+                    <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
                         {/* Personal Information */}
-                        <div className="space-y-6">
-                            <div className="flex items-center space-x-2 pb-3 border-b-2 border-gray-100">
-                                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                    <User className="h-4 w-4 text-white" />
+                        <div className="space-y-4 sm:space-y-6">
+                            <div className="flex items-center space-x-2 pb-2 sm:pb-3 border-b-2 border-gray-100">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-md sm:rounded-lg flex items-center justify-center">
+                                    <User className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Personal Information</h3>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         <User className="inline h-4 w-4 mr-1" />
@@ -422,16 +421,16 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         </div>
 
                         {/* Professional Links */}
-                        <div className="space-y-6">
-                            <div className="flex items-center space-x-2 pb-3 border-b-2 border-gray-100">
-                                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                                    <Link className="h-4 w-4 text-white" />
+                        <div className="space-y-4 sm:space-y-6">
+                            <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b-2 border-gray-100">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-md sm:rounded-lg flex items-center justify-center">
+                                    <Link className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900">Professional Links</h3>
-                                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Optional</span>
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Professional Links</h3>
+                                <span className="text-xs sm:text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Optional</span>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                 <div>
                                     <label className="block text-xs text-gray-500 mb-1">LinkedIn</label>
                                     <Input
@@ -471,16 +470,16 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         </div>
 
                         {/* Skills Section */}
-                        <div className="space-y-6">
-                            <div className="flex items-center space-x-2 pb-3 border-b-2 border-gray-100">
-                                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                                    <Code className="h-4 w-4 text-white" />
+                        <div className="space-y-4 sm:space-y-6">
+                            <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b-2 border-gray-100">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-md sm:rounded-lg flex items-center justify-center">
+                                    <Code className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900">Skills</h3>
-                                <span className="text-sm text-red-500 bg-red-50 px-2 py-1 rounded-full">Required</span>
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Skills</h3>
+                                <span className="text-xs sm:text-sm text-red-500 bg-red-50 px-2 py-1 rounded-full">Required</span>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                                     Technical and soft skills
                                 </label>
                                 <Textarea
@@ -488,24 +487,24 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                     value={formData.skills}
                                     onChange={handleChange}
                                     placeholder="JavaScript, React, Node.js, Python, SQL, Project Management, Team Leadership..."
-                                    rows={4}
-                                    className="resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    rows={3}
+                                    className="resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base"
                                     required
                                 />
                             </div>
                         </div>
 
                         {/* Work Experience Section */}
-                        <div className="space-y-6">
-                            <div className="flex items-center space-x-2 pb-3 border-b-2 border-gray-100">
-                                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                                    <Briefcase className="h-4 w-4 text-white" />
+                        <div className="space-y-4 sm:space-y-6">
+                            <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b-2 border-gray-100">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-md sm:rounded-lg flex items-center justify-center">
+                                    <Briefcase className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900">Work Experience</h3>
-                                <span className="text-sm text-red-500 bg-red-50 px-2 py-1 rounded-full">Required</span>
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Work Experience</h3>
+                                <span className="text-xs sm:text-sm text-red-500 bg-red-50 px-2 py-1 rounded-full">Required</span>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                                     Your professional work history
                                 </label>
                                 <Textarea
@@ -513,24 +512,24 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                     value={formData.experiences}
                                     onChange={handleChange}
                                     placeholder="Senior Software Engineer at Tech Corp (2020-2024)&#10;- Led development of web applications serving 100k+ users&#10;- Implemented CI/CD pipelines reducing deployment time by 50%&#10;&#10;Software Engineer at StartupXYZ (2018-2020)&#10;- Developed RESTful APIs and microservices&#10;- Collaborated with cross-functional teams"
-                                    rows={6}
-                                    className="resize-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                    rows={5}
+                                    className="resize-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm sm:text-base"
                                     required
                                 />
                             </div>
                         </div>
 
                         {/* Projects Section */}
-                        <div className="space-y-6">
-                            <div className="flex items-center space-x-2 pb-3 border-b-2 border-gray-100">
-                                <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center">
-                                    <FileText className="h-4 w-4 text-white" />
+                        <div className="space-y-4 sm:space-y-6">
+                            <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b-2 border-gray-100">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-md sm:rounded-lg flex items-center justify-center">
+                                    <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900">Projects</h3>
-                                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Optional</span>
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Projects</h3>
+                                <span className="text-xs sm:text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Optional</span>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                                     Notable projects and achievements
                                 </label>
                                 <Textarea
@@ -538,23 +537,23 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                     value={formData.projects}
                                     onChange={handleChange}
                                     placeholder="E-commerce Platform (2023)&#10;- Built full-stack application using React and Node.js&#10;- Integrated payment processing and inventory management&#10;&#10;Task Management App (2022)&#10;- Developed mobile app using React Native&#10;- Implemented real-time collaboration features"
-                                    rows={6}
-                                    className="resize-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                                    rows={5}
+                                    className="resize-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm sm:text-base"
                                 />
                             </div>
                         </div>
 
                         {/* Education Section */}
-                        <div className="space-y-6">
-                            <div className="flex items-center space-x-2 pb-3 border-b-2 border-gray-100">
-                                <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center">
-                                    <GraduationCap className="h-4 w-4 text-white" />
+                        <div className="space-y-4 sm:space-y-6">
+                            <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b-2 border-gray-100">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-pink-500 to-pink-600 rounded-md sm:rounded-lg flex items-center justify-center">
+                                    <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900">Education</h3>
-                                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Optional</span>
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Education</h3>
+                                <span className="text-xs sm:text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Optional</span>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                                     Academic background and qualifications
                                 </label>
                                 <Textarea
@@ -562,23 +561,23 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                     value={formData.education}
                                     onChange={handleChange}
                                     placeholder="Bachelor of Science in Computer Science&#10;University of Technology, 2018&#10;GPA: 3.8/4.0&#10;Relevant Coursework: Data Structures, Algorithms, Database Systems"
-                                    rows={4}
-                                    className="resize-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                    rows={3}
+                                    className="resize-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-sm sm:text-base"
                                 />
                             </div>
                         </div>
 
                         {/* Certifications Section */}
-                        <div className="space-y-6">
-                            <div className="flex items-center space-x-2 pb-3 border-b-2 border-gray-100">
-                                <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center">
-                                    <Award className="h-4 w-4 text-white" />
+                        <div className="space-y-4 sm:space-y-6">
+                            <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b-2 border-gray-100">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-md sm:rounded-lg flex items-center justify-center">
+                                    <Award className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900">Certifications</h3>
-                                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Optional</span>
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Certifications</h3>
+                                <span className="text-xs sm:text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Optional</span>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                                     Professional certifications and licenses
                                 </label>
                                 <Textarea
@@ -587,22 +586,22 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                     onChange={handleChange}
                                     placeholder="AWS Certified Solutions Architect (2023)&#10;Google Cloud Professional Developer (2022)&#10;Scrum Master Certification (2021)"
                                     rows={3}
-                                    className="resize-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                                    className="resize-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm sm:text-base"
                                 />
                             </div>
                         </div>
 
                         {/* Languages Section */}
-                        <div className="space-y-6">
-                            <div className="flex items-center space-x-2 pb-3 border-b-2 border-gray-100">
-                                <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
-                                    <Globe className="h-4 w-4 text-white" />
+                        <div className="space-y-4 sm:space-y-6">
+                            <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b-2 border-gray-100">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-md sm:rounded-lg flex items-center justify-center">
+                                    <Globe className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900">Languages</h3>
-                                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Optional</span>
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Languages</h3>
+                                <span className="text-xs sm:text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Optional</span>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                                     Languages you speak and proficiency levels
                                 </label>
                                 <Textarea
@@ -611,51 +610,51 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                     onChange={handleChange}
                                     placeholder="English (Native)&#10;Spanish (Conversational)&#10;French (Basic)"
                                     rows={3}
-                                    className="resize-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    className="resize-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base"
                                 />
                             </div>
                         </div>
 
                         {/* Error and Success Messages */}
                         {error && (
-                            <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-6 py-4 rounded-r-lg shadow-sm">
+                            <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 sm:px-6 py-3 sm:py-4 rounded-r-lg shadow-sm">
                                 <div className="flex items-center">
-                                    <div className="w-5 h-5 bg-red-400 rounded-full flex items-center justify-center mr-3">
+                                    <div className="w-5 h-5 bg-red-400 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
                                         <span className="text-white text-xs">!</span>
                                     </div>
-                                    <span className="font-medium">{error}</span>
+                                    <span className="font-medium text-sm sm:text-base">{error}</span>
                                 </div>
                             </div>
                         )}
 
                         {success && (
-                            <div className="bg-green-50 border-l-4 border-green-400 text-green-700 px-6 py-4 rounded-r-lg shadow-sm">
+                            <div className="bg-green-50 border-l-4 border-green-400 text-green-700 px-4 sm:px-6 py-3 sm:py-4 rounded-r-lg shadow-sm">
                                 <div className="flex items-center">
-                                    <div className="w-5 h-5 bg-green-400 rounded-full flex items-center justify-center mr-3">
+                                    <div className="w-5 h-5 bg-green-400 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
                                         <span className="text-white text-xs">✓</span>
                                     </div>
-                                    <span className="font-medium">{success}</span>
+                                    <span className="font-medium text-sm sm:text-base">{success}</span>
                                 </div>
                             </div>
                         )}
 
                         {/* Submit Button */}
-                        <div className="flex justify-center pt-6 border-t border-gray-200">
+                        <div className="flex justify-center pt-4 sm:pt-6 border-t border-gray-200">
                             <Button
                                 type="submit"
                                 disabled={isLoading}
                                 size="lg"
-                                className="min-w-[200px] bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                                className="w-full sm:w-auto sm:min-w-[200px] bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 sm:px-8 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                             >
                                 {isLoading ? (
                                     <>
-                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                                        Saving Profile...
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2 sm:mr-3"></div>
+                                        <span className="text-sm sm:text-base">Saving Profile...</span>
                                     </>
                                 ) : (
                                     <>
-                                        <Save className="h-5 w-5 mr-3" />
-                                        Save Profile
+                                        <Save className="h-5 w-5 mr-2 sm:mr-3" />
+                                        <span className="text-sm sm:text-base">Save Profile</span>
                                     </>
                                 )}
                             </Button>

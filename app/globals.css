@@ -368,3 +368,126 @@ body {
 .animate-scroll:hover {
     animation-play-state: paused;
 }
+
+/* Mobile-specific responsive utilities */
+@media (max-width: 640px) {
+
+    /* Reduce floating orb sizes and hide some on mobile for better performance */
+    .floating-orb-1 {
+        width: 250px;
+        height: 250px;
+        top: -80px;
+        right: -80px;
+    }
+
+    .floating-orb-2 {
+        width: 200px;
+        height: 200px;
+        bottom: 5%;
+        left: -80px;
+    }
+
+    .floating-orb-3 {
+        display: none;
+    }
+
+    /* Increase grid pattern spacing on mobile */
+    .grid-pattern {
+        background-size: 24px 24px;
+        opacity: 0.3;
+    }
+
+    /* Reduce glass effect blur on mobile for performance */
+    .glass-card,
+    .glass-card-strong {
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    /* Better touch targets on mobile */
+    .btn-primary,
+    .btn-secondary {
+        min-height: 48px;
+    }
+
+    /* Card padding adjustments */
+    .card {
+        @apply p-4;
+    }
+
+    /* Reduce premium badge hover effect on mobile */
+    .premium-badge:hover {
+        transform: none;
+    }
+}
+
+/* Improved touch feedback for buttons */
+@media (hover: none) {
+
+    .btn-primary:active,
+    .btn-secondary:active {
+        transform: scale(0.98);
+    }
+
+    .premium-badge:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+/* Better input focus on mobile */
+@media (max-width: 640px) {
+    .input-field:focus {
+        font-size: 16px;
+        /* Prevents iOS zoom on focus */
+    }
+
+    input,
+    textarea,
+    select {
+        font-size: 16px;
+        /* Prevents iOS zoom */
+    }
+}
+
+/* Animation for mobile menu */
+.animate-in {
+    animation: slideIn 0.2s ease-out;
+}
+
+.slide-in-from-top {
+    animation: slideInFromTop 0.2s ease-out;
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive text utilities */
+.text-balance {
+    text-wrap: balance;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}

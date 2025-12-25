@@ -91,21 +91,21 @@ export default function PricingPage() {
 
             <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
                 {/* Header */}
-                <div className="text-center mb-16">
-                    <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-full mb-6">
+                <div className="text-center mb-8 sm:mb-12 md:mb-16 px-2">
+                    <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-full mb-4 sm:mb-6">
                         <Sparkles className="h-4 w-4 text-emerald-600" />
                         <span className="text-sm font-medium text-emerald-700">Simple, transparent pricing</span>
                     </div>
-                    <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-3 sm:mb-4 tracking-tight">
                         Choose your plan
                     </h1>
-                    <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                    <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
                         Start with 3 free cover letters. Upgrade anytime to generate more.
                     </p>
                 </div>
 
                 {/* Pricing Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-stretch">
                     {pricingPlans.map((plan) => {
                         const Icon = plan.icon
                         const isSelected = selectedPlan === plan.id
@@ -114,9 +114,9 @@ export default function PricingPage() {
                             <div
                                 key={plan.id}
                                 className={`
-                                    relative bg-white rounded-2xl p-8 transition-all duration-300 flex flex-col
+                                    relative bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 transition-all duration-300 flex flex-col
                                     ${plan.popular
-                                        ? 'ring-2 ring-violet-500 shadow-xl shadow-violet-500/10 scale-[1.02] md:scale-105'
+                                        ? 'ring-2 ring-violet-500 shadow-xl shadow-violet-500/10 sm:scale-105 order-first sm:order-none'
                                         : 'ring-1 ring-slate-200 shadow-lg hover:shadow-xl hover:ring-slate-300'
                                     }
                                 `}
@@ -132,9 +132,9 @@ export default function PricingPage() {
                                 )}
 
                                 {/* Plan Header */}
-                                <div className="text-center mb-8">
+                                <div className="text-center mb-6 sm:mb-8">
                                     <div className={`
-                                        w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4
+                                        w-12 h-12 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4
                                         ${plan.popular
                                             ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
                                             : plan.color === 'emerald'
@@ -142,16 +142,16 @@ export default function PricingPage() {
                                                 : 'bg-amber-100 text-amber-600'
                                         }
                                     `}>
-                                        <Icon className="h-7 w-7" />
+                                        <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
                                     </div>
-                                    <h3 className="text-xl font-bold text-slate-900 mb-1">{plan.name}</h3>
+                                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-1">{plan.name}</h3>
                                     <p className="text-sm text-slate-500">{plan.credits} cover letters</p>
                                 </div>
 
                                 {/* Price */}
-                                <div className="text-center mb-8">
+                                <div className="text-center mb-6 sm:mb-8">
                                     <div className="flex items-baseline justify-center gap-1">
-                                        <span className="text-5xl font-bold text-slate-900">${plan.price}</span>
+                                        <span className="text-4xl sm:text-5xl font-bold text-slate-900">${plan.price}</span>
                                     </div>
                                     <p className="text-sm text-slate-500 mt-2">
                                         ${plan.pricePerLetter} per letter
@@ -159,9 +159,9 @@ export default function PricingPage() {
                                 </div>
 
                                 {/* Features */}
-                                <ul className="space-y-4 mb-8 flex-grow">
+                                <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex-grow">
                                     {plan.features.map((feature, index) => (
-                                        <li key={index} className="flex items-start gap-3">
+                                        <li key={index} className="flex items-start gap-2 sm:gap-3">
                                             <div className={`
                                                 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5
                                                 ${plan.popular
@@ -183,7 +183,7 @@ export default function PricingPage() {
                                     onClick={() => handleSelectPlan(plan.id)}
                                     disabled={isLoading && isSelected}
                                     className={`
-                                        w-full py-3.5 px-6 rounded-xl font-semibold text-base transition-all duration-200
+                                        w-full py-3 sm:py-3.5 px-6 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base transition-all duration-200
                                         flex items-center justify-center gap-2 mt-auto
                                         ${plan.popular
                                             ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-700 hover:to-purple-700 shadow-lg shadow-violet-500/25'
@@ -207,11 +207,11 @@ export default function PricingPage() {
                 </div>
 
                 {/* Trust Section */}
-                <div className="mt-16 text-center">
-                    <p className="text-sm text-slate-500 mb-4">
+                <div className="mt-10 sm:mt-16 text-center px-2">
+                    <p className="text-xs sm:text-sm text-slate-500 mb-3 sm:mb-4">
                         🔒 Secure payment powered by Stripe • Cancel anytime • No hidden fees
                     </p>
-                    <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-slate-400">
+                    <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 sm:gap-6 md:gap-8 text-slate-400">
                         <div className="flex items-center gap-2">
                             <Check className="h-4 w-4 text-emerald-500" />
                             <span className="text-sm">Instant delivery</span>
@@ -228,20 +228,20 @@ export default function PricingPage() {
                 </div>
 
                 {/* FAQ Section */}
-                <div className="mt-24">
-                    <h2 className="text-2xl font-bold text-slate-900 text-center mb-8">
+                <div className="mt-16 sm:mt-24 px-2">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 text-center mb-6 sm:mb-8">
                         Frequently Asked Questions
                     </h2>
-                    <div className="max-w-3xl mx-auto space-y-4">
-                        <div className="bg-white rounded-xl p-6 ring-1 ring-slate-200">
-                            <h3 className="font-semibold text-slate-900 mb-2">Do I get free credits to try?</h3>
-                            <p className="text-slate-600 text-sm">
+                    <div className="max-w-3xl mx-auto space-y-3 sm:space-y-4">
+                        <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 ring-1 ring-slate-200">
+                            <h3 className="font-semibold text-slate-900 mb-2 text-sm sm:text-base">Do I get free credits to try?</h3>
+                            <p className="text-slate-600 text-xs sm:text-sm">
                                 Yes! Every new user gets 3 free cover letters to try the service before purchasing.
                             </p>
                         </div>
-                        <div className="bg-white rounded-xl p-6 ring-1 ring-slate-200">
-                            <h3 className="font-semibold text-slate-900 mb-2">Do credits expire?</h3>
-                            <p className="text-slate-600 text-sm">
+                        <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 ring-1 ring-slate-200">
+                            <h3 className="font-semibold text-slate-900 mb-2 text-sm sm:text-base">Do credits expire?</h3>
+                            <p className="text-slate-600 text-xs sm:text-sm">
                                 No, your credits never expire. Use them whenever you need.
                             </p>
                         </div>

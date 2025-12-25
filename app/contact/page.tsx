@@ -78,26 +78,26 @@ export default function ContactPage() {
         <div className="min-h-screen flex flex-col premium-bg">
             <Header />
 
-            <main className="flex-grow container mx-auto px-4 py-20">
-                <div className="text-center mb-12">
-                    <h1 className="text-5xl font-bold bg-gradient-to-r from-green-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
+            <main className="flex-grow container mx-auto px-4 py-12 sm:py-20">
+                <div className="text-center mb-8 sm:mb-12">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3 sm:mb-4">
                         Get in Touch
                     </h1>
-                    <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                    <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
                         Have a question, suggestion, or need help? We'd love to hear from you.
                     </p>
                 </div>
 
                 {/* Founder Contact Card */}
-                <div className="max-w-xl mx-auto mb-12">
+                <div className="max-w-xl mx-auto mb-8 sm:mb-12">
                     <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100">
-                        <CardContent className="p-8">
+                        <CardContent className="p-6 sm:p-8">
                             <div className="text-center">
-                                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                                    <MessageSquare className="h-8 w-8 text-white" />
+                                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
+                                    <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                                 </div>
-                                <h2 className="text-xl font-semibold text-gray-900 mb-2">Talk to the Founder</h2>
-                                <p className="text-gray-600 mb-4">Get direct access to Mahdi, the founder of Swift Letter</p>
+                                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Talk to the Founder</h2>
+                                <p className="text-gray-600 mb-4 text-sm sm:text-base">Get direct access to Mahdi, the founder of Swift Letter</p>
                                 <a
                                     href="https://x.com/mahdi_builds"
                                     target="_blank"
@@ -115,19 +115,19 @@ export default function ContactPage() {
                 {/* Contact Form */}
                 <div className="max-w-xl mx-auto">
                     <Card className="shadow-xl border-0 bg-gradient-to-br from-green-50 via-emerald-50 to-green-100">
-                        <CardHeader className="text-center pb-8">
-                            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                                <Mail className="h-8 w-8 text-white" />
+                        <CardHeader className="text-center pb-4 sm:pb-8 px-4 sm:px-6">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
+                                <Mail className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                             </div>
-                            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">
+                            <CardTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">
                                 Send us a Message
                             </CardTitle>
-                            <CardDescription className="text-base text-gray-600">
+                            <CardDescription className="text-sm sm:text-base text-gray-600">
                                 Fill out the form below and we'll get back to you within 24 hours.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="px-8 pb-8">
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                        <CardContent className="px-4 sm:px-8 pb-6 sm:pb-8">
+                            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -219,22 +219,22 @@ export default function ContactPage() {
                                 )}
 
                                 {/* Submit Button */}
-                                <div className="flex justify-center pt-6 border-t border-green-200">
+                                <div className="flex justify-center pt-4 sm:pt-6 border-t border-green-200">
                                     <Button
                                         type="submit"
                                         disabled={isSubmitting}
                                         size="lg"
-                                        className="min-w-[200px] bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                        className="w-full sm:w-auto sm:min-w-[200px] bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 sm:px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm sm:text-base"
                                     >
                                         {isSubmitting ? (
                                             <>
-                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
-                                                Sending Message...
+                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 sm:mr-3"></div>
+                                                <span>Sending...</span>
                                             </>
                                         ) : (
                                             <>
-                                                <Send className="h-5 w-5 mr-3" />
-                                                Send Message
+                                                <Send className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3" />
+                                                <span>Send Message</span>
                                             </>
                                         )}
                                     </Button>
