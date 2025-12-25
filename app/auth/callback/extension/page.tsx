@@ -36,7 +36,7 @@ function ExtensionAuthCallbackContent() {
 
             // Store in localStorage with a special key the extension can read
             localStorage.setItem('swift_letter_extension_auth', JSON.stringify(authData))
-            
+
             // Also try to communicate directly with the extension
             try {
                 // Send message to any listening extension
@@ -51,7 +51,7 @@ function ExtensionAuthCallbackContent() {
                         email: user.email
                     }
                 }, '*')
-                
+
                 // Also try Chrome extension messaging if available
                 if (window.chrome && window.chrome.runtime) {
                     window.chrome.runtime.sendMessage({
@@ -71,7 +71,7 @@ function ExtensionAuthCallbackContent() {
             }
 
             setStatus('success')
-            
+
             // Auto-close tab after a short delay to improve UX
             setTimeout(() => {
                 try {

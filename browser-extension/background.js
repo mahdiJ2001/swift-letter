@@ -2,7 +2,7 @@
 
 // Configuration - Dynamically get from website
 let CONFIG = {
-    API_BASE_URL: 'http://localhost:3001', // Fallback for development
+    API_BASE_URL: 'http://localhost:3000', // Updated to match current server
     SUPABASE_URL: null,
     SUPABASE_ANON_KEY: null,
     WEBSITE_URL: 'https://swiftletter.online' // Production website URL
@@ -34,7 +34,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
         return true;
     }
-    
+
     if (message.type === 'SWIFT_LETTER_AUTH_SUCCESS') {
         // Store the session data when we get it from auth callback
         chrome.storage.local.set({
@@ -49,7 +49,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }).catch(() => {
                 // Popup might not be open, that's okay
             });
-            
+
             sendResponse({ success: true });
         });
         return true;
@@ -71,7 +71,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 pendingPosition: message.position
             });
         });
-        
+
         sendResponse({ success: true });
         return true;
     }

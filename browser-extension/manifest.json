@@ -21,7 +21,6 @@
         "https://*.swiftletter.online/*",
         "https://swiftletter.online/*",
         "https://www.swiftletter.online/*",
-        "http://localhost:3001/*",
         "http://localhost:3000/*"
     ],
     "action": {

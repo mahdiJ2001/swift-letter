@@ -2,7 +2,7 @@
 
 // Configuration - Dynamically get from website
 let CONFIG = {
-    API_BASE_URL: 'http://localhost:3001', // Fallback for development
+    API_BASE_URL: 'http://localhost:3000', // Updated to match current server
     SUPABASE_URL: null,
     SUPABASE_ANON_KEY: null,
     WEBSITE_URL: 'https://swiftletter.online' // Production website URL
@@ -11,24 +11,35 @@ let CONFIG = {
 // Function to detect environment and set config
 async function detectConfig() {
     try {
-        // Try to get config from the website
-        const response = await fetch(`${CONFIG.WEBSITE_URL}/api/config`, {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
-        });
-        
-        if (response.ok) {
-            const config = await response.json();
-            CONFIG.API_BASE_URL = config.baseUrl || CONFIG.WEBSITE_URL;
+        // First try localhost for development
+        let configResponse;
+        try {
+            configResponse = await fetch('http://localhost:3000/api/config', {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' }
+            });
+        } catch {
+            // If localhost fails, try production
+            configResponse = await fetch(`${CONFIG.WEBSITE_URL}/api/config`, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' }
+            });
+        }
+
+        if (configResponse && configResponse.ok) {
+            const config = await configResponse.json();
+            CONFIG.API_BASE_URL = config.baseUrl || (configResponse.url.includes('localhost') ? 'http://localhost:3000' : CONFIG.WEBSITE_URL);
             CONFIG.SUPABASE_URL = config.supabaseUrl;
             CONFIG.SUPABASE_ANON_KEY = config.supabaseAnonKey;
+            console.log('Config loaded:', CONFIG);
         } else {
             // Fallback to localhost for development
-            CONFIG.API_BASE_URL = 'http://localhost:3001';
+            CONFIG.API_BASE_URL = 'http://localhost:3000';
+            console.log('Using fallback config');
         }
     } catch (error) {
         console.log('Using fallback config for development:', error);
-        // Keep the localhost fallback
+        CONFIG.API_BASE_URL = 'http://localhost:3000';
     }
 }
 
@@ -64,7 +75,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Auth was successful, update state
         state.session = message.session;
         state.user = message.user;
-        
+
         loadUserProfile().then(() => {
             showMainContent();
             showSuccess('Successfully signed in!');
@@ -73,10 +84,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function init() {
-    cacheElements();
-    attachEventListeners();
-    await checkAuthStatus();
-    await loadPendingJobDescription();
+    console.log('Extension initializing...');
+    try {
+        cacheElements();
+        attachEventListeners();
+
+        // Initialize visual feedback for token input
+        if (elements.authTokenInput) {
+            validateTokenInput();
+
+            // Add CSS classes dynamically if they don't exist
+            const style = document.createElement('style');
+            style.textContent = `
+                .token-warning { background-color: #fbbf24 !important; color: #92400e !important; }
+                .token-error { background-color: #ef4444 !important; color: #white !important; }
+                .token-good { background-color: #10b981 !important; color: white !important; }
+                .token-warning:hover, .token-error:hover, .token-good:hover { opacity: 0.9; }
+            `;
+            document.head.appendChild(style);
+        }
+
+        await checkAuthStatus();
+        await loadPendingJobDescription();
+        console.log('Extension initialization complete');
+    } catch (error) {
+        console.error('Extension initialization failed:', error);
+        showError('Extension failed to initialize. Please reload.');
+    }
 }
 
 // Check for job description extracted from content script
@@ -114,6 +148,27 @@ function cacheElements() {
     elements.signupLink = document.getElementById('signupLink');
     elements.authTokenInput = document.getElementById('authTokenInput');
     elements.pasteTokenBtn = document.getElementById('pasteTokenBtn');
+
+    // Add real-time token validation
+    if (elements.authTokenInput) {
+        elements.authTokenInput.addEventListener('input', validateTokenInput);
+        elements.authTokenInput.addEventListener('paste', (e) => {
+            // Delay validation to allow paste to complete
+            setTimeout(validateTokenInput, 100);
+        });
+    }
+
+    // Check if critical elements exist
+    if (!elements.loginBtn) {
+        console.error('Login button not found!');
+    }
+    if (!elements.refreshAuthBtn) {
+        console.error('Refresh auth button not found!');
+    }
+    if (!elements.pasteTokenBtn) {
+        console.error('Paste token button not found!');
+    }
+
     elements.creditsBadge = document.getElementById('creditsBadge');
     elements.resumeStatusCard = document.getElementById('resumeStatusCard');
     elements.resumeStatusIcon = document.getElementById('resumeStatusIcon');
@@ -150,10 +205,30 @@ function cacheElements() {
 
 function attachEventListeners() {
     // Auth
-    elements.loginBtn.addEventListener('click', openLoginPage);
-    elements.refreshAuthBtn.addEventListener('click', handleRefreshAuth);
-    elements.signupLink.addEventListener('click', openSignupPage);
-    elements.pasteTokenBtn.addEventListener('click', handlePasteToken);
+    if (elements.loginBtn) {
+        elements.loginBtn.addEventListener('click', openLoginPage);
+        console.log('Login button listener attached');
+    } else {
+        console.error('Cannot attach login button listener - element not found');
+    }
+
+    if (elements.refreshAuthBtn) {
+        elements.refreshAuthBtn.addEventListener('click', handleRefreshAuth);
+        console.log('Refresh auth button listener attached');
+    } else {
+        console.error('Cannot attach refresh auth button listener - element not found');
+    }
+
+    if (elements.signupLink) {
+        elements.signupLink.addEventListener('click', openSignupPage);
+    }
+
+    if (elements.pasteTokenBtn) {
+        elements.pasteTokenBtn.addEventListener('click', handlePasteToken);
+        console.log('Paste token button listener attached');
+    } else {
+        console.error('Cannot attach paste token button listener - element not found');
+    }
 
     // Resume
     elements.uploadResumeBtn.addEventListener('click', () => elements.resumeInput.click());
@@ -188,29 +263,43 @@ function attachEventListeners() {
 // Auth Functions
 async function checkAuthStatus() {
     try {
+        console.log('Checking auth status...');
         // First load configuration
         await detectConfig();
-        
+
         // Check for automatic auth from website first
-        await checkWebsiteAuth();
-        
+        const hasWebAuth = await checkWebsiteAuth();
+
+        if (hasWebAuth) {
+            console.log('Found website auth, loading profile...');
+            await loadUserProfile();
+            showMainContent();
+            return;
+        }
+
         // Try to get session from storage
         const stored = await chrome.storage.local.get(['session', 'user']);
 
         if (stored.session && stored.user) {
+            console.log('Found stored session, verifying...');
             state.session = stored.session;
             state.user = stored.user;
 
             // Verify session is still valid
             const isValid = await verifySession();
             if (isValid) {
+                console.log('Session valid, loading profile...');
                 await loadUserProfile();
                 showMainContent();
                 return;
+            } else {
+                console.log('Session invalid, clearing storage...');
+                await chrome.storage.local.remove(['session', 'user']);
             }
         }
 
         // No valid session, show auth
+        console.log('No valid session found, showing auth section');
         showAuthSection();
     } catch (error) {
         console.error('Auth check error:', error);
@@ -223,28 +312,28 @@ async function checkWebsiteAuth() {
     try {
         // Try to get session from main website
         const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        
-        if (activeTab && activeTab.url && 
-            (activeTab.url.includes('swiftletter.online') || activeTab.url.includes('localhost:3001'))) {
-            
+
+        if (activeTab && activeTab.url &&
+            (activeTab.url.includes('swiftletter.online') || activeTab.url.includes('localhost:3000'))) {
+
             // Inject script to check for existing session
             const results = await chrome.scripting.executeScript({
                 target: { tabId: activeTab.id },
                 function: extractSessionFromWebsite
             });
-            
+
             if (results && results[0] && results[0].result) {
                 const sessionData = results[0].result;
                 if (sessionData.session && sessionData.user) {
                     // Store the session
                     state.session = sessionData.session;
                     state.user = sessionData.user;
-                    
+
                     await chrome.storage.local.set({
                         session: state.session,
                         user: state.user
                     });
-                    
+
                     console.log('Automatically detected authentication from website');
                     return true;
                 }
@@ -278,7 +367,7 @@ function extractSessionFromWebsite() {
                 }
             }
         }
-        
+
         // Also try sessionStorage
         const sessionKeys = Object.keys(sessionStorage);
         for (const key of sessionKeys) {
@@ -407,12 +496,15 @@ function updateGenerateButton() {
 
 async function openLoginPage(e) {
     e.preventDefault();
-    
+    console.log('Login button clicked');
+
     // First try to detect existing auth from any open Swift Letter tabs
-    const swiftLetterTabs = await chrome.tabs.query({ 
-        url: ['*://swiftletter.online/*', '*://www.swiftletter.online/*', '*://localhost:3001/*'] 
+    const swiftLetterTabs = await chrome.tabs.query({
+        url: ['*://swiftletter.online/*', '*://www.swiftletter.online/*', '*://localhost:3000/*']
     });
-    
+
+    console.log('Found Swift Letter tabs:', swiftLetterTabs.length);
+
     if (swiftLetterTabs.length > 0) {
         // Check if user is already signed in on any of these tabs
         for (const tab of swiftLetterTabs) {
@@ -421,19 +513,19 @@ async function openLoginPage(e) {
                     target: { tabId: tab.id },
                     function: extractSessionFromWebsite
                 });
-                
+
                 if (results && results[0] && results[0].result) {
                     const sessionData = results[0].result;
                     if (sessionData.session && sessionData.user) {
                         // Store the session and update UI
                         state.session = sessionData.session;
                         state.user = sessionData.user;
-                        
+
                         await chrome.storage.local.set({
                             session: state.session,
                             user: state.user
                         });
-                        
+
                         await loadUserProfile();
                         showMainContent();
                         showSuccess('Successfully signed in!');
@@ -445,10 +537,13 @@ async function openLoginPage(e) {
             }
         }
     }
-    
+
     // If no existing session found, open login page
-    chrome.tabs.create({ 
-        url: `${CONFIG.API_BASE_URL}/auth/login?extension=true&redirect_to=${encodeURIComponent(CONFIG.API_BASE_URL + '/auth/callback/extension?extension=true')}` 
+    const loginUrl = `${CONFIG.API_BASE_URL}/auth/login?extension=true&redirect_to=${encodeURIComponent(CONFIG.API_BASE_URL + '/auth/callback/extension?extension=true')}`;
+    console.log('Opening login URL:', loginUrl);
+
+    chrome.tabs.create({
+        url: loginUrl
     });
 }
 
@@ -458,6 +553,7 @@ function openSignupPage(e) {
 }
 
 async function handleRefreshAuth() {
+    console.log('Refresh auth button clicked');
     elements.refreshAuthBtn.disabled = true;
     elements.refreshAuthBtn.innerHTML = `
         <svg class="btn-icon animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -467,9 +563,10 @@ async function handleRefreshAuth() {
         </svg>
         Checking...
     `;
-    
+
     try {
         const authFound = await checkWebsiteAuth();
+        console.log('Auth check result:', authFound);
         if (authFound) {
             await loadUserProfile();
             showMainContent();
@@ -493,8 +590,59 @@ async function handleRefreshAuth() {
     }
 }
 
+// Real-time token validation feedback
+function validateTokenInput() {
+    if (!elements.authTokenInput || !elements.pasteTokenBtn) return;
+
+    const token = elements.authTokenInput.value.trim();
+    const btn = elements.pasteTokenBtn;
+
+    // Reset button state
+    btn.classList.remove('token-warning', 'token-error', 'token-good');
+    btn.disabled = false;
+
+    if (!token) {
+        btn.innerHTML = '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>Paste Auth Token';
+        return;
+    }
+
+    // Check for common issues
+    const hasNonASCII = /[^\x20-\x7E]/.test(token);
+    const hasErrorText = /token decode error|syntaxerror|unexpected token|error:|failed/i.test(token);
+    const looksLikeJSON = token.startsWith('{') && token.endsWith('}');
+    const hasAccessToken = token.includes('access_token');
+    const hasUser = token.includes('user');
+    const isVeryShort = token.length < 50;
+
+    if (hasErrorText) {
+        btn.classList.add('token-error');
+        btn.innerHTML = '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Error Message (Not Token)';
+        btn.disabled = true;
+    } else if (isVeryShort) {
+        btn.classList.add('token-error');
+        btn.innerHTML = '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5"/></svg>Token Too Short';
+        btn.disabled = true;
+    } else if (!looksLikeJSON || !hasAccessToken || !hasUser) {
+        btn.classList.add('token-warning');
+        if (!looksLikeJSON) {
+            btn.innerHTML = '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 21-6-6m-5-5-6-6"/><path d="m3 21 18-18"/></svg>Missing { } Brackets';
+        } else if (!hasAccessToken) {
+            btn.innerHTML = '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5"/></svg>Missing Access Token';
+        } else if (!hasUser) {
+            btn.innerHTML = '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5"/></svg>Missing User Data';
+        }
+    } else if (hasNonASCII) {
+        btn.classList.add('token-warning');
+        btn.innerHTML = '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/><path d="M12 15.75h.007v.008H12v-.008z"/></svg>Try Process (Has Issues)';
+    } else {
+        btn.classList.add('token-good');
+        btn.innerHTML = '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Process Token';
+    }
+}
+
 // Handle pasting auth token from the callback page
 async function handlePasteToken() {
+    console.log('Paste token button clicked');
     try {
         // Try to read from clipboard first
         let token = elements.authTokenInput.value.trim();
@@ -504,6 +652,7 @@ async function handlePasteToken() {
             try {
                 token = await navigator.clipboard.readText();
                 elements.authTokenInput.value = token;
+                console.log('Token read from clipboard, length:', token.length);
             } catch {
                 showError('Please paste your auth token in the input field');
                 return;
@@ -515,40 +664,302 @@ async function handlePasteToken() {
             return;
         }
 
-        // Decode the token
-        try {
-            const decoded = JSON.parse(atob(token));
+        console.log('Processing token, first 50 chars:', token.substring(0, 50));
 
-            if (!decoded.access_token || !decoded.user) {
-                throw new Error('Invalid token format');
-            }
-
-            // Store the session
-            state.session = {
-                access_token: decoded.access_token,
-                refresh_token: decoded.refresh_token
-            };
-            state.user = decoded.user;
-
-            // Save to storage
-            await chrome.storage.local.set({
-                session: state.session,
-                user: state.user
-            });
-
-            // Load user profile
-            await loadUserProfile();
-            showMainContent();
-            showSuccess('Successfully signed in!');
-
-        } catch (decodeError) {
-            console.error('Token decode error:', decodeError);
-            showError('Invalid auth token. Please copy a fresh token from the website.');
+        // ULTRA-AGGRESSIVE token cleaning and validation
+        if (!token || token.length < 5) {
+            throw new Error('Token appears to be empty or too short');
         }
 
+        console.log('Original token length:', token.length);
+        console.log('Token contains corrupted chars:', /[^\x20-\x7E]/.test(token));
+
+        // Step 1: Detect if this is an error message instead of a token
+        const errorIndicators = [
+            'Token decode error',
+            'SyntaxError',
+            'Unexpected token',
+            'Token deco',
+            'Error:',
+            'undefined',
+            'null',
+            '[object',
+            'Failed to',
+            'Invalid'
+        ];
+
+        const hasErrorIndicator = errorIndicators.some(indicator =>
+            token.toLowerCase().includes(indicator.toLowerCase())
+        );
+
+        if (hasErrorIndicator) {
+            throw new Error('The input appears to be an error message, not a token. Please copy a fresh token from the callback page.');
+        }
+
+        // Step 2: EXTREME character cleaning - remove ALL non-standard characters
+        const originalToken = token;
+
+        // First pass: clean invisible and control characters
+        token = token
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Control characters
+            .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '') // Zero-width and non-breaking spaces
+            .replace(/[\u2000-\u206F]/g, ' ') // Various Unicode spaces to regular space
+            .replace(/[\uFFF0-\uFFFF]/g, '') // Specials block
+            .trim();
+
+        // Second pass: remove corrupted binary-like patterns
+        token = token
+            .replace(/[^\x20-\x7E]+/g, '') // Keep only printable ASCII
+            .replace(/\s+/g, ' ') // Normalize whitespace
+            .trim();
+
+        console.log('After cleaning - Length:', token.length);
+        console.log('Characters removed:', originalToken.length - token.length);
+
+        // Step 3: If token is too damaged, try to extract JSON from the original
+        if (token.length < 20) {
+            console.log('Token severely damaged, attempting JSON extraction from original...');
+
+            // Look for JSON patterns in the original corrupted text
+            const jsonPatterns = [
+                /\{[^{}]*"access_token"[^{}]*\}/g,
+                /\{[^{}]*"user"[^{}]*\}/g,
+                /\{.*?"[^"]*".*?\}/g
+            ];
+
+            let extractedJson = null;
+            for (const pattern of jsonPatterns) {
+                const matches = originalToken.match(pattern);
+                if (matches && matches.length > 0) {
+                    // Try to clean and parse each match
+                    for (const match of matches) {
+                        try {
+                            // Clean the match and try to parse
+                            const cleanMatch = match.replace(/[^\x20-\x7E]/g, '');
+                            const parsed = JSON.parse(cleanMatch);
+                            if (parsed.access_token || parsed.user) {
+                                extractedJson = cleanMatch;
+                                break;
+                            }
+                        } catch (e) {
+                            continue;
+                        }
+                    }
+                    if (extractedJson) break;
+                }
+            }
+
+            if (extractedJson) {
+                token = extractedJson;
+                console.log('Successfully extracted JSON from corrupted token');
+            } else {
+                throw new Error('Token is too corrupted to recover. Please refresh the callback page and copy a completely new token.');
+            }
+        }
+
+        // Step 4: Final validation
+        if (token.length < 10) {
+            throw new Error('Token too short after all cleaning attempts');
+        }
+
+        // Step 5: Enhanced parsing strategies
+        const base64Pattern = /^[A-Za-z0-9+/=\s]*$/;
+        const jsonPattern = /^[\s]*[{\[].*[}\]][\s]*$/s;
+
+        console.log('Final token - Length:', token.length);
+        console.log('JSON pattern match:', jsonPattern.test(token));
+        console.log('Base64 pattern match:', base64Pattern.test(token));
+
+        // Step 6: Multi-strategy parsing with even more fallbacks
+        let decoded = null;
+        let parseStrategy = '';
+
+        // Strategy 1: Direct JSON parse
+        try {
+            decoded = JSON.parse(token);
+            parseStrategy = 'direct JSON';
+            console.log('✓ Direct JSON parsing successful');
+        } catch (jsonError1) {
+            console.log('✗ Direct JSON failed:', jsonError1.message);
+
+            // Strategy 2: Aggressive JSON cleaning
+            try {
+                let cleanedToken = token
+                    .replace(/[^\w\s{}[\]:,"'.-@]/g, '') // Keep only safe chars
+                    .replace(/\s*([{}[\]:,])\s*/g, '$1') // Remove spaces around JSON chars
+                    .replace(/'/g, '"') // Convert single quotes to double
+                    .trim();
+
+                decoded = JSON.parse(cleanedToken);
+                parseStrategy = 'aggressively cleaned JSON';
+                console.log('✓ Aggressively cleaned JSON parsing successful');
+            } catch (jsonError2) {
+                console.log('✗ Cleaned JSON failed:', jsonError2.message);
+
+                // Strategy 3: Base64 decode with cleaning
+                try {
+                    let base64Token = token.replace(/[^A-Za-z0-9+/=]/g, '');
+                    // Ensure proper base64 padding
+                    while (base64Token.length % 4) {
+                        base64Token += '=';
+                    }
+                    const decodedBase64 = atob(base64Token);
+                    decoded = JSON.parse(decodedBase64);
+                    parseStrategy = 'base64 decode then JSON';
+                    console.log('✓ Base64 decode successful');
+                } catch (base64Error) {
+                    console.log('✗ Base64 strategy failed:', base64Error.message);
+
+                    // Strategy 4: Pattern extraction with multiple attempts
+                    const extractionPatterns = [
+                        /\{[^{}]*"access_token"[^{}]*"user"[^{}]*\}/g,
+                        /\{[^{}]*"user"[^{}]*"access_token"[^{}]*\}/g,
+                        /\{[^{}]*"access_token"[^{}]*\}/g,
+                        /\{[^{}]*"user"[^{}]*\}/g,
+                        /\{.*?"[^"]*".*?\}/g
+                    ];
+
+                    for (const pattern of extractionPatterns) {
+                        const matches = token.match(pattern);
+                        if (matches) {
+                            for (const match of matches) {
+                                try {
+                                    decoded = JSON.parse(match);
+                                    if (decoded.access_token || decoded.user) {
+                                        parseStrategy = 'pattern extraction';
+                                        console.log('✓ Pattern extraction successful');
+                                        break;
+                                    }
+                                } catch (e) {
+                                    continue;
+                                }
+                            }
+                            if (decoded) break;
+                        }
+                    }
+
+                    if (!decoded) {
+                        console.error('All parsing strategies exhausted');
+                        console.error('Final token state:', {
+                            length: token.length,
+                            firstChars: token.substring(0, 20),
+                            lastChars: token.substring(token.length - 20),
+                            isJSON: jsonPattern.test(token),
+                            isBase64: base64Pattern.test(token)
+                        });
+
+                        throw new Error(`Token parsing completely failed. Errors: JSON: "${jsonError1.message}", Cleaned: "${jsonError2.message}", Base64: "${base64Error.message}"`);
+                    }
+                }
+            }
+        }
+
+        console.log('Token successfully parsed using strategy:', parseStrategy);
+
+        // Validate the decoded token structure
+        if (!decoded || typeof decoded !== 'object') {
+            throw new Error('Decoded token is not a valid object');
+        }
+
+        if (!decoded.access_token || typeof decoded.access_token !== 'string') {
+            throw new Error('Missing or invalid access_token in token');
+        }
+
+        if (!decoded.user || typeof decoded.user !== 'object') {
+            throw new Error('Missing or invalid user information in token');
+        }
+
+        // Store the session
+        state.session = {
+            access_token: decoded.access_token,
+            refresh_token: decoded.refresh_token
+        };
+        state.user = decoded.user;
+
+        // Save to storage
+        await chrome.storage.local.set({
+            session: state.session,
+            user: state.user
+        });
+
+        // Load user profile
+        await loadUserProfile();
+        showMainContent();
+        showSuccess('Successfully signed in!');
+
     } catch (error) {
-        console.error('Paste token error:', error);
-        showError('Failed to process auth token');
+        console.error('Token processing error:', error);
+
+        // Provide highly specific error messages based on the type of error
+        let userMessage = 'Failed to process auth token.';
+        let suggestions = [];
+
+        if (error.message.includes('error message, not a token')) {
+            userMessage = 'You pasted an error message instead of a token.';
+            suggestions = [
+                '1. Go back to the callback page',
+                '2. Look for a box containing JSON-like text (starts with { and ends with })',
+                '3. Copy ONLY the token content, not any error messages',
+                '4. Paste it in the input field above'
+            ];
+        } else if (error.message.includes('too corrupted to recover')) {
+            userMessage = 'The token is severely corrupted and cannot be recovered.';
+            suggestions = [
+                '1. Refresh the callback page completely (F5)',
+                '2. Sign in again if needed',
+                '3. Copy the new token that appears',
+                '4. Make sure to copy the ENTIRE token without any surrounding text'
+            ];
+        } else if (error.message.includes('too short after')) {
+            userMessage = 'The token appears to be incomplete or truncated.';
+            suggestions = [
+                '1. Make sure you selected and copied the COMPLETE token',
+                '2. The token should be quite long (hundreds of characters)',
+                '3. It should start with { and end with }',
+                '4. Don\'t include any extra text before or after the token'
+            ];
+        } else if (error.message.includes('parsing completely failed')) {
+            userMessage = 'The token format is unrecognizable and cannot be processed.';
+            suggestions = [
+                '1. This might be a browser compatibility issue',
+                '2. Try using a different browser (Chrome, Firefox, Edge)',
+                '3. Clear your browser cache and cookies',
+                '4. Refresh the callback page and get a fresh token'
+            ];
+        } else if (error.message.includes('access_token')) {
+            userMessage = 'The token is missing authentication information.';
+            suggestions = [
+                '1. The token might be incomplete or from a failed login',
+                '2. Go back and sign in again completely',
+                '3. Wait for the success message before copying the token',
+                '4. Copy the new token that appears after successful login'
+            ];
+        } else if (error.message.includes('user')) {
+            userMessage = 'The token is missing user information.';
+            suggestions = [
+                '1. The authentication might not be complete',
+                '2. Make sure you completed the entire sign-in process',
+                '3. Look for a "Successfully signed in" or similar message',
+                '4. Copy the token only after seeing the success confirmation'
+            ];
+        }
+
+        // Build the complete error message
+        if (suggestions.length > 0) {
+            userMessage += '\n\nSuggestions:\n' + suggestions.join('\n');
+        }
+
+        // Also log detailed info for debugging
+        console.error('Detailed token info:', {
+            originalLength: elements.authTokenInput.value.length,
+            hasNonASCII: /[^\x20-\x7E]/.test(elements.authTokenInput.value),
+            startsWithBrace: elements.authTokenInput.value.trim().startsWith('{'),
+            endsWithBrace: elements.authTokenInput.value.trim().endsWith('}'),
+            containsAccessToken: elements.authTokenInput.value.includes('access_token'),
+            containsUser: elements.authTokenInput.value.includes('user')
+        });
+
+        showError(userMessage);
     }
 }
 
@@ -939,22 +1350,4 @@ function showSuccess(message) {
     }, 3000);
 }
 
-// Listen for auth messages from the web app
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === 'AUTH_SUCCESS') {
-        state.session = message.session;
-        state.user = message.user;
-
-        // Store session
-        chrome.storage.local.set({
-            session: message.session,
-            user: message.user
-        });
-
-        loadUserProfile().then(() => {
-            showMainContent();
-        });
-
-        sendResponse({ success: true });
-    }
-});
+// Additional auth handling is already covered by the main message listener above

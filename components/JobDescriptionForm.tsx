@@ -10,22 +10,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
-// Add custom CSS for progress bar animation
+// Add custom CSS for subtle animations
 const progressBarStyles = `
-  @keyframes progressBar {
-    0% { width: 10%; opacity: 0.8; }
-    50% { width: 80%; opacity: 1; }
-    100% { width: 70%; opacity: 0.8; }
-  }
-  
-  @keyframes loadingPulse {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
-  
   @keyframes progressGlow {
-    0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
-    50% { box-shadow: 0 0 20px rgba(147, 51, 234, 0.7); }
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
   }
 `
 
@@ -790,42 +779,52 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                                 type="submit"
                                 disabled={!jobDescription.trim() || isLoading || isPdfGenerating}
                                 size="lg"
-                                className="w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                                className={`
+                                    relative overflow-hidden transition-all duration-300 ease-in-out
+                                    ${isLoading || isPdfGenerating
+                                        ? 'w-full sm:w-80 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
+                                        : 'w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
+                                    }
+                                    disabled:opacity-60 disabled:cursor-not-allowed
+                                    text-white font-semibold shadow-lg hover:shadow-xl
+                                    border-0 rounded-xl px-8 py-4
+                                `}
                             >
                                 {isLoading || isPdfGenerating ? (
-                                    <div className="flex items-center justify-center">
-                                        <div className="relative">
-                                            <div className="w-5 h-5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin mr-3"></div>
-                                        </div>
-                                        <div className="flex flex-col items-start">
+                                    <>
+                                        {/* Progress Background */}
+                                        <div
+                                            className="absolute inset-0 bg-white/10 transition-all duration-500 ease-out"
+                                            style={{ width: `${loadingProgress}%` }}
+                                        />
+
+                                        {/* Content */}
+                                        <div className="relative flex items-center justify-center space-x-4">
                                             <div className="flex items-center space-x-3">
-                                                <span className="font-medium">
-                                                    {isPdfGenerating ? 'Generating PDF...' : 'Creating your cover letter...'}
+                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                <span className="font-medium text-white">
+                                                    {isPdfGenerating ? 'Generating PDF' : 'Creating Cover Letter'}
                                                 </span>
-                                                <span className="text-sm font-bold text-blue-600">
+                                            </div>
+
+                                            <div className="flex items-center space-x-2">
+                                                <div className="w-16 h-2 bg-white/20 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-white rounded-full transition-all duration-300 ease-out"
+                                                        style={{ width: `${loadingProgress}%` }}
+                                                    />
+                                                </div>
+                                                <span className="text-sm font-bold text-white min-w-[3rem] text-right">
                                                     {Math.round(loadingProgress)}%
                                                 </span>
                                             </div>
-                                            <div className="flex items-center mt-2 w-full">
-                                                <div className="w-40 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-full transition-all duration-300 ease-out"
-                                                        style={{
-                                                            width: `${loadingProgress}%`,
-                                                            animation: 'progressGlow 2s ease-in-out infinite',
-                                                            backgroundSize: '200% 200%'
-                                                        }}></div>
-                                                </div>
-                                                <span className="text-xs text-gray-500 ml-3">
-                                                    {isLoading ? 'AI is writing...' : 'Compiling...'}
-                                                </span>
-                                            </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <Zap className="h-4 w-4 mr-2" />
-                                        Generate Cover Letter
                                     </>
+                                ) : (
+                                    <div className="flex items-center justify-center space-x-2">
+                                        <Zap className="h-5 w-5" />
+                                        <span>Generate Cover Letter</span>
+                                    </div>
                                 )}
                             </Button>
                         </div>
