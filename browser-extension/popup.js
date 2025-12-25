@@ -1,12 +1,36 @@
 // Swift Letter Browser Extension - Main Popup Script
 
-// Configuration - UPDATE THIS TO YOUR PRODUCTION URL
-const CONFIG = {
-    // Change this to your production URL when deploying
-    API_BASE_URL: 'https://swiftletter.online', // or your production domain
-    SUPABASE_URL: 'https://your-project.supabase.co', // Update with your Supabase URL
-    SUPABASE_ANON_KEY: 'your-anon-key-here' // Update with your Supabase anon key
+// Configuration - Dynamically get from website
+let CONFIG = {
+    API_BASE_URL: 'http://localhost:3001', // Fallback for development
+    SUPABASE_URL: null,
+    SUPABASE_ANON_KEY: null,
+    WEBSITE_URL: 'https://swiftletter.online' // Production website URL
 };
+
+// Function to detect environment and set config
+async function detectConfig() {
+    try {
+        // Try to get config from the website
+        const response = await fetch(`${CONFIG.WEBSITE_URL}/api/config`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        if (response.ok) {
+            const config = await response.json();
+            CONFIG.API_BASE_URL = config.baseUrl || CONFIG.WEBSITE_URL;
+            CONFIG.SUPABASE_URL = config.supabaseUrl;
+            CONFIG.SUPABASE_ANON_KEY = config.supabaseAnonKey;
+        } else {
+            // Fallback to localhost for development
+            CONFIG.API_BASE_URL = 'http://localhost:3001';
+        }
+    } catch (error) {
+        console.log('Using fallback config for development:', error);
+        // Keep the localhost fallback
+    }
+}
 
 // State
 let state = {
@@ -33,6 +57,20 @@ const elements = {};
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', init);
+
+// Listen for auth updates from background script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'AUTH_UPDATE') {
+        // Auth was successful, update state
+        state.session = message.session;
+        state.user = message.user;
+        
+        loadUserProfile().then(() => {
+            showMainContent();
+            showSuccess('Successfully signed in!');
+        });
+    }
+});
 
 async function init() {
     cacheElements();
@@ -72,6 +110,7 @@ function cacheElements() {
     elements.authSection = document.getElementById('authSection');
     elements.mainContent = document.getElementById('mainContent');
     elements.loginBtn = document.getElementById('loginBtn');
+    elements.refreshAuthBtn = document.getElementById('refreshAuthBtn');
     elements.signupLink = document.getElementById('signupLink');
     elements.authTokenInput = document.getElementById('authTokenInput');
     elements.pasteTokenBtn = document.getElementById('pasteTokenBtn');
@@ -112,6 +151,7 @@ function cacheElements() {
 function attachEventListeners() {
     // Auth
     elements.loginBtn.addEventListener('click', openLoginPage);
+    elements.refreshAuthBtn.addEventListener('click', handleRefreshAuth);
     elements.signupLink.addEventListener('click', openSignupPage);
     elements.pasteTokenBtn.addEventListener('click', handlePasteToken);
 
@@ -148,6 +188,12 @@ function attachEventListeners() {
 // Auth Functions
 async function checkAuthStatus() {
     try {
+        // First load configuration
+        await detectConfig();
+        
+        // Check for automatic auth from website first
+        await checkWebsiteAuth();
+        
         // Try to get session from storage
         const stored = await chrome.storage.local.get(['session', 'user']);
 
@@ -170,6 +216,92 @@ async function checkAuthStatus() {
         console.error('Auth check error:', error);
         showAuthSection();
     }
+}
+
+// Check if user is already authenticated on the website
+async function checkWebsiteAuth() {
+    try {
+        // Try to get session from main website
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        
+        if (activeTab && activeTab.url && 
+            (activeTab.url.includes('swiftletter.online') || activeTab.url.includes('localhost:3001'))) {
+            
+            // Inject script to check for existing session
+            const results = await chrome.scripting.executeScript({
+                target: { tabId: activeTab.id },
+                function: extractSessionFromWebsite
+            });
+            
+            if (results && results[0] && results[0].result) {
+                const sessionData = results[0].result;
+                if (sessionData.session && sessionData.user) {
+                    // Store the session
+                    state.session = sessionData.session;
+                    state.user = sessionData.user;
+                    
+                    await chrome.storage.local.set({
+                        session: state.session,
+                        user: state.user
+                    });
+                    
+                    console.log('Automatically detected authentication from website');
+                    return true;
+                }
+            }
+        }
+    } catch (error) {
+        console.log('Could not auto-detect auth from website:', error);
+    }
+    return false;
+}
+
+// Function to inject into website to extract session
+function extractSessionFromWebsite() {
+    try {
+        // Try to get from localStorage (Supabase auth helpers store it here)
+        const keys = Object.keys(localStorage);
+        for (const key of keys) {
+            if (key.includes('supabase') && key.includes('auth')) {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    if (parsed.access_token && parsed.user) {
+                        return {
+                            session: {
+                                access_token: parsed.access_token,
+                                refresh_token: parsed.refresh_token
+                            },
+                            user: parsed.user
+                        };
+                    }
+                }
+            }
+        }
+        
+        // Also try sessionStorage
+        const sessionKeys = Object.keys(sessionStorage);
+        for (const key of sessionKeys) {
+            if (key.includes('supabase') && key.includes('auth')) {
+                const data = sessionStorage.getItem(key);
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    if (parsed.access_token && parsed.user) {
+                        return {
+                            session: {
+                                access_token: parsed.access_token,
+                                refresh_token: parsed.refresh_token
+                            },
+                            user: parsed.user
+                        };
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error extracting session:', error);
+    }
+    return null;
 }
 
 async function verifySession() {
@@ -273,9 +405,51 @@ function updateGenerateButton() {
     }
 }
 
-function openLoginPage(e) {
+async function openLoginPage(e) {
     e.preventDefault();
-    chrome.tabs.create({ url: `${CONFIG.API_BASE_URL}/auth/login?extension=true&redirect_to=${CONFIG.API_BASE_URL}/auth/callback/extension?extension=true` });
+    
+    // First try to detect existing auth from any open Swift Letter tabs
+    const swiftLetterTabs = await chrome.tabs.query({ 
+        url: ['*://swiftletter.online/*', '*://www.swiftletter.online/*', '*://localhost:3001/*'] 
+    });
+    
+    if (swiftLetterTabs.length > 0) {
+        // Check if user is already signed in on any of these tabs
+        for (const tab of swiftLetterTabs) {
+            try {
+                const results = await chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    function: extractSessionFromWebsite
+                });
+                
+                if (results && results[0] && results[0].result) {
+                    const sessionData = results[0].result;
+                    if (sessionData.session && sessionData.user) {
+                        // Store the session and update UI
+                        state.session = sessionData.session;
+                        state.user = sessionData.user;
+                        
+                        await chrome.storage.local.set({
+                            session: state.session,
+                            user: state.user
+                        });
+                        
+                        await loadUserProfile();
+                        showMainContent();
+                        showSuccess('Successfully signed in!');
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('Could not check tab for auth:', error);
+            }
+        }
+    }
+    
+    // If no existing session found, open login page
+    chrome.tabs.create({ 
+        url: `${CONFIG.API_BASE_URL}/auth/login?extension=true&redirect_to=${encodeURIComponent(CONFIG.API_BASE_URL + '/auth/callback/extension?extension=true')}` 
+    });
 }
 
 function openSignupPage(e) {
@@ -283,12 +457,48 @@ function openSignupPage(e) {
     chrome.tabs.create({ url: `${CONFIG.API_BASE_URL}/auth/signup?extension=true&redirect_to=${CONFIG.API_BASE_URL}/auth/callback/extension?extension=true` });
 }
 
+async function handleRefreshAuth() {
+    elements.refreshAuthBtn.disabled = true;
+    elements.refreshAuthBtn.innerHTML = `
+        <svg class="btn-icon animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        Checking...
+    `;
+    
+    try {
+        const authFound = await checkWebsiteAuth();
+        if (authFound) {
+            await loadUserProfile();
+            showMainContent();
+            showSuccess('Authentication detected! You are now signed in.');
+        } else {
+            showError('No active session found. Please sign in first.');
+        }
+    } catch (error) {
+        console.error('Refresh auth error:', error);
+        showError('Could not check authentication status.');
+    } finally {
+        elements.refreshAuthBtn.disabled = false;
+        elements.refreshAuthBtn.innerHTML = `
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Check if Already Signed In
+        `;
+    }
+}
+
 // Handle pasting auth token from the callback page
 async function handlePasteToken() {
     try {
         // Try to read from clipboard first
         let token = elements.authTokenInput.value.trim();
-        
+
         if (!token) {
             // Try to get from clipboard
             try {
@@ -299,43 +509,43 @@ async function handlePasteToken() {
                 return;
             }
         }
-        
+
         if (!token) {
             showError('Please paste your auth token');
             return;
         }
-        
+
         // Decode the token
         try {
             const decoded = JSON.parse(atob(token));
-            
+
             if (!decoded.access_token || !decoded.user) {
                 throw new Error('Invalid token format');
             }
-            
+
             // Store the session
             state.session = {
                 access_token: decoded.access_token,
                 refresh_token: decoded.refresh_token
             };
             state.user = decoded.user;
-            
+
             // Save to storage
             await chrome.storage.local.set({
                 session: state.session,
                 user: state.user
             });
-            
+
             // Load user profile
             await loadUserProfile();
             showMainContent();
             showSuccess('Successfully signed in!');
-            
+
         } catch (decodeError) {
             console.error('Token decode error:', decodeError);
             showError('Invalid auth token. Please copy a fresh token from the website.');
         }
-        
+
     } catch (error) {
         console.error('Paste token error:', error);
         showError('Failed to process auth token');

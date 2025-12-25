@@ -52,6 +52,15 @@ body {
     display: none !important;
 }
 
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 /* Header */
 .header {
     display: flex;
@@ -351,6 +360,18 @@ body {
 
 .btn-secondary:hover:not(:disabled) {
     background: var(--gray-200);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+}
+
+.btn-outline:hover:not(:disabled) {
+    background: var(--primary-light);
+    border-color: var(--primary-dark);
+    color: var(--primary-dark);
 }
 
 .btn-ghost {

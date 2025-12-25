@@ -1,10 +1,11 @@
 // Swift Letter Browser Extension - Background Service Worker
 
-// Configuration - Make sure these match popup.js
-const CONFIG = {
-    API_BASE_URL: 'https://swiftletter.online', // Update with your production URL
-    SUPABASE_URL: 'https://your-project.supabase.co',
-    SUPABASE_ANON_KEY: 'your-anon-key-here'
+// Configuration - Dynamically get from website
+let CONFIG = {
+    API_BASE_URL: 'http://localhost:3001', // Fallback for development
+    SUPABASE_URL: null,
+    SUPABASE_ANON_KEY: null,
+    WEBSITE_URL: 'https://swiftletter.online' // Production website URL
 };
 
 // Listen for messages from content scripts or popup
@@ -33,6 +34,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
         return true;
     }
+    
+    if (message.type === 'SWIFT_LETTER_AUTH_SUCCESS') {
+        // Store the session data when we get it from auth callback
+        chrome.storage.local.set({
+            session: message.session,
+            user: message.user
+        }, () => {
+            // Notify popup if it's open
+            chrome.runtime.sendMessage({
+                type: 'AUTH_UPDATE',
+                session: message.session,
+                user: message.user
+            }).catch(() => {
+                // Popup might not be open, that's okay
+            });
+            
+            sendResponse({ success: true });
+        });
+        return true;
+    }
 
     if (message.type === 'EXTRACT_JOB_DESCRIPTION') {
         // This is triggered from content script when user wants to auto-extract
@@ -42,7 +63,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             jobDescription: message.jobDescription,
             company: message.company,
             position: message.position
+        }).catch(() => {
+            // Popup might not be open, store for later
+            chrome.storage.local.set({
+                pendingJobDescription: message.jobDescription,
+                pendingCompany: message.company,
+                pendingPosition: message.position
+            });
         });
+        
         sendResponse({ success: true });
         return true;
     }
