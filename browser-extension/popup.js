@@ -73,6 +73,8 @@ function cacheElements() {
     elements.mainContent = document.getElementById('mainContent');
     elements.loginBtn = document.getElementById('loginBtn');
     elements.signupLink = document.getElementById('signupLink');
+    elements.authTokenInput = document.getElementById('authTokenInput');
+    elements.pasteTokenBtn = document.getElementById('pasteTokenBtn');
     elements.creditsBadge = document.getElementById('creditsBadge');
     elements.resumeStatusCard = document.getElementById('resumeStatusCard');
     elements.resumeStatusIcon = document.getElementById('resumeStatusIcon');
@@ -111,6 +113,7 @@ function attachEventListeners() {
     // Auth
     elements.loginBtn.addEventListener('click', openLoginPage);
     elements.signupLink.addEventListener('click', openSignupPage);
+    elements.pasteTokenBtn.addEventListener('click', handlePasteToken);
 
     // Resume
     elements.uploadResumeBtn.addEventListener('click', () => elements.resumeInput.click());
@@ -272,12 +275,71 @@ function updateGenerateButton() {
 
 function openLoginPage(e) {
     e.preventDefault();
-    chrome.tabs.create({ url: `${CONFIG.API_BASE_URL}/auth/login?extension=true&redirect_to=${CONFIG.API_BASE_URL}/auth/callback/extension` });
+    chrome.tabs.create({ url: `${CONFIG.API_BASE_URL}/auth/login?extension=true&redirect_to=${CONFIG.API_BASE_URL}/auth/callback/extension?extension=true` });
 }
 
 function openSignupPage(e) {
     e.preventDefault();
-    chrome.tabs.create({ url: `${CONFIG.API_BASE_URL}/auth/signup?extension=true&redirect_to=${CONFIG.API_BASE_URL}/auth/callback/extension` });
+    chrome.tabs.create({ url: `${CONFIG.API_BASE_URL}/auth/signup?extension=true&redirect_to=${CONFIG.API_BASE_URL}/auth/callback/extension?extension=true` });
+}
+
+// Handle pasting auth token from the callback page
+async function handlePasteToken() {
+    try {
+        // Try to read from clipboard first
+        let token = elements.authTokenInput.value.trim();
+        
+        if (!token) {
+            // Try to get from clipboard
+            try {
+                token = await navigator.clipboard.readText();
+                elements.authTokenInput.value = token;
+            } catch {
+                showError('Please paste your auth token in the input field');
+                return;
+            }
+        }
+        
+        if (!token) {
+            showError('Please paste your auth token');
+            return;
+        }
+        
+        // Decode the token
+        try {
+            const decoded = JSON.parse(atob(token));
+            
+            if (!decoded.access_token || !decoded.user) {
+                throw new Error('Invalid token format');
+            }
+            
+            // Store the session
+            state.session = {
+                access_token: decoded.access_token,
+                refresh_token: decoded.refresh_token
+            };
+            state.user = decoded.user;
+            
+            // Save to storage
+            await chrome.storage.local.set({
+                session: state.session,
+                user: state.user
+            });
+            
+            // Load user profile
+            await loadUserProfile();
+            showMainContent();
+            showSuccess('Successfully signed in!');
+            
+        } catch (decodeError) {
+            console.error('Token decode error:', decodeError);
+            showError('Invalid auth token. Please copy a fresh token from the website.');
+        }
+        
+    } catch (error) {
+        console.error('Paste token error:', error);
+        showError('Failed to process auth token');
+    }
 }
 
 // Resume Upload

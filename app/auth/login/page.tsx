@@ -18,7 +18,10 @@ export default function LoginPage() {
 
     const router = useRouter()
     const searchParams = useSearchParams()
-    const redirectTo = searchParams.get('redirectTo') || '/profile'
+    const isExtension = searchParams.get('extension') === 'true'
+    const redirectTo = isExtension 
+        ? '/auth/callback/extension?extension=true' 
+        : (searchParams.get('redirectTo') || searchParams.get('redirect_to') || '/profile')
     const { signInWithGoogle } = useAuth()
 
     const handleSubmit = async (e: React.FormEvent) => {

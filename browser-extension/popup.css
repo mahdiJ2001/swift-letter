@@ -127,6 +127,40 @@ body {
     text-decoration: underline;
 }
 
+/* Auth Divider */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--gray-200);
+}
+
+.auth-divider span {
+    font-size: 12px;
+    color: var(--gray-400);
+    white-space: nowrap;
+}
+
+/* Token Paste Section */
+.token-paste-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.token-paste-section .input {
+    font-size: 11px;
+    padding: 8px 12px;
+}
+
 /* Main Content */
 .main-content {
     padding: 16px 20px;
