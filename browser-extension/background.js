@@ -2,7 +2,7 @@
 
 // Configuration - Make sure these match popup.js
 const CONFIG = {
-    API_BASE_URL: 'https://swiftletter.vercel.app', // Update with your production URL
+    API_BASE_URL: 'https://swiftletter.online', // Update with your production URL
     SUPABASE_URL: 'https://your-project.supabase.co',
     SUPABASE_ANON_KEY: 'your-anon-key-here'
 };

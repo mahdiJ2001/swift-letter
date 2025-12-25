@@ -3,7 +3,7 @@
 // Configuration - UPDATE THIS TO YOUR PRODUCTION URL
 const CONFIG = {
     // Change this to your production URL when deploying
-    API_BASE_URL: 'https://swiftletter.vercel.app', // or your production domain
+    API_BASE_URL: 'https://swiftletter.online', // or your production domain
     SUPABASE_URL: 'https://your-project.supabase.co', // Update with your Supabase URL
     SUPABASE_ANON_KEY: 'your-anon-key-here' // Update with your Supabase anon key
 };

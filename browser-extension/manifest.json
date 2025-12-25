@@ -18,8 +18,8 @@
         "https://*.ziprecruiter.com/*",
         "https://*.wellfound.com/*",
         "https://*.dice.com/*",
-        "https://*.swiftletter.vercel.app/*",
-        "https://swiftletter.vercel.app/*"
+        "https://*.swiftletter.online/*",
+        "https://swiftletter.online/*"
     ],
     "action": {
         "default_popup": "popup.html",
