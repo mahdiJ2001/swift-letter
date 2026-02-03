@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import { createClient } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -37,6 +38,7 @@ type UserProfile = {
     languages?: string
     location?: string
     credits: number
+    resume_url?: string
 }
 
 interface ProfileFormProps {
@@ -114,6 +116,41 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
         setSuccess('')
 
         try {
+            // First, upload the file to Supabase storage
+            const supabase = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            )
+
+            // Get the current user
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) {
+                throw new Error('User not authenticated')
+            }
+
+            // Generate unique filename
+            const fileExt = 'pdf'
+            const fileName = `${user.id}-${Date.now()}.${fileExt}`
+            const filePath = `resumes/${fileName}`
+
+            // Upload file to storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('user-files')
+                .upload(filePath, file)
+
+            if (uploadError) {
+                console.error('Storage upload error:', uploadError)
+                throw new Error('Failed to upload resume file')
+            }
+
+            // Get public URL for the uploaded file
+            const { data: urlData } = supabase.storage
+                .from('user-files')
+                .getPublicUrl(filePath)
+
+            const resumeUrl = urlData.publicUrl
+
+            // Now extract the content from the PDF
             const formData = new FormData()
             formData.append('pdf', file)
 
@@ -156,6 +193,11 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                     languages: formatArray(extractedProfile.languages) || prev.languages,
                 }))
 
+                // Update profile with resume URL immediately
+                if (profile) {
+                    await updateProfileWithResumeUrl(resumeUrl)
+                }
+
                 setSuccess('Resume processed successfully! Review and customize the extracted information.')
             } else {
                 throw new Error(responseData.error || 'Failed to extract information from PDF')
@@ -165,6 +207,32 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
             setError(error.message || 'Failed to process resume. Please try again.')
         } finally {
             setIsUploadingResume(false)
+        }
+    }
+
+    const updateProfileWithResumeUrl = async (resumeUrl: string) => {
+        try {
+            const response = await fetch('/api/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    id: profile?.id, 
+                    resume_url: resumeUrl 
+                }),
+            })
+
+            if (response.ok) {
+                const updatedProfile = await response.json()
+                // Update the profile state to include the resume URL
+                onProfileUpdate({
+                    ...profile!,
+                    resume_url: resumeUrl
+                })
+            }
+        } catch (error) {
+            console.error('Failed to update profile with resume URL:', error)
         }
     }
 
@@ -423,8 +491,8 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         {/* Professional Links */}
                         <div className="space-y-4 sm:space-y-6">
                             <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b border-[#2e2e2e]">
-                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-indigo-600 rounded-md sm:rounded-lg flex items-center justify-center">
-                                    <Link className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-md sm:rounded-lg flex items-center justify-center border border-[#2e2e2e]">
+                                    <Link className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                                 </div>
                                 <h3 className="text-base sm:text-lg font-semibold text-[#ececec]">Professional Links</h3>
                                 <span className="text-xs sm:text-sm text-[#666] bg-[#212121] px-2 py-1 rounded-full">Optional</span>
@@ -497,8 +565,8 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         {/* Work Experience Section */}
                         <div className="space-y-4 sm:space-y-6">
                             <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b border-[#2e2e2e]">
-                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-orange-600 rounded-md sm:rounded-lg flex items-center justify-center">
-                                    <Briefcase className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-md sm:rounded-lg flex items-center justify-center border border-[#2e2e2e]">
+                                    <Briefcase className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                                 </div>
                                 <h3 className="text-base sm:text-lg font-semibold text-[#ececec]">Work Experience</h3>
                                 <span className="text-xs sm:text-sm text-red-400 bg-red-900/30 px-2 py-1 rounded-full">Required</span>
@@ -522,8 +590,8 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         {/* Projects Section */}
                         <div className="space-y-4 sm:space-y-6">
                             <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b border-[#2e2e2e]">
-                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-cyan-600 rounded-md sm:rounded-lg flex items-center justify-center">
-                                    <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-md sm:rounded-lg flex items-center justify-center border border-[#2e2e2e]">
+                                    <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                                 </div>
                                 <h3 className="text-base sm:text-lg font-semibold text-[#ececec]">Projects</h3>
                                 <span className="text-xs sm:text-sm text-[#666] bg-[#212121] px-2 py-1 rounded-full">Optional</span>
@@ -546,8 +614,8 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         {/* Education Section */}
                         <div className="space-y-4 sm:space-y-6">
                             <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b border-[#2e2e2e]">
-                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-pink-600 rounded-md sm:rounded-lg flex items-center justify-center">
-                                    <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-md sm:rounded-lg flex items-center justify-center border border-[#2e2e2e]">
+                                    <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                                 </div>
                                 <h3 className="text-base sm:text-lg font-semibold text-[#ececec]">Education</h3>
                                 <span className="text-xs sm:text-sm text-[#666] bg-[#212121] px-2 py-1 rounded-full">Optional</span>
@@ -570,8 +638,8 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         {/* Certifications Section */}
                         <div className="space-y-4 sm:space-y-6">
                             <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b border-[#2e2e2e]">
-                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-yellow-600 rounded-md sm:rounded-lg flex items-center justify-center">
-                                    <Award className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-md sm:rounded-lg flex items-center justify-center border border-[#2e2e2e]">
+                                    <Award className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                                 </div>
                                 <h3 className="text-base sm:text-lg font-semibold text-[#ececec]">Certifications</h3>
                                 <span className="text-xs sm:text-sm text-[#666] bg-[#212121] px-2 py-1 rounded-full">Optional</span>
@@ -594,8 +662,8 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         {/* Languages Section */}
                         <div className="space-y-4 sm:space-y-6">
                             <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b border-[#2e2e2e]">
-                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-teal-600 rounded-md sm:rounded-lg flex items-center justify-center">
-                                    <Globe className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-md sm:rounded-lg flex items-center justify-center border border-[#2e2e2e]">
+                                    <Globe className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                                 </div>
                                 <h3 className="text-base sm:text-lg font-semibold text-[#ececec]">Languages</h3>
                                 <span className="text-xs sm:text-sm text-[#666] bg-[#212121] px-2 py-1 rounded-full">Optional</span>

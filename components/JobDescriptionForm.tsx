@@ -313,21 +313,28 @@ export default function JobDescriptionForm() {
                 // and remove LaTeX commands for better editing
                 let extractedBody = ''
 
+                console.log('Raw LaTeX content for extraction:', data.content.substring(0, 500) + '...')
+
                 // Try multiple patterns to extract the letter body
                 const patterns = [
-                    // Pattern 1: Content between vspace commands
+                    // Pattern 1: Content between recipient and signature
+                    /Dear [^\\]*\\\\([\s\S]*?)\\vspace\{2\.0em\}/,
+                    // Pattern 2: Content after \vspace{1.5em} until signature
                     /\\vspace\{1\.5em\}([\s\S]*?)\\vspace\{2\.0em\}/,
-                    // Pattern 2: Content after recipient info until signature
-                    /Dear.*?\\\\([\s\S]*?)\\vspace\{2\.0em\}/,
                     // Pattern 3: Content between Dear and Sincerely
-                    /Dear.*?\\\\([\s\S]*?)Sincerely,/,
-                    // Pattern 4: Main body content
-                    /\\begin\{document\}[\s\S]*?\\\\([\s\S]*?)\\vspace\{2\.0em\}/
+                    /Dear [^\\]*\\\\([\s\S]*?)Sincerely,/,
+                    // Pattern 4: Content after recipient until signature block
+                    /\\targetCompany\}[\s\S]*?\\\\([\s\S]*?)\\vspace\{2\.0em\}/,
+                    // Pattern 5: Fallback - everything between certain markers
+                    /% ={25}[\s\S]*?\\\\([\s\S]*?)\\vspace\{2\.0em\}/
                 ]
 
-                for (const pattern of patterns) {
+                for (let i = 0; i < patterns.length; i++) {
+                    const pattern = patterns[i]
                     const match = data.content.match(pattern)
                     if (match && match[1] && match[1].trim()) {
+                        console.log(`Pattern ${i + 1} matched:`, match[1].substring(0, 200) + '...')
+
                         extractedBody = match[1]
                             .replace(/\\\\[\s]*\n/g, '\n\n')  // Replace \\\\ with double newline
                             .replace(/\\vspace\{[^}]*\}/g, '')  // Remove \vspace commands
@@ -336,14 +343,23 @@ export default function JobDescriptionForm() {
                             .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')  // Remove LaTeX commands with arguments
                             .replace(/\\[a-zA-Z]+\*?/g, '')  // Remove LaTeX commands without arguments
                             .replace(/\{([^}]*)\}/g, '$1')  // Remove remaining braces
-                            .replace(/\n\s*\n\s*\n/g, '\n\n')  // Clean up excessive newlines
+                            .replace(/\n\s*\n\s*\n+/g, '\n\n')  // Clean up excessive newlines
                             .replace(/^\s+|\s+$/gm, '')  // Trim each line
+                            .replace(/\s+/g, ' ')  // Normalize spaces
+                            .replace(/\. /g, '.\n\n')  // Add paragraph breaks after sentences
                             .trim()
+
+                        console.log(`Cleaned content (${extractedBody.length} chars):`, extractedBody.substring(0, 100) + '...')
 
                         if (extractedBody.length > 50) { // Only use if we got substantial content
                             break
                         }
                     }
+                }
+
+                if (!extractedBody) {
+                    console.warn('No body content extracted, using fallback')
+                    extractedBody = 'Please edit this content with your personalized cover letter.'
                 }
                 setEditableLetter(extractedBody)
 
