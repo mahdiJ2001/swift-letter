@@ -384,8 +384,8 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
             <Card className="bg-[#171717] border-[#2e2e2e]">
                 <CardHeader className="border-b border-[#2e2e2e] p-4 sm:p-6">
                     <CardTitle className="flex items-center space-x-2 sm:space-x-3 text-lg sm:text-xl">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center">
-                            <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-lg sm:rounded-xl flex items-center justify-center border border-[#2e2e2e]">
+                            <User className="h-4 w-4 sm:h-5 sm:w-5 text-black" />
                         </div>
                         <span className="text-[#ececec]">Profile Information</span>
                     </CardTitle>

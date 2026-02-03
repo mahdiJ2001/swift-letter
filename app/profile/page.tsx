@@ -55,7 +55,6 @@ export default function ProfilePage() {
             if (response.ok) {
                 const data = await response.json()
                 if (data) {
-                    console.log('Fetched profile data:', data) // Temporary debug log
                     // Convert null values to undefined for TypeScript compatibility
                     const convertedProfile: UserProfile = {
                         ...data,
@@ -67,7 +66,6 @@ export default function ProfilePage() {
                         credits: data.credits || 0,
                         resume_url: data.resume_url || undefined // Ensure resume_url is included
                     }
-                    console.log('Converted profile with resume_url:', convertedProfile.resume_url) // Temporary debug log
                     setProfile(convertedProfile)
                 }
             } else if (response.status === 404) {
