@@ -290,8 +290,8 @@ export default function JobDescriptionForm() {
                 const subjectMatch = data.content.match(/\\newcommand\{\\targetSubject\}\{([^}]*)\}/)
                 const recipientMatch = data.content.match(/\\newcommand\{\\recipientName\}\{([^}]*)\}/)
 
-                const extractedCompany = companyMatch?.[1] || ''
-                const extractedPosition = positionMatch?.[1] || ''
+                const extractedCompany = companyMatch?.[1]?.replace(/\\&/g, '&').trim() || ''
+                const extractedPosition = positionMatch?.[1]?.replace(/\\&/g, '&').trim() || ''
                 let extractedSubject = subjectMatch?.[1] || ''
 
                 if (extractedSubject) {
@@ -338,7 +338,11 @@ export default function JobDescriptionForm() {
                         extractedBody = match[1]
                             // Clean up LaTeX formatting and template remnants
                             .replace(/^[\s\S]*?(?=To\s+(?:the\s+)?[A-Z])/i, '')  // Remove everything before "To the [Company]"
-                            .replace(/\\\\[\s]*\n/g, '\n\n')  // Replace \\\\ with double newline
+                            .replace(/\\&/g, '&')  // Convert LaTeX \& to &
+                            .replace(/\\%/g, '%')  // Convert LaTeX \% to %
+                            .replace(/\\\$/g, '$')  // Convert LaTeX \$ to $
+                            .replace(/\\#/g, '#')  // Convert LaTeX \# to #
+                            .replace(/\\[\\][\s]*\n/g, '\n\n')  // Replace \\\\ with double newline (preserve paragraphs)
                             .replace(/\\vspace\{[^}]*\}/g, '')  // Remove \vspace commands
                             .replace(/\\textbf\{([^}]*)\}/g, '$1')  // Remove \textbf{} formatting
                             .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')  // Remove \href{}{} links
@@ -347,8 +351,7 @@ export default function JobDescriptionForm() {
                             .replace(/\{([^}]*)\}/g, '$1')  // Remove remaining braces
                             .replace(/\n\s*\n\s*\n+/g, '\n\n')  // Clean up excessive newlines
                             .replace(/^\s+|\s+$/gm, '')  // Trim each line
-                            .replace(/\s+/g, ' ')  // Normalize spaces
-                            .replace(/\. /g, '.\n\n')  // Add paragraph breaks after sentences
+                            .replace(/([.!?])\s+/g, '$1\n\n')  // Add paragraph breaks after sentences
                             .replace(/^[\s\n]*/, '')  // Remove leading whitespace and newlines
                             .trim()
 
@@ -398,6 +401,23 @@ export default function JobDescriptionForm() {
                 .replace(/\\newcommand\{\\targetPosition\}\{[^}]*\}/g, `\\newcommand{\\targetPosition}{${targetPosition}}`)
                 .replace(/\\newcommand\{\\targetSubject\}\{[^}]*\}/g, `\\newcommand{\\targetSubject}{${targetSubject}}`)
 
+            // Replace the letter body content with the edited text
+            const letterBodyPattern = /(% ={25}[\s\S]*?% Letter Body[\s\S]*?% ={25}[\s\S]*?)([\s\S]*?)(\\vspace\{2\.0em\})/
+            const bodyMatch = formattedLatex.match(letterBodyPattern)
+
+            let finalLatex = formattedLatex
+            if (bodyMatch) {
+                // Convert plain text back to LaTeX format for PDF generation
+                const latexFormattedContent = textContent
+                    .replace(/&/g, '\\&')  // Escape & for LaTeX
+                    .replace(/%/g, '\\%')  // Escape % for LaTeX
+                    .replace(/\$/g, '\\$')  // Escape $ for LaTeX
+                    .replace(/#/g, '\\#')  // Escape # for LaTeX
+                    .replace(/\n\n/g, '\\\\\\\\\n\n')  // Convert paragraph breaks to LaTeX line breaks
+
+                finalLatex = formattedLatex.replace(letterBodyPattern, `$1${latexFormattedContent}\n\n$3`)
+            }
+
             const response = await fetch('/api/generate-pdf', {
                 method: 'POST',
                 headers: {
@@ -405,7 +425,7 @@ export default function JobDescriptionForm() {
                     'Authorization': `Bearer ${session.access_token}`
                 },
                 body: JSON.stringify({
-                    latex: formattedLatex
+                    latex: finalLatex
                 })
             })
 
