@@ -336,13 +336,15 @@ export default function JobDescriptionForm() {
                     // Pattern 8: More flexible pattern - everything between greeting and signature area
                     /(?:Dear|To the)\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*(?:Sincerely|Best regards|Yours sincerely|Cordialement)|\\vspace\{[^}]*em\})/i,
                     // Pattern 9: Fallback - capture everything after greeting until document structure changes
-                    /(?:Dear|To the)\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*\\[a-zA-Z]+|\\end\{document\})/i
+                    /(?:Dear|To the)\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*\\[a-zA-Z]+|\\end\{document\})/i,
+                    // Pattern 10: Ultimate fallback - capture any text content in the document
+                    /\\begin\{document\}[\s\S]*?(?:Dear|To the)[\s\S]*?,([\s\S]*?)(?:Sincerely|Cordialement|\\end\{document\})/i
                 ]
 
                 for (let i = 0; i < patterns.length; i++) {
                     const pattern = patterns[i]
                     const match = data.content.match(pattern)
-                    if (match && match[1] && match[1].trim()) {
+                    if (match && match[1]) {  // Remove trim() check to capture any content
                         extractedBody = match[1]
                             // Clean up LaTeX escape characters first
                             .replace(/\\&/g, '&')  // Convert LaTeX \& to &
@@ -378,10 +380,8 @@ export default function JobDescriptionForm() {
                             .trim()
 
                         console.log(`Pattern ${i + 1} extracted content (${extractedBody.length} chars):`, extractedBody.substring(0, 100) + '...')
-
-                        if (extractedBody.length > 30) { // Reduced threshold to capture more content
-                            break
-                        }
+                        // Always use extracted content regardless of length
+                        break
                     }
                 }
 
@@ -444,14 +444,25 @@ export default function JobDescriptionForm() {
                             .replace(/\\\\/g, '\n')
                             .replace(/%[^\n]*/g, '')
                             .trim()
-                        if (rawContent.length > 100) {
-                            extractedBody = rawContent
-                        } else {
-                            extractedBody = 'Unable to extract letter content. Please try regenerating.'
-                        }
+                        // Always use raw content if available, no matter the length
+                        extractedBody = rawContent || 'Generated content will appear here'
                     }
                 }
-                setEditableLetter(extractedBody)
+
+                // Ensure we always have some content to edit, never empty
+                const finalContent = extractedBody.trim() || data.content
+                    .replace(/\\documentclass[\s\S]*?\\begin\{document\}/g, '')
+                    .replace(/\\end\{document\}/g, '')
+                    .replace(/\\newcommand[^}]*\{[^}]*\}/g, '')
+                    .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
+                    .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
+                    .replace(/\{([^}]*)\}/g, '$1')
+                    .replace(/\\\\/g, '\n')
+                    .replace(/%[^\n]*/g, '')
+                    .trim()
+
+                console.log('Final content to edit:', finalContent.length, 'characters')
+                setEditableLetter(finalContent)
 
                 await generatePdfAndPreview(data.latex)
             } else {
