@@ -315,12 +315,16 @@ export default function JobDescriptionForm() {
 
                 // Try multiple patterns to extract the letter body
                 const patterns = [
-                    // Pattern 1: Content between Dear and \vspace{2.0em} - the actual letter body
-                    /Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n?([\s\S]*?)\\vspace\{2\.0em\}/,
-                    // Pattern 2: Content after "Letter Body" section until signature
-                    /%\s*Letter Body\s*%\s*=+\s*Dear[^,]*,\s*(?:\\\\)?\s*\n?([\s\S]*?)\\vspace\{2\.0em\}/,
-                    // Pattern 3: Content between Dear and Sincerely (fallback)
-                    /Dear[^,]*,\s*(?:\\\\)?\s*\n?([\s\S]*?)(?:Sincerely,|\\vspace)/
+                    // Pattern 1: Content between Dear and \vspace{2.0em} or \\vspace{2.0em}
+                    /Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n*([\s\S]*?)\\\\?vspace\{2\.0em\}/,
+                    // Pattern 2: Content between Dear and Sincerely
+                    /Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*Sincerely,|\n\s*\\vspace)/,
+                    // Pattern 3: Content after "Letter Body" comment (if exists)
+                    /%\s*Letter Body\s*%.*?Dear[^,]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:Sincerely,|\\vspace)/,
+                    // Pattern 4: More flexible pattern - everything between Dear and signature area
+                    /Dear\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*(?:Sincerely|Best regards|Yours sincerely)|\\vspace\{[^}]*em\})/,
+                    // Pattern 5: Fallback - capture everything after Dear line until document structure changes
+                    /Dear\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*\\[a-zA-Z]+|\\end\{document\})/
                 ]
 
                 for (let i = 0; i < patterns.length; i++) {
@@ -339,14 +343,17 @@ export default function JobDescriptionForm() {
                             .replace(/\\textbf\{([^}]*)\}/g, '$1')  // Remove \textbf{} formatting
                             .replace(/\\textit\{([^}]*)\}/g, '$1')  // Remove \textit{} formatting
                             .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')  // Remove \href{}{} links
-                            .replace(/\\targetPosition/g, extractedPosition || 'Position')  // Replace variable
-                            .replace(/\\targetCompany/g, extractedCompany || 'Company')  // Replace variable
+                            // Replace LaTeX variables with actual values
+                            .replace(/\\targetPosition(?![a-zA-Z])/g, extractedPosition || 'the position')
+                            .replace(/\\targetCompany(?![a-zA-Z])/g, extractedCompany || 'your company')
+                            .replace(/\\recipientName(?![a-zA-Z])/g, recipientMatch?.[1] || 'Hiring Manager')
                             // Remove other LaTeX commands
                             .replace(/\\vspace\{[^}]*\}/g, '')  // Remove \vspace commands
                             .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')  // Remove LaTeX commands with arguments
                             .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')  // Remove LaTeX commands without arguments
                             // Handle line breaks - preserve paragraph structure
                             .replace(/\\\\\s*/g, '\n\n')  // Replace \\ with paragraph break
+                            .replace(/\\newline\s*/g, '\n')  // Replace \newline with line break
                             // Clean up braces and formatting
                             .replace(/\{([^}]*)\}/g, '$1')  // Remove remaining braces
                             .replace(/\n\s*\n\s*\n+/g, '\n\n')  // Clean up excessive newlines
@@ -355,14 +362,33 @@ export default function JobDescriptionForm() {
                             .replace(/^[\s\n]*/, '')  // Remove leading whitespace and newlines
                             .trim()
 
-                        if (extractedBody.length > 50) { // Only use if we got substantial content
+                        console.log(`Pattern ${i + 1} extracted content (${extractedBody.length} chars):`, extractedBody.substring(0, 100) + '...')
+
+                        if (extractedBody.length > 30) { // Reduced threshold to capture more content
                             break
                         }
                     }
                 }
 
                 if (!extractedBody) {
-                    extractedBody = 'Please edit this content with your personalized cover letter.'
+                    console.warn('Failed to extract letter body from LaTeX content. First 500 characters of content:')
+                    console.warn(data.content.substring(0, 500))
+                    // Try a simple fallback - look for any text after "Dear" and before signature words
+                    const simpleMatch = data.content.match(/Dear[^,\n]*,\s*\n*([\s\S]{50,}?)(?=\n\s*(?:Sincerely|Best regards|Yours sincerely|\s*\\end))/i)
+                    if (simpleMatch && simpleMatch[1]) {
+                        extractedBody = simpleMatch[1]
+                            .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')  // Remove LaTeX commands
+                            .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')  // Remove LaTeX commands
+                            .replace(/\{([^}]*)\}/g, '$1')  // Remove braces
+                            .replace(/\\\\/g, '\n')  // Replace \\ with newlines
+                            .trim()
+                        console.log('Simple fallback extracted:', extractedBody.length, 'characters')
+                    }
+
+                    if (!extractedBody) {
+                        extractedBody = 'Please edit this content with your personalized cover letter. fix it please '
+                        console.error('All extraction methods failed, using placeholder text')
+                    }
                 }
                 setEditableLetter(extractedBody)
 
