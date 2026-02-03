@@ -38,55 +38,30 @@ export async function POST(request: NextRequest) {
         // Generate unique filename
         const fileExt = 'pdf'
         const fileName = `${user.id}-${Date.now()}.${fileExt}`
-        const filePath = `resumes/${fileName}`
+        const filePath = fileName
 
         // Convert file to buffer
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
 
-        // Upload file to storage
+        // Upload file to the resumes bucket
         const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('user-files')
+            .from('resumes')
             .upload(filePath, buffer, {
                 contentType: 'application/pdf',
-                upsert: false
+                upsert: true
             })
 
         if (uploadError) {
             console.error('Storage upload error:', uploadError)
-            // If bucket doesn't exist, try to create it
-            if (uploadError.message?.includes('Bucket not found')) {
-                const { error: bucketError } = await supabase.storage.createBucket('user-files', {
-                    public: true,
-                    allowedMimeTypes: ['application/pdf'],
-                    fileSizeLimit: 10485760 // 10MB
-                })
-                
-                if (bucketError) {
-                    console.error('Failed to create bucket:', bucketError)
-                    return NextResponse.json({ error: 'Storage configuration error' }, { status: 500 })
-                }
-
-                // Retry upload after bucket creation
-                const { data: retryUploadData, error: retryUploadError } = await supabase.storage
-                    .from('user-files')
-                    .upload(filePath, buffer, {
-                        contentType: 'application/pdf',
-                        upsert: false
-                    })
-
-                if (retryUploadError) {
-                    console.error('Retry upload error:', retryUploadError)
-                    return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
-                }
-            } else {
-                return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
-            }
+            return NextResponse.json({ 
+                error: `Failed to upload file: ${uploadError.message}` 
+            }, { status: 500 })
         }
 
         // Get public URL for the uploaded file
         const { data: urlData } = supabase.storage
-            .from('user-files')
+            .from('resumes')
             .getPublicUrl(filePath)
 
         const resumeUrl = urlData.publicUrl
