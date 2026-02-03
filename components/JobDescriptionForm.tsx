@@ -336,7 +336,13 @@ export default function JobDescriptionForm() {
                         console.log(`Pattern ${i + 1} matched:`, match[1].substring(0, 200) + '...')
 
                         extractedBody = match[1]
+                            // Remove LaTeX template sections and comments
+                            .replace(/%\s*Date\s*\{\}.*?%\s*=+.*?%\s*Letter Body\s*%\s*=+/gs, '')  // Remove template header section
+                            .replace(/%.*?%/g, '')  // Remove any remaining % comment blocks
                             .replace(/^%.*$/gm, '')  // Remove LaTeX comment lines starting with %
+                            .replace(/To:\s*Position:\s*Company:\s*/g, '')  // Remove template placeholders
+                            .replace(/Subject:\s*/g, '')  // Remove subject placeholder
+                            .replace(/=+/g, '')  // Remove separator lines
                             .replace(/\\\\[\s]*\n/g, '\n\n')  // Replace \\\\ with double newline
                             .replace(/\\vspace\{[^}]*\}/g, '')  // Remove \vspace commands
                             .replace(/\\textbf\{([^}]*)\}/g, '$1')  // Remove \textbf{} formatting
@@ -348,7 +354,7 @@ export default function JobDescriptionForm() {
                             .replace(/^\s+|\s+$/gm, '')  // Trim each line
                             .replace(/\s+/g, ' ')  // Normalize spaces
                             .replace(/\. /g, '.\n\n')  // Add paragraph breaks after sentences
-                            .replace(/^\s*\n+/, '')  // Remove leading empty lines
+                            .replace(/^[\s\n]*/, '')  // Remove leading whitespace and newlines
                             .trim()
 
                         console.log(`Cleaned content (${extractedBody.length} chars):`, extractedBody.substring(0, 100) + '...')
