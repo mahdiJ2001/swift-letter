@@ -55,6 +55,7 @@ export default function ProfilePage() {
             if (response.ok) {
                 const data = await response.json()
                 if (data) {
+                    console.log('Fetched profile data:', data) // Temporary debug log
                     // Convert null values to undefined for TypeScript compatibility
                     const convertedProfile: UserProfile = {
                         ...data,
@@ -63,8 +64,10 @@ export default function ProfilePage() {
                         certifications: data.certifications || undefined,
                         languages: data.languages || undefined,
                         location: data.location || undefined,
-                        credits: data.credits || 0
+                        credits: data.credits || 0,
+                        resume_url: data.resume_url || undefined // Ensure resume_url is included
                     }
+                    console.log('Converted profile with resume_url:', convertedProfile.resume_url) // Temporary debug log
                     setProfile(convertedProfile)
                 }
             } else if (response.status === 404) {
@@ -82,8 +85,6 @@ export default function ProfilePage() {
     }
 
     const handleProfileUpdate = (updatedProfile: UserProfile) => {
-        console.log('Profile page - received profile update:', updatedProfile)
-        console.log('Resume URL:', updatedProfile.resume_url)
         setProfile(updatedProfile)
     }
 
@@ -175,11 +176,11 @@ export default function ProfilePage() {
                                 <div className="p-6 h-full">
                                     {profile?.resume_url ? (
                                         <div className="w-full h-full">
-                                            <embed
-                                                src={profile.resume_url}
-                                                type="application/pdf"
+                                            <iframe
+                                                src={`${profile.resume_url}#toolbar=0&navpanes=0&scrollbar=0`}
                                                 className="w-full h-full rounded-lg border border-[#2e2e2e]"
                                                 title="Resume Preview"
+                                                style={{ border: 'none' }}
                                             />
                                         </div>
                                     ) : (

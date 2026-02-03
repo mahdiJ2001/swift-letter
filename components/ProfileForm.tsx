@@ -188,9 +188,6 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
             }
 
             // Update profile with resume URL
-            console.log('Updating profile with resume URL:', resumeUrl)
-            console.log('Current profile:', profile)
-
             if (profile) {
                 onProfileUpdate({
                     ...profile,

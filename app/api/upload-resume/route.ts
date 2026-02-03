@@ -35,11 +35,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 })
         }
 
-        // Generate unique filename
+        // Generate unique filename with user folder structure for RLS compatibility
         const fileExt = 'pdf'
-        const fileName = `${user.id}-${Date.now()}.${fileExt}`
-        const filePath = fileName
-
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`
+        
         // Convert file to buffer
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
@@ -47,13 +46,21 @@ export async function POST(request: NextRequest) {
         // Upload file to the resumes bucket
         const { data: uploadData, error: uploadError } = await supabase.storage
             .from('resumes')
-            .upload(filePath, buffer, {
+            .upload(fileName, buffer, {
                 contentType: 'application/pdf',
                 upsert: true
             })
 
         if (uploadError) {
             console.error('Storage upload error:', uploadError)
+            
+            // If it's an RLS policy error, provide helpful message
+            if (uploadError.message?.includes('row-level security') || uploadError.message?.includes('policy')) {
+                return NextResponse.json({ 
+                    error: 'Storage permissions not configured properly. Please ensure the resumes bucket has the correct RLS policies for authenticated users.' 
+                }, { status: 500 })
+            }
+            
             return NextResponse.json({ 
                 error: `Failed to upload file: ${uploadError.message}` 
             }, { status: 500 })
@@ -62,7 +69,7 @@ export async function POST(request: NextRequest) {
         // Get public URL for the uploaded file
         const { data: urlData } = supabase.storage
             .from('resumes')
-            .getPublicUrl(filePath)
+            .getPublicUrl(fileName)
 
         const resumeUrl = urlData.publicUrl
 
