@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
-import { Menu, X, FileText, User, LogOut, Star } from 'lucide-react'
+import { Menu, X, User, LogOut, Coins } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 
@@ -35,63 +36,64 @@ export default function Header() {
     }, [user])
 
     return (
-        <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 sticky top-0 z-50 shadow-sm shadow-slate-200/50">
-            <div className="w-full px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
+        <header className="bg-[#0d0d0d] border-b border-[#2e2e2e] sticky top-0 z-50">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-14">
                     <div className="flex items-center space-x-8">
                         {/* Logo */}
                         <Link href="/" className="flex items-center space-x-2 group">
-                            <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200/50 group-hover:shadow-emerald-300/60 transition-all duration-300">
-                                <FileText className="h-5 w-5 text-white" />
-                            </div>
-                            <span className="text-xl font-bold text-slate-900">Swift Letter</span>
+                            <Image
+                                src="/logos/SL.png"
+                                alt="Swift Letter"
+                                width={65}
+                                height={65}
+                                className="rounded-lg"
+                            />
+                            <span className="text-lg font-semibold text-[#ececec]">Swift Letter</span>
                         </Link>
 
                         {/* Desktop Navigation */}
-                        <nav className="hidden md:flex items-center space-x-8">
+                        <nav className="hidden md:flex items-center space-x-6">
                             <Link
                                 href="/"
-                                className="text-slate-600 hover:text-emerald-600 font-medium transition-colors duration-200"
+                                className="text-[#a1a1a1] hover:text-[#ececec] text-sm font-medium transition-colors"
                             >
                                 Generator
                             </Link>
                             <Link
+                                href="/waitlist"
+                                className="text-[#a1a1a1] hover:text-[#ececec] text-sm font-medium transition-colors"
+                            >
+                                Waitlist
+                            </Link>
+                            <Link
                                 href="/profile"
-                                className="text-slate-600 hover:text-emerald-600 font-medium transition-colors duration-200"
+                                className="text-[#a1a1a1] hover:text-[#ececec] text-sm font-medium transition-colors"
                             >
                                 Profile
-                            </Link>
-                            <Link
-                                href="/pricing"
-                                className="text-slate-600 hover:text-emerald-600 font-medium transition-colors duration-200"
-                            >
-                                Pricing
-                            </Link>
-                            <Link
-                                href="/feedback"
-                                className="text-slate-600 hover:text-emerald-600 font-medium transition-colors duration-200"
-                            >
-                                Feedback
                             </Link>
                         </nav>
                     </div>
 
                     {/* Auth Section */}
-                    <div className="hidden md:flex items-center space-x-4">
+                    <div className="hidden md:flex items-center space-x-3">
                         {user ? (
                             <>
                                 {credits !== null && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
+                                    <button
                                         onClick={() => setShowCreditsModal(true)}
-                                        className="flex items-center space-x-1 px-2 py-1 bg-green-50 hover:bg-green-100 rounded-md border border-green-200 text-green-700 hover:text-green-800"
+                                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#171717] hover:bg-[#212121] rounded-lg border border-[#2e2e2e] text-[#a1a1a1] hover:text-[#ececec] transition-colors"
                                     >
-                                        <Star className="h-4 w-4 text-green-600" />
+                                        <Coins className="h-4 w-4 text-emerald-500" />
                                         <span className="text-sm font-medium">{credits}</span>
-                                    </Button>
+                                    </button>
                                 )}
-                                <Button variant="ghost" asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    asChild
+                                    className="text-[#a1a1a1] hover:text-[#ececec] hover:bg-[#171717]"
+                                >
                                     <Link href="/profile" className="flex items-center space-x-2">
                                         <User className="h-4 w-4" />
                                         <span>Profile</span>
@@ -99,21 +101,31 @@ export default function Header() {
                                 </Button>
                                 <Button
                                     variant="ghost"
+                                    size="sm"
                                     onClick={signOut}
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    className="text-red-400 hover:text-red-300 hover:bg-red-950/30"
                                 >
-                                    <LogOut className="h-4 w-4 mr-2" />
+                                    <LogOut className="h-4 w-4 mr-1.5" />
                                     <span>Sign Out</span>
                                 </Button>
                             </>
                         ) : (
                             <>
-                                <Button variant="ghost" asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    asChild
+                                    className="text-[#a1a1a1] hover:text-[#ececec] hover:bg-[#171717]"
+                                >
                                     <Link href="/auth/login">
                                         Sign In
                                     </Link>
                                 </Button>
-                                <Button asChild>
+                                <Button
+                                    size="sm"
+                                    asChild
+                                    className="bg-white hover:bg-gray-100 text-black border border-[#2e2e2e]"
+                                >
                                     <Link href="/auth/signup">
                                         Get Started
                                     </Link>
@@ -126,60 +138,53 @@ export default function Header() {
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="md:hidden"
+                        className="md:hidden text-[#a1a1a1] hover:text-[#ececec] hover:bg-[#171717]"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                     >
                         {isMenuOpen ? (
-                            <X className="h-6 w-6" />
+                            <X className="h-5 w-5" />
                         ) : (
-                            <Menu className="h-6 w-6" />
+                            <Menu className="h-5 w-5" />
                         )}
                     </Button>
                 </div>
 
                 {/* Mobile Navigation */}
                 {isMenuOpen && (
-                    <div className="md:hidden border-t border-gray-200 py-4 space-y-2 animate-in slide-in-from-top duration-200">
+                    <div className="md:hidden border-t border-[#2e2e2e] py-4 space-y-1 animate-in slide-in-from-top">
                         <Link
                             href="/"
-                            className="block text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 font-medium transition-all duration-200 px-4 py-3 rounded-lg"
+                            className="block text-[#a1a1a1] hover:text-[#ececec] hover:bg-[#171717] font-medium px-4 py-3 rounded-lg transition-colors"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Generator
                         </Link>
                         <Link
+                            href="/waitlist"
+                            className="block text-[#a1a1a1] hover:text-[#ececec] hover:bg-[#171717] font-medium px-4 py-3 rounded-lg transition-colors"
+                            onClick={() => setIsMenuOpen(false)}
+                        >
+                            Waitlist
+                        </Link>
+                        <Link
                             href="/profile"
-                            className="block text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 font-medium transition-all duration-200 px-4 py-3 rounded-lg"
+                            className="block text-[#a1a1a1] hover:text-[#ececec] hover:bg-[#171717] font-medium px-4 py-3 rounded-lg transition-colors"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Profile
                         </Link>
-                        <Link
-                            href="/pricing"
-                            className="block text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 font-medium transition-all duration-200 px-4 py-3 rounded-lg"
-                            onClick={() => setIsMenuOpen(false)}
-                        >
-                            Pricing
-                        </Link>
-                        <Link
-                            href="/feedback"
-                            className="block text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 font-medium transition-all duration-200 px-4 py-3 rounded-lg"
-                            onClick={() => setIsMenuOpen(false)}
-                        >
-                            Feedback
-                        </Link>
-                        <div className="border-t border-gray-100 my-2 pt-2">
+                        <div className="border-t border-[#2e2e2e] my-2 pt-2">
                             {user ? (
                                 <>
                                     {credits !== null && (
-                                        <div className="flex items-center space-x-2 px-4 py-3 bg-emerald-50 rounded-lg mx-2 mb-2">
-                                            <Star className="h-5 w-5 text-emerald-600" />
-                                            <span className="text-sm font-semibold text-emerald-700">Credits: {credits}</span>
+                                        <div className="flex items-center space-x-2 px-4 py-3 bg-[#171717] rounded-lg mx-2 mb-2">
+                                            <Coins className="h-5 w-5 text-emerald-500" />
+                                            <span className="text-sm font-semibold text-[#ececec]">Credits: {credits}</span>
                                         </div>
                                     )}
                                     <Button
                                         variant="ghost"
-                                        className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 py-3 px-4"
+                                        className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-950/30 py-3 px-4"
                                         onClick={() => {
                                             signOut()
                                             setIsMenuOpen(false)
@@ -193,7 +198,7 @@ export default function Header() {
                                 <div className="space-y-2 px-2">
                                     <Button
                                         variant="outline"
-                                        className="w-full justify-center py-3 text-base"
+                                        className="w-full justify-center py-3 text-base border-[#2e2e2e] text-[#a1a1a1] hover:bg-[#171717]"
                                         asChild
                                     >
                                         <Link
@@ -204,7 +209,7 @@ export default function Header() {
                                         </Link>
                                     </Button>
                                     <Button
-                                        className="w-full justify-center py-3 text-base bg-emerald-600 hover:bg-emerald-700"
+                                        className="w-full justify-center py-3 text-base bg-white hover:bg-gray-100 text-black border border-[#2e2e2e]"
                                         asChild
                                     >
                                         <Link
@@ -224,41 +229,31 @@ export default function Header() {
             {/* Credits Modal */}
             {showCreditsModal && (
                 <div
-                    className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99999] p-4 min-h-screen"
+                    className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[99999] p-4"
                     onClick={() => setShowCreditsModal(false)}
                 >
                     <div
-                        className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-gray-200 transform transition-all duration-200 scale-100 relative"
+                        className="bg-[#171717] rounded-xl max-w-md w-full p-6 border border-[#2e2e2e]"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="text-center">
-                            <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                                <Star className="h-8 w-8 text-white" />
+                            <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Coins className="h-8 w-8 text-white" />
                             </div>
-                            <h3 className="text-2xl font-bold text-gray-900 mb-2">Your Credits</h3>
-                            <div className="text-5xl font-bold bg-gradient-to-br from-green-500 to-green-700 bg-clip-text text-transparent mb-4">{credits}</div>
-                            <p className="text-gray-600 mb-6 text-sm">
-                                {credits === 0 ? 'You have no credits remaining. Purchase more to continue generating cover letters.' :
+                            <h3 className="text-2xl font-bold text-[#ececec] mb-2">Your Credits</h3>
+                            <div className="text-5xl font-bold text-emerald-500 mb-4">{credits}</div>
+                            <p className="text-[#a1a1a1] mb-6 text-sm">
+                                {credits === 0 ? 'You have no credits remaining.' :
                                     credits === 1 ? 'You have 1 credit remaining.' :
                                         `You have ${credits} credits remaining.`}
                             </p>
-                            <div className="flex space-x-3">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setShowCreditsModal(false)}
-                                    className="flex-1 hover:bg-gray-50"
-                                >
-                                    Close
-                                </Button>
-                                <Button
-                                    asChild
-                                    className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg"
-                                >
-                                    <Link href="/pricing" onClick={() => setShowCreditsModal(false)}>
-                                        Buy Credits
-                                    </Link>
-                                </Button>
-                            </div>
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowCreditsModal(false)}
+                                className="w-full border-[#2e2e2e] text-[#a1a1a1] hover:bg-[#212121]"
+                            >
+                                Close
+                            </Button>
                         </div>
                     </div>
                 </div>

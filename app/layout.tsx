@@ -92,7 +92,7 @@ export default function RootLayout({
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
                 />
             </head>
-            <body className={`${inter.className} min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100`}>
+            <body className={`${inter.className} min-h-screen bg-[#0d0d0d]`}>
                 <AuthProvider>
                     {children}
                 </AuthProvider>

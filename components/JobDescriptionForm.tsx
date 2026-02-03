@@ -2,21 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Clipboard, Zap, Download, PenTool, Upload, CheckCircle2, FileText } from 'lucide-react'
+import { Paperclip, Send, Globe, Download, X, Pencil, Loader2 } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-
-// Add custom CSS for subtle animations
-const progressBarStyles = `
-  @keyframes progressGlow {
-    0%, 100% { opacity: 0.8; }
-    50% { opacity: 1; }
-  }
-`
+import { Input } from '@/components/ui/input'
 
 type UserProfile = {
     id: string
@@ -49,7 +40,6 @@ export default function JobDescriptionForm() {
     const [success, setSuccess] = useState('')
     const [showPdfPreview, setShowPdfPreview] = useState(false)
     const [pdfUrl, setPdfUrl] = useState<string>('')
-    const [showWritingStyle, setShowWritingStyle] = useState(false)
     const [selectedLanguage, setSelectedLanguage] = useState('english')
     const [showLanguageModal, setShowLanguageModal] = useState(false)
     const [isEditingLetter, setIsEditingLetter] = useState(false)
@@ -59,18 +49,11 @@ export default function JobDescriptionForm() {
     const [editablePosition, setEditablePosition] = useState('')
     const [editableSubject, setEditableSubject] = useState('')
     const [isUploadingResume, setIsUploadingResume] = useState(false)
-    const [showErrorPopup, setShowErrorPopup] = useState(false)
-    const [errorMessage, setErrorMessage] = useState('')
-    const [showSuccessPopup, setShowSuccessPopup] = useState(false)
-    const [showFeedbackForm, setShowFeedbackForm] = useState(false)
-    const [feedbackText, setFeedbackText] = useState('')
-    const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
     const [hasResumeAttached, setHasResumeAttached] = useState(false)
-    const [loadingProgress, setLoadingProgress] = useState(0)
     const router = useRouter()
     const { user } = useAuth()
 
-    // Fetch user profile on mount to check if resume is attached
+    // Fetch user profile on mount
     useEffect(() => {
         const fetchProfile = async () => {
             if (!user) {
@@ -82,7 +65,6 @@ export default function JobDescriptionForm() {
                 const response = await fetch(`/api/profile?userId=${user.id}`)
                 if (response.ok) {
                     const profileData = await response.json()
-                    // Check if profile has key fields filled (indicating resume was uploaded)
                     const hasProfile = profileData &&
                         profileData.full_name &&
                         profileData.experiences &&
@@ -100,61 +82,20 @@ export default function JobDescriptionForm() {
         fetchProfile()
     }, [user])
 
-    // Progress animation effect
-    useEffect(() => {
-        let interval: NodeJS.Timeout
-        if (isLoading || isPdfGenerating) {
-            setLoadingProgress(0)
-            const duration = 30000 // 30 seconds
-            const steps = 100
-            const stepDuration = duration / steps
-
-            interval = setInterval(() => {
-                setLoadingProgress(prev => {
-                    if (prev >= 100) {
-                        return 100
-                    }
-                    // Simulate realistic progress with some randomness
-                    const increment = Math.random() * 3 + 0.5 // 0.5 to 3.5% per step
-                    return Math.min(100, prev + increment)
-                })
-            }, stepDuration)
-        } else {
-            setLoadingProgress(0)
-        }
-
-        return () => {
-            if (interval) clearInterval(interval)
-        }
-    }, [isLoading, isPdfGenerating])
-
     // Prevent body scrolling when modals are open
     useEffect(() => {
-        const isAnyModalOpen = showPdfPreview || showLanguageModal || isEditingLetter || showErrorPopup || showSuccessPopup || showFeedbackForm
+        const isAnyModalOpen = showPdfPreview || showLanguageModal || isEditingLetter
 
         if (isAnyModalOpen) {
             document.body.style.overflow = 'hidden'
-            document.body.style.paddingRight = '17px' // Prevent layout shift
         } else {
             document.body.style.overflow = 'unset'
-            document.body.style.paddingRight = '0px'
         }
 
-        // Cleanup function to restore scrolling
         return () => {
             document.body.style.overflow = 'unset'
-            document.body.style.paddingRight = '0px'
         }
-    }, [showPdfPreview, showLanguageModal, isEditingLetter, showErrorPopup, showSuccessPopup, showFeedbackForm])
-
-    const handlePasteFromClipboard = async () => {
-        try {
-            const text = await navigator.clipboard.readText()
-            setJobDescription(text)
-        } catch (err) {
-            console.error('Failed to read clipboard:', err)
-        }
-    }
+    }, [showPdfPreview, showLanguageModal, isEditingLetter])
 
     const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0]
@@ -165,56 +106,33 @@ export default function JobDescriptionForm() {
             return
         }
 
-        if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        if (file.size > 10 * 1024 * 1024) {
             setError('File size must be less than 10MB.')
             return
         }
 
         setIsUploadingResume(true)
         setError('')
-        setSuccess('Processing PDF, please wait...')
+        setSuccess('Processing resume...')
 
         try {
-            console.log('Starting PDF processing...')
-
-            // Create FormData to send the file to API
             const formData = new FormData()
             formData.append('file', file)
 
-            setSuccess('Extracting text from PDF...')
-
-            // Send to API endpoint for processing
             const response = await fetch('/api/extract-pdf', {
                 method: 'POST',
                 body: formData
             })
 
-            setSuccess('Processing with AI...')
-
             if (!response.ok) {
-                let errorMessage = 'Failed to process PDF'
-                try {
-                    const errorData = await response.json()
-                    errorMessage = errorData.error || errorMessage
-                } catch {
-                    // If we can't parse the error response, provide a helpful message
-                    if (response.status === 500) {
-                        errorMessage = 'Server error while processing PDF. This might be due to a large file or temporary server issue. Please try again with a smaller PDF or wait a moment and retry.'
-                    }
-                }
-                throw new Error(errorMessage)
+                throw new Error('Failed to process PDF')
             }
 
             const responseData = await response.json()
-            console.log('API Response:', responseData)
-
             const extractedData = responseData.data
-            console.log('Extracted data:', extractedData)
 
-            // Format arrays for display
             const { formatSkillsArray, formatLanguagesArray } = await import('@/lib/resume-parser')
 
-            // Prepare profile data for automatic save
             const updatedProfile = {
                 full_name: extractedData.full_name || '',
                 email: extractedData.email || '',
@@ -233,18 +151,15 @@ export default function JobDescriptionForm() {
                 ].filter(Boolean).join('\n')
             }
 
-            // Automatically save to profile
             if (user) {
                 const { data: { session } } = await supabase.auth.getSession()
                 if (session) {
-                    // First check if profile exists in database
                     const checkResponse = await fetch(`/api/profile?userId=${user.id}`)
                     let existingProfile = null
                     let hasExistingProfile = false
 
                     if (checkResponse.ok) {
                         const profileData = await checkResponse.json()
-                        // Check if we got actual profile data (not null or empty)
                         if (profileData && profileData.id) {
                             existingProfile = profileData
                             hasExistingProfile = true
@@ -266,62 +181,19 @@ export default function JobDescriptionForm() {
                     if (updateResponse.ok) {
                         const savedProfile = await updateResponse.json()
                         setProfile(savedProfile)
-                        setHasResumeAttached(true) // Mark resume as attached
-                        setSuccess('Resume processed and profile automatically saved!')
-                        setShowSuccessPopup(true)
-                    } else {
-                        const errorData = await updateResponse.json()
-                        throw new Error(`Failed to save profile: ${errorData.error || 'Unknown error'}`)
+                        setHasResumeAttached(true)
+                        setSuccess('Resume processed successfully!')
+                        setTimeout(() => setSuccess(''), 3000)
                     }
-                } else {
-                    throw new Error('No active session found')
                 }
-            } else {
-                throw new Error('User not authenticated')
             }
 
-            // Clear the file input
             event.target.value = ''
         } catch (error: any) {
-            console.error('Resume processing error:', error)
-            setErrorMessage(error.message || 'Failed to process resume. Please try again.')
-            setShowErrorPopup(true)
-            setError('')
-            setSuccess('')
+            setError(error.message || 'Failed to process resume.')
+            setTimeout(() => setError(''), 5000)
         } finally {
             setIsUploadingResume(false)
-        }
-    }
-
-    const handleFeedbackSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!feedbackText.trim()) return
-
-        setIsSubmittingFeedback(true)
-        try {
-            const response = await fetch('/api/feedback', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    feedback: feedbackText.trim(),
-                    page: 'generator',
-                    user_id: user?.id || null
-                })
-            })
-
-            if (response.ok) {
-                setFeedbackText('')
-                setShowFeedbackForm(false)
-                setSuccess('Thank you for your feedback!')
-            } else {
-                setError('Failed to submit feedback. Please try again.')
-            }
-        } catch (error) {
-            setError('Failed to submit feedback. Please try again.')
-        } finally {
-            setIsSubmittingFeedback(false)
         }
     }
 
@@ -334,16 +206,13 @@ export default function JobDescriptionForm() {
         setSuccess('')
 
         if (!user) {
-            // Redirect to login if not authenticated
             router.push('/auth/login?redirectTo=/')
             return
         }
 
         try {
-            // Check if user has a complete profile
             const response = await fetch(`/api/profile?userId=${user.id}`)
             if (!response.ok) {
-                // No profile exists, redirect to create one
                 sessionStorage.setItem('jobDescription', jobDescription)
                 router.push('/profile')
                 return
@@ -351,15 +220,12 @@ export default function JobDescriptionForm() {
 
             const profileData = await response.json()
 
-            // Check if profile has required fields
             if (!profileData || !profileData.full_name || !profileData.email || !profileData.phone || !profileData.experiences || !profileData.skills) {
-                // Profile incomplete, redirect to fill it
                 sessionStorage.setItem('jobDescription', jobDescription)
                 router.push('/profile')
                 return
             }
 
-            // Profile is complete, generate cover letter
             setProfile(profileData)
             await generateCoverLetter(profileData)
 
@@ -373,7 +239,6 @@ export default function JobDescriptionForm() {
 
     const generateCoverLetter = async (profileData: UserProfile) => {
         try {
-            // Get the current session token
             const { data: { session } } = await supabase.auth.getSession()
 
             if (!session) {
@@ -409,14 +274,8 @@ export default function JobDescriptionForm() {
             })
 
             if (!generateResponse.ok) {
-                const errorText = await generateResponse.text()
-                console.error('API Error Response:', errorText)
-                try {
-                    const errorData = JSON.parse(errorText)
-                    throw new Error(errorData.error || `API Error: ${generateResponse.status} ${generateResponse.statusText}`)
-                } catch (parseError) {
-                    throw new Error(`API Error: ${generateResponse.status} ${generateResponse.statusText} - ${errorText}`)
-                }
+                const errorData = await generateResponse.json()
+                throw new Error(errorData.error || 'Failed to generate cover letter')
             }
 
             const data = await generateResponse.json()
@@ -424,43 +283,8 @@ export default function JobDescriptionForm() {
             if (data.success) {
                 setGeneratedLetter(data.content)
                 setGeneratedLatex(data.latex)
-                // Extract text content from LaTeX for editing
-                const textMatch = data.content.match(/% Letter Body[\s\S]*?% =========================\s*([\s\S]*?)\s*\\vspace{2\.0em}/)
-                if (textMatch) {
-                    // First get the actual values for replacement
-                    const companyMatch = data.content.match(/\\newcommand\{\\targetCompany\}\{([^}]*)\}/)
-                    const positionMatch = data.content.match(/\\newcommand\{\\targetPosition\}\{([^}]*)\}/)
-                    const extractedCompany = companyMatch?.[1] || ''
-                    const extractedPosition = positionMatch?.[1] || ''
 
-                    let textContent = textMatch[1]
-                        .replace(/\\noindent\s*/g, '')
-                        .replace(/\\vspace{[^}]*}/g, '\n')
-                        .replace(/\\\\\s*/g, '\n')
-                        .replace(/\\textbf\{([^}]*)\}/g, '$1')
-                        .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')
-                        .replace(/\\targetCompany(?![a-zA-Z])/g, extractedCompany)
-                        .replace(/\\targetPosition(?![a-zA-Z])/g, extractedPosition)
-                        .replace(/\\myname/g, profile?.full_name || '')
-                        .replace(/\\mylocation/g, profile?.location || '')
-                        .replace(/\\myemail/g, profile?.email || '')
-                        .replace(/\\myphone/g, profile?.phone || '')
-                        .replace(/\\today/g, new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }))
-                        .replace(/\\%/g, '%')
-                        .replace(/\\_/g, '_')
-                        .replace(/\\&/g, '&')
-                        .replace(/\\#/g, '#')
-                        .replace(/\\\$/g, '$')
-                        .replace(/\\ /g, ' ')
-                        .replace(/\\•/g, '•')
-                        .replace(/\{|\}/g, '')
-                        .replace(/[ \t]+/g, ' ')
-                        .replace(/\n\s*\n\s*\n/g, '\n\n')
-                        .trim()
-                    setEditableLetter(textContent)
-                }
-
-                // Extract individual fields from LaTeX
+                // Extract fields for editing
                 const companyMatch = data.content.match(/\\newcommand\{\\targetCompany\}\{([^}]*)\}/)
                 const positionMatch = data.content.match(/\\newcommand\{\\targetPosition\}\{([^}]*)\}/)
                 const subjectMatch = data.content.match(/\\newcommand\{\\targetSubject\}\{([^}]*)\}/)
@@ -470,36 +294,21 @@ export default function JobDescriptionForm() {
                 const extractedPosition = positionMatch?.[1] || ''
                 let extractedSubject = subjectMatch?.[1] || ''
 
-                console.log('Subject extraction debug:', {
-                    subjectMatch,
-                    extractedSubject,
-                    rawContent: data.content.substring(0, 500)
-                })
-
-                // Replace LaTeX variables in subject with actual values
                 if (extractedSubject) {
                     extractedSubject = extractedSubject
                         .replace(/\\targetPosition(?![a-zA-Z])/g, extractedPosition)
                         .replace(/\\targetCompany(?![a-zA-Z])/g, extractedCompany)
-                        .replace(/\\myname/g, profile?.full_name || '')
                         .replace(/\\&/g, '&')
-                        .replace(/\\%/g, '%')
-                        .replace(/\\#/g, '#')
-                        .replace(/\\\$/g, '$')
-                        .replace(/\\_/g, '_')
                         .trim()
                 } else {
-                    // Fallback subject if extraction fails
                     extractedSubject = `Application for ${extractedPosition} at ${extractedCompany}`
                 }
-
-                console.log('Final extracted subject:', extractedSubject)
 
                 setEditableCompany(extractedCompany)
                 setEditablePosition(extractedPosition)
                 setEditableSubject(extractedSubject)
                 setEditableRecipientName(recipientMatch?.[1] || '')
-                // Generate PDF directly
+
                 await generatePdfAndPreview(data.latex)
             } else {
                 throw new Error(data.error || 'Failed to generate cover letter')
@@ -507,20 +316,9 @@ export default function JobDescriptionForm() {
 
         } catch (error: any) {
             console.error('Error generating cover letter:', error)
-            let errorMessage = error.message || 'Failed to generate cover letter. Please try again.'
-
-            // Provide more helpful error messages for common issues
-            if (errorMessage.includes('Edge Function returned a non-2xx status code') ||
-                errorMessage.includes('AWS credentials are not configured') ||
-                errorMessage.includes('Internal Server Error')) {
-                errorMessage = 'Cover letter generation is currently unavailable. The AI service may be temporarily down or not properly configured. Please try again later.'
-            }
-
-            setError(errorMessage)
+            setError(error.message || 'Failed to generate cover letter. Please try again.')
         }
     }
-
-
 
     const generatePdfFromText = async (textContent: string, recipientName: string = '', companyName: string = '', positionName: string = '', subjectText: string = '') => {
         setIsPdfGenerating(true)
@@ -532,27 +330,16 @@ export default function JobDescriptionForm() {
                 throw new Error('No valid session found')
             }
 
-            // Use provided values or extract from text content as fallback
-            const targetCompany = companyName || textContent.match(/To the Hiring Team at ([^,\n]+)/)?.[1]?.trim() || 'Company'
-            const targetPosition = positionName || textContent.match(/saw the ([^,\n]+) opening/)?.[1]?.trim() || 'Position'
+            const targetCompany = companyName || 'Company'
+            const targetPosition = positionName || 'Position'
             const targetRecipient = recipientName || 'Hiring Manager'
             const targetSubject = subjectText || `Application for ${targetPosition} at ${targetCompany}`
 
-            // Use the original LaTeX template with updated content
             const formattedLatex = generatedLatex
                 .replace(/\\newcommand\{\\recipientName\}\{[^}]*\}/g, `\\newcommand{\\recipientName}{${targetRecipient}}`)
                 .replace(/\\newcommand\{\\targetCompany\}\{[^}]*\}/g, `\\newcommand{\\targetCompany}{${targetCompany}}`)
                 .replace(/\\newcommand\{\\targetPosition\}\{[^}]*\}/g, `\\newcommand{\\targetPosition}{${targetPosition}}`)
                 .replace(/\\newcommand\{\\targetSubject\}\{[^}]*\}/g, `\\newcommand{\\targetSubject}{${targetSubject}}`)
-                .replace(
-                    /% =========================\s*% Letter Body\s*% =========================[\s\S]*?\\vspace\{2\.0em\}/,
-                    `% =========================
-% Letter Body
-% =========================
-${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').replace(/\$/g, '\\$').replace(/_/g, '\\_')}
-
-\\vspace{2.0em}`
-                )
 
             const response = await fetch('/api/generate-pdf', {
                 method: 'POST',
@@ -566,9 +353,7 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
             })
 
             if (!response.ok) {
-                const errorText = await response.text()
-                console.error('PDF API Error Response:', errorText)
-                throw new Error(`PDF API Error: ${response.status} - ${errorText}`)
+                throw new Error('Failed to generate PDF')
             }
 
             const data = await response.json()
@@ -583,19 +368,16 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                 const blob = new Blob([byteArray], { type: 'application/pdf' })
                 const url = URL.createObjectURL(blob)
 
-                // Update the generatedLatex with the new formatted version
                 setGeneratedLatex(formattedLatex)
-
                 setPdfUrl(url)
                 setShowPdfPreview(true)
                 setIsEditingLetter(false)
-                setSuccess('Cover letter updated successfully!')
             } else {
                 throw new Error(data.error || 'Failed to generate PDF')
             }
         } catch (error: any) {
             console.error('Error generating PDF:', error)
-            setError(error.message || 'Failed to generate PDF. Please try again.')
+            setError(error.message || 'Failed to generate PDF.')
         } finally {
             setIsPdfGenerating(false)
         }
@@ -623,20 +405,12 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
             })
 
             if (!response.ok) {
-                const errorText = await response.text()
-                console.error('PDF API Error Response:', errorText)
-                try {
-                    const errorData = JSON.parse(errorText)
-                    throw new Error(errorData.error || `PDF API Error: ${response.status}`)
-                } catch {
-                    throw new Error(`PDF API Error: ${response.status} - ${errorText}`)
-                }
+                throw new Error('Failed to generate PDF')
             }
 
             const data = await response.json()
 
             if (data.success && data.pdfData) {
-                // Convert base64 to blob URL for preview
                 const byteCharacters = atob(data.pdfData)
                 const byteNumbers = new Array(byteCharacters.length)
                 for (let i = 0; i < byteCharacters.length; i++) {
@@ -653,365 +427,225 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
             }
         } catch (error: any) {
             console.error('Error generating PDF:', error)
-            setError(error.message || 'Failed to generate PDF. Please try again.')
+            setError(error.message || 'Failed to generate PDF.')
         } finally {
             setIsPdfGenerating(false)
         }
     }
 
-
-
     return (
         <>
-            <style jsx>{progressBarStyles}</style>
-            <Card className="w-full max-w-none mx-auto glass-card-strong rounded-2xl border-0">
-                <CardHeader className="text-left pb-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <CardTitle className="text-lg font-semibold text-slate-900">
-                            Generate Cover Letter
-                        </CardTitle>
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                            {/* Resume Status Indicator */}
-                            {hasResumeAttached && (
-                                <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
-                                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                                    <span className="text-sm font-medium text-emerald-700">Resume Attached</span>
-                                </div>
-                            )}
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => document.getElementById('resume-upload')?.click()}
-                                disabled={isUploadingResume}
-                                className={`
-                                    font-medium transition-all duration-200
-                                    ${hasResumeAttached
-                                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
-                                        : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700'
-                                    }
-                                `}
-                            >
-                                {isUploadingResume ? (
-                                    <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mr-2"></div>
-                                ) : hasResumeAttached ? (
-                                    <FileText className="h-4 w-4 mr-2" />
-                                ) : (
-                                    <Upload className="h-4 w-4 mr-2" />
-                                )}
-                                <span>
-                                    {isUploadingResume
-                                        ? 'Processing Resume...'
-                                        : hasResumeAttached
-                                            ? 'Update Resume'
-                                            : 'Attach Resume'
-                                    }
-                                </span>
-                            </Button>
-                        </div>
-                        <input
-                            id="resume-upload"
-                            type="file"
-                            accept=".pdf"
-                            className="hidden"
-                            onChange={handleResumeUpload}
+            {/* Main Input Container - ChatGPT Style */}
+            <div className="w-full max-w-3xl">
+                <form onSubmit={handleGenerateCoverLetter}>
+                    <div className="chat-input-container p-3 sm:p-4">
+                        {/* Textarea */}
+                        <Textarea
+                            value={jobDescription}
+                            onChange={(e) => setJobDescription(e.target.value)}
+                            placeholder="Paste the job description here..."
+                            className="w-full min-h-[120px] max-h-[300px] resize-none bg-transparent border-0 text-[#ececec] placeholder-[#666] focus:ring-0 focus:outline-none text-base"
+                            rows={4}
                         />
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleGenerateCoverLetter} className="space-y-6">
 
-                        <div className="relative">
-                            <Textarea
-                                id="jobDescription"
-                                rows={12}
-                                className="resize-none text-sm sm:text-base min-h-[300px] sm:min-h-[400px] md:min-h-[500px] w-full"
-                                placeholder={
-                                    "Paste the complete job description here...\n\n" +
-                                    "Example:\n" +
-                                    "Software Engineer - Frontend Development\n" +
-                                    "ABC Tech Company\n\n" +
-                                    "We are looking for a skilled Frontend Developer to join our team...\n" +
-                                    "[rest of job description]"
-                                }
-                                value={jobDescription}
-                                onChange={(e) => setJobDescription(e.target.value)}
-                                required
-                            />
+                        {/* Bottom toolbar */}
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#2e2e2e]">
+                            <div className="flex items-center gap-2">
+                                {/* Attach Resume Button */}
+                                <label className="feature-pill cursor-pointer">
+                                    <Paperclip className="h-4 w-4" />
+                                    <span className="hidden sm:inline">
+                                        {isUploadingResume ? 'Processing...' : hasResumeAttached ? 'Resume ✓' : 'Attach Resume'}
+                                    </span>
+                                    <input
+                                        type="file"
+                                        accept=".pdf"
+                                        className="hidden"
+                                        onChange={handleResumeUpload}
+                                        disabled={isUploadingResume}
+                                    />
+                                </label>
 
-                            {/* Language Button - Top Right */}
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => setShowLanguageModal(true)}
-                                className="absolute top-4 right-4"
-                            >
-                                <span className="text-sm mr-1">🌐</span>
-                                <span>{selectedLanguage === 'english' ? 'EN' : 'FR'}</span>
-                            </Button>
-
-                            {/* Paste Button - Center */}
-                            {!jobDescription && (
-                                <Button
+                                {/* Language Button */}
+                                <button
                                     type="button"
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={handlePasteFromClipboard}
-                                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                                    onClick={() => setShowLanguageModal(true)}
+                                    className="feature-pill"
                                 >
-                                    <Clipboard className="h-4 w-4 mr-2" />
-                                    <span>Paste</span>
-                                </Button>
-                            )}
-
-                            {/* Character Count */}
-                            <div className="absolute bottom-4 right-4 text-sm text-gray-500">
-                                {jobDescription.length} characters
+                                    <Globe className="h-4 w-4" />
+                                    <span className="hidden sm:inline">
+                                        {selectedLanguage === 'english' ? 'English' : 'Français'}
+                                    </span>
+                                </button>
                             </div>
-                        </div>
 
-
-
-                        {/* Submit Button */}
-                        <div className="text-center">
+                            {/* Submit Button */}
                             <Button
                                 type="submit"
                                 disabled={!jobDescription.trim() || isLoading || isPdfGenerating}
-                                size="lg"
-                                className={`
-                                    relative overflow-hidden transition-all duration-300 ease-in-out
-                                    ${isLoading || isPdfGenerating
-                                        ? 'w-full sm:w-80 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
-                                        : 'w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
-                                    }
-                                    disabled:opacity-60 disabled:cursor-not-allowed
-                                    text-white font-semibold shadow-lg hover:shadow-xl
-                                    border-0 rounded-xl px-8 py-4
-                                `}
+                                className="bg-[#ececec] hover:bg-white text-[#0d0d0d] rounded-full p-2.5 h-auto disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 {isLoading || isPdfGenerating ? (
-                                    <>
-                                        {/* Progress Background */}
-                                        <div
-                                            className="absolute inset-0 bg-white/10 transition-all duration-500 ease-out"
-                                            style={{ width: `${loadingProgress}%` }}
-                                        />
-
-                                        {/* Content */}
-                                        <div className="relative flex items-center justify-center space-x-4">
-                                            <div className="flex items-center space-x-3">
-                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                <span className="font-medium text-white">
-                                                    {isPdfGenerating ? 'Generating PDF' : 'Creating Cover Letter'}
-                                                </span>
-                                            </div>
-
-                                            <div className="flex items-center space-x-2">
-                                                <div className="w-16 h-2 bg-white/20 rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-white rounded-full transition-all duration-300 ease-out"
-                                                        style={{ width: `${loadingProgress}%` }}
-                                                    />
-                                                </div>
-                                                <span className="text-sm font-bold text-white min-w-[3rem] text-right">
-                                                    {Math.round(loadingProgress)}%
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </>
+                                    <Loader2 className="h-5 w-5 animate-spin" />
                                 ) : (
-                                    <div className="flex items-center justify-center space-x-2">
-                                        <Zap className="h-5 w-5" />
-                                        <span>Generate Cover Letter</span>
-                                    </div>
+                                    <Send className="h-5 w-5" />
                                 )}
                             </Button>
                         </div>
+                    </div>
+                </form>
 
-                        {/* Error and Success Messages */}
-                        {error && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                                <p className="text-red-600 text-sm">{error}</p>
-                            </div>
-                        )}
+                {/* Status Messages */}
+                {error && (
+                    <div className="mt-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-300 text-sm">
+                        {error}
+                    </div>
+                )}
 
-                        {success && (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                                <p className="text-green-600 text-sm">{success}</p>
-                            </div>
-                        )}
+                {success && (
+                    <div className="mt-4 p-3 bg-emerald-900/30 border border-emerald-800 rounded-lg text-emerald-300 text-sm">
+                        {success}
+                    </div>
+                )}
 
-                        {/* Word Count & Validation */}
-                        <div className="text-center">
-                            <p className="text-sm text-gray-500">
-                                {jobDescription.trim() ? (
-                                    <span className="text-green-600">✓ Ready to generate your cover letter!</span>
-                                ) : (
-                                    <span>Please paste the job description to continue</span>
-                                )}
-                            </p>
-                        </div>
-                    </form>
+                {/* Helper text */}
+                <p className="text-center text-[#666] text-xs mt-4">
+                    Paste a job description and generate a personalized cover letter in seconds.
+                </p>
+            </div>
 
-                </CardContent>
-            </Card>
-
-            {/* Language Selection Modal - Outside Card for proper fixed positioning */}
+            {/* Language Selection Modal */}
             {showLanguageModal && (
-                <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-                    <div className="bg-white rounded-lg max-w-md w-full p-6">
-                        <h3 className="text-lg font-semibold mb-4">Select Language</h3>
+                <div
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
+                    onClick={() => setShowLanguageModal(false)}
+                >
+                    <div
+                        className="bg-[#171717] rounded-xl max-w-md w-full p-6 border border-[#2e2e2e]"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h3 className="text-lg font-semibold text-[#ececec] mb-4">Select Language</h3>
                         <div className="space-y-3 mb-6">
                             <button
-                                onClick={() => setSelectedLanguage('english')}
-                                className={`w-full p-3 text-left rounded-lg border-2 transition-colors ${selectedLanguage === 'english'
-                                    ? 'border-green-500 bg-green-50 text-green-700'
-                                    : 'border-gray-200 hover:border-gray-300'
+                                type="button"
+                                onClick={() => {
+                                    setSelectedLanguage('english')
+                                    setShowLanguageModal(false)
+                                }}
+                                className={`w-full p-3 text-left rounded-lg border transition-colors ${selectedLanguage === 'english'
+                                        ? 'border-emerald-500 bg-emerald-900/30 text-emerald-300'
+                                        : 'border-[#2e2e2e] hover:border-[#3a3a3a] text-[#a1a1a1]'
                                     }`}
                             >
                                 <div className="flex items-center">
                                     <span className="text-xl mr-3">🇺🇸</span>
                                     <div>
-                                        <div className="font-medium">English</div>
-                                        <div className="text-sm text-gray-500">Generate cover letter in English</div>
+                                        <div className="font-medium text-[#ececec]">English</div>
+                                        <div className="text-sm text-[#666]">Generate in English</div>
                                     </div>
                                 </div>
                             </button>
                             <button
-                                onClick={() => setSelectedLanguage('french')}
-                                className={`w-full p-3 text-left rounded-lg border-2 transition-colors ${selectedLanguage === 'french'
-                                    ? 'border-green-500 bg-green-50 text-green-700'
-                                    : 'border-gray-200 hover:border-gray-300'
+                                type="button"
+                                onClick={() => {
+                                    setSelectedLanguage('french')
+                                    setShowLanguageModal(false)
+                                }}
+                                className={`w-full p-3 text-left rounded-lg border transition-colors ${selectedLanguage === 'french'
+                                        ? 'border-emerald-500 bg-emerald-900/30 text-emerald-300'
+                                        : 'border-[#2e2e2e] hover:border-[#3a3a3a] text-[#a1a1a1]'
                                     }`}
                             >
                                 <div className="flex items-center">
                                     <span className="text-xl mr-3">🇫🇷</span>
                                     <div>
-                                        <div className="font-medium">Français</div>
-                                        <div className="text-sm text-gray-500">Générer la lettre de motivation en français</div>
+                                        <div className="font-medium text-[#ececec]">Français</div>
+                                        <div className="text-sm text-[#666]">Générer en français</div>
                                     </div>
                                 </div>
                             </button>
                         </div>
-                        <div className="flex justify-end space-x-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => setShowLanguageModal(false)}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                onClick={() => setShowLanguageModal(false)}
-                                className="bg-green-600 hover:bg-green-700"
-                            >
-                                Select
-                            </Button>
-                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowLanguageModal(false)}
+                            className="w-full border-[#2e2e2e] text-[#a1a1a1] hover:bg-[#212121]"
+                        >
+                            Cancel
+                        </Button>
                     </div>
                 </div>
             )}
 
-            {/* Edit Cover Letter Modal - Higher z-index to appear above PDF Preview */}
+            {/* Edit Cover Letter Modal */}
             {isEditingLetter && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4" style={{ zIndex: 10000 }}>
-                    <div className="bg-white rounded-lg sm:rounded-xl w-full max-w-5xl max-h-[98vh] sm:max-h-[95vh] flex flex-col shadow-2xl">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-6 border-b gap-3">
-                            <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Edit Cover Letter</h3>
-                            <div className="flex items-center gap-2 sm:space-x-3">
+                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-[10000]">
+                    <div className="bg-[#171717] rounded-xl w-full max-w-5xl max-h-[98vh] flex flex-col border border-[#2e2e2e]">
+                        <div className="flex items-center justify-between p-4 border-b border-[#2e2e2e]">
+                            <h3 className="text-lg font-semibold text-[#ececec]">Edit Cover Letter</h3>
+                            <div className="flex items-center gap-2">
                                 <Button
                                     onClick={() => generatePdfFromText(editableLetter, editableRecipientName, editableCompany, editablePosition, editableSubject)}
                                     disabled={isPdfGenerating}
-                                    className="bg-green-600 text-white hover:bg-green-700 text-xs sm:text-sm flex-1 sm:flex-none"
+                                    className="bg-white hover:bg-gray-100 text-black border border-[#2e2e2e] text-sm"
                                 >
-                                    {isPdfGenerating ? 'Recompiling...' : 'Recompile & Preview'}
+                                    {isPdfGenerating ? 'Compiling...' : 'Recompile'}
                                 </Button>
                                 <Button
-                                    variant="outline"
+                                    variant="ghost"
                                     onClick={() => setIsEditingLetter(false)}
-                                    className="text-xs sm:text-sm"
+                                    className="text-[#a1a1a1] hover:text-[#ececec] hover:bg-[#212121]"
                                 >
-                                    Cancel
+                                    <X className="h-5 w-5" />
                                 </Button>
                             </div>
                         </div>
-                        <div className="flex-1 p-3 sm:p-6 overflow-auto">
-                            <div className="space-y-4 sm:space-y-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Recipient Information
-                                    </label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">To (Recipient)</label>
-                                            <Input
-                                                placeholder="Hiring Manager"
-                                                value={editableRecipientName}
-                                                onChange={(e) => setEditableRecipientName(e.target.value)}
-                                                className="text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">Company Name</label>
-                                            <Input
-                                                placeholder="Company Name"
-                                                value={editableCompany}
-                                                onChange={(e) => {
-                                                    setEditableCompany(e.target.value)
-                                                    // Also update in letter content
-                                                    const updated = editableLetter.replace(
-                                                        /To the Hiring Team at [^,\n]+/,
-                                                        `To the Hiring Team at ${e.target.value}`
-                                                    )
-                                                    setEditableLetter(updated)
-                                                }}
-                                                className="text-sm"
-                                            />
-                                        </div>
+                        <div className="flex-1 p-4 overflow-auto">
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Recipient</label>
+                                        <Input
+                                            placeholder="Hiring Manager"
+                                            value={editableRecipientName}
+                                            onChange={(e) => setEditableRecipientName(e.target.value)}
+                                            className="bg-[#212121] border-[#2e2e2e] text-[#ececec]"
+                                        />
                                     </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">Position</label>
-                                            <Input
-                                                placeholder="Software Engineer"
-                                                value={editablePosition}
-                                                onChange={(e) => {
-                                                    setEditablePosition(e.target.value)
-                                                    // Also update in letter content
-                                                    const updated = editableLetter.replace(
-                                                        /saw the ([^,\n]+) opening/,
-                                                        `saw the ${e.target.value} opening`
-                                                    )
-                                                    setEditableLetter(updated)
-                                                }}
-                                                className="text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">Subject</label>
-                                            <Input
-                                                placeholder="Application for Position at Company"
-                                                value={editableSubject}
-                                                onChange={(e) => setEditableSubject(e.target.value)}
-                                                className="text-sm"
-                                            />
-                                        </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Company</label>
+                                        <Input
+                                            placeholder="Company Name"
+                                            value={editableCompany}
+                                            onChange={(e) => setEditableCompany(e.target.value)}
+                                            className="bg-[#212121] border-[#2e2e2e] text-[#ececec]"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Position</label>
+                                        <Input
+                                            placeholder="Software Engineer"
+                                            value={editablePosition}
+                                            onChange={(e) => setEditablePosition(e.target.value)}
+                                            className="bg-[#212121] border-[#2e2e2e] text-[#ececec]"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Subject</label>
+                                        <Input
+                                            placeholder="Application for..."
+                                            value={editableSubject}
+                                            onChange={(e) => setEditableSubject(e.target.value)}
+                                            className="bg-[#212121] border-[#2e2e2e] text-[#ececec]"
+                                        />
                                     </div>
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Cover Letter Content
-                                    </label>
+                                    <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Content</label>
                                     <Textarea
                                         value={editableLetter}
                                         onChange={(e) => setEditableLetter(e.target.value)}
-                                        className="w-full min-h-[300px] sm:min-h-[400px] md:min-h-[500px] resize-none text-sm leading-relaxed"
-                                        placeholder="Edit your cover letter content here..."
+                                        className="w-full min-h-[400px] resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec]"
                                     />
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        Edit the text naturally - formatting will be handled automatically when you recompile.
-                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -1019,29 +653,28 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                 </div>
             )}
 
-            {/* PDF Preview Modal - Modern Design - Properly outside Card for full page blur */}
+            {/* PDF Preview Modal */}
             {showPdfPreview && pdfUrl && (
-                <div className="fixed inset-0 bg-black/85 backdrop-blur-xl backdrop-saturate-150 flex items-center justify-center p-2 sm:p-4" style={{ zIndex: 9999, backdropFilter: 'blur(20px) saturate(180%)' }}>
-                    <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-6xl max-h-[98vh] sm:max-h-[95vh] flex flex-col overflow-hidden border border-gray-200">
-                        {/* Modern Header */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-6 border-b border-gray-100 bg-gradient-to-r from-green-50 to-emerald-50 gap-3">
+                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-[9999]">
+                    <div className="bg-[#171717] rounded-xl w-full max-w-6xl max-h-[98vh] flex flex-col border border-[#2e2e2e] overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-4 border-b border-[#2e2e2e]">
                             <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
-                                    <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-[#2e2e2e]">
+                                    <Download className="h-5 w-5 text-black" />
                                 </div>
                                 <div>
-                                    <h3 className="text-base sm:text-xl font-bold text-gray-900">Your Cover Letter</h3>
-                                    <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">AI-generated • Professional format</p>
+                                    <h3 className="text-lg font-semibold text-[#ececec]">Your Cover Letter</h3>
+                                    <p className="text-sm text-[#666]">Generated successfully</p>
                                 </div>
                             </div>
-                            <div className="flex items-center justify-end gap-2 sm:space-x-3">
+                            <div className="flex items-center gap-2">
                                 <Button
                                     onClick={() => setIsEditingLetter(true)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3"
-                                    size="sm"
+                                    className="bg-[#212121] hover:bg-[#2e2e2e] text-[#ececec] border border-[#2e2e2e]"
                                 >
-                                    <PenTool className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                                    <span className="hidden sm:inline">Edit Letter</span>
+                                    <Pencil className="h-4 w-4 mr-2" />
+                                    Edit
                                 </Button>
                                 <Button
                                     onClick={() => {
@@ -1052,11 +685,10 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                                         a.click()
                                         document.body.removeChild(a)
                                     }}
-                                    className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3"
-                                    size="sm"
+                                    className="bg-white hover:bg-gray-100 text-black border border-[#2e2e2e]"
                                 >
-                                    <Download className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                                    <span className="hidden sm:inline">Download PDF</span>
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Download
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -1065,154 +697,27 @@ ${textContent.replace(/%/g, '\\%').replace(/&/g, '\\&').replace(/#/g, '\\#').rep
                                         URL.revokeObjectURL(pdfUrl)
                                         setPdfUrl('')
                                     }}
-                                    className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2"
-                                    size="sm"
+                                    className="text-[#666] hover:text-[#ececec] hover:bg-[#212121]"
                                 >
-                                    ✕
+                                    <X className="h-5 w-5" />
                                 </Button>
                             </div>
                         </div>
 
-                        {/* PDF Viewer Container */}
-                        <div className="flex-1 bg-gray-50 p-2 sm:p-4 relative overflow-hidden">
-                            <div className="relative w-full h-full bg-white rounded-lg sm:rounded-xl shadow-inner border border-gray-200 overflow-hidden">
+                        {/* PDF Viewer */}
+                        <div className="flex-1 bg-[#0d0d0d] p-4">
+                            <div className="w-full h-full bg-white rounded-lg overflow-hidden">
                                 <iframe
                                     src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
                                     className="w-full h-full border-0"
                                     title="Cover Letter Preview"
-                                    style={{
-                                        height: 'calc(98vh - 140px)',
-                                        minHeight: '300px'
-                                    }}
+                                    style={{ minHeight: '500px' }}
                                 />
                             </div>
-
-                            {/* Success Message */}
-                            <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
-                                <div className="bg-green-100 border border-green-200 text-green-800 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
-                                    ✓ Cover letter generated successfully!
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
             )}
-
-            {/* Error Popup Modal */}
-            {showErrorPopup && (
-                <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-                    <div className="bg-white rounded-lg max-w-md w-full p-6">
-                        <div className="text-center">
-                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Saving Profile</h3>
-                            <p className="text-gray-600 mb-6">{errorMessage}</p>
-                            <Button
-                                onClick={() => {
-                                    setShowErrorPopup(false)
-                                    setErrorMessage('')
-                                }}
-                                className="w-full bg-red-600 hover:bg-red-700"
-                            >
-                                Close
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Success Popup Modal */}
-            {showSuccessPopup && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-                    <div className="bg-white rounded-lg max-w-md w-full p-6">
-                        <div className="text-center">
-                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Profile Updated Successfully!</h3>
-                            <p className="text-gray-600 mb-6">
-                                Your resume has been processed and your profile has been automatically updated.
-                                You can check the extracted information or edit it from the profile interface.
-                            </p>
-                            <div className="flex space-x-3">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setShowSuccessPopup(false)}
-                                    className="flex-1"
-                                >
-                                    Continue
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        setShowSuccessPopup(false)
-                                        router.push('/profile')
-                                    }}
-                                    className="flex-1 bg-green-600 hover:bg-green-700"
-                                >
-                                    View Profile
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Feedback Form Modal */}
-            {showFeedbackForm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-                    <div className="bg-white rounded-lg max-w-md w-full p-6">
-                        <form onSubmit={handleFeedbackSubmit}>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Share Your Feedback</h3>
-                            <textarea
-                                value={feedbackText}
-                                onChange={(e) => setFeedbackText(e.target.value)}
-                                placeholder="Tell us about your experience, report bugs, or suggest improvements..."
-                                className="w-full h-32 p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                required
-                            />
-                            <div className="flex space-x-3 mt-4">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => {
-                                        setShowFeedbackForm(false)
-                                        setFeedbackText('')
-                                    }}
-                                    className="flex-1"
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    disabled={isSubmittingFeedback || !feedbackText.trim()}
-                                    className="flex-1 bg-green-600 hover:bg-green-700"
-                                >
-                                    {isSubmittingFeedback ? 'Sending...' : 'Send Feedback'}
-                                </Button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Feedback Bubble */}
-            <button
-                onClick={() => setShowFeedbackForm(true)}
-                className="fixed bottom-6 right-6 bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-105 z-40 group"
-                title="Send Feedback"
-            >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 21l1.98-5.874A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
-                </svg>
-                <span className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-sm py-1 px-2 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    Send Feedback
-                </span>
-            </button>
         </>
     )
 }
