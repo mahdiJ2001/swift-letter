@@ -82,8 +82,9 @@ export default function ProfilePage() {
     }
 
     const handleProfileUpdate = (updatedProfile: UserProfile) => {
+        console.log('Profile page - received profile update:', updatedProfile)
+        console.log('Resume URL:', updatedProfile.resume_url)
         setProfile(updatedProfile)
-        console.log('Profile updated:', updatedProfile)
     }
 
 
@@ -173,11 +174,14 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="p-6 h-full">
                                     {profile?.resume_url ? (
-                                        <iframe
-                                            src={profile.resume_url}
-                                            className="w-full h-full rounded-lg border border-[#2e2e2e]"
-                                            title="Resume Preview"
-                                        />
+                                        <div className="w-full h-full">
+                                            <embed
+                                                src={profile.resume_url}
+                                                type="application/pdf"
+                                                className="w-full h-full rounded-lg border border-[#2e2e2e]"
+                                                title="Resume Preview"
+                                            />
+                                        </div>
                                     ) : (
                                         <div className="flex flex-col items-center justify-center h-full text-center text-[#a1a1a1]">
                                             <svg className="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">

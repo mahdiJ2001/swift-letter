@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
-import { createClient } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -116,58 +115,48 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
         setSuccess('')
 
         try {
-            // First, upload the file to Supabase storage
-            const supabase = createClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-            )
+            // First, upload the file to get the resume URL
+            const uploadFormData = new FormData()
+            uploadFormData.append('file', file)
 
-            // Get the current user
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) {
-                throw new Error('User not authenticated')
-            }
-
-            // Generate unique filename
-            const fileExt = 'pdf'
-            const fileName = `${user.id}-${Date.now()}.${fileExt}`
-            const filePath = `resumes/${fileName}`
-
-            // Upload file to storage
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('user-files')
-                .upload(filePath, file)
-
-            if (uploadError) {
-                console.error('Storage upload error:', uploadError)
-                throw new Error('Failed to upload resume file')
-            }
-
-            // Get public URL for the uploaded file
-            const { data: urlData } = supabase.storage
-                .from('user-files')
-                .getPublicUrl(filePath)
-
-            const resumeUrl = urlData.publicUrl
-
-            // Now extract the content from the PDF
-            const formData = new FormData()
-            formData.append('pdf', file)
-
-            const response = await fetch('/api/extract-pdf', {
+            const uploadResponse = await fetch('/api/upload-resume', {
                 method: 'POST',
-                body: formData,
+                body: uploadFormData,
             })
 
-            if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.error || 'Failed to extract PDF content')
+            if (!uploadResponse.ok) {
+                const errorData = await uploadResponse.json()
+                throw new Error(errorData.error || 'Failed to upload resume file')
             }
 
-            const responseData = await response.json()
+            const uploadResult = await uploadResponse.json()
+            const resumeUrl = uploadResult.resumeUrl
 
-            // API returns { data: extractedProfile }
-            const extractedProfile = responseData.data
+            // Then extract the content from the PDF
+            const extractFormData = new FormData()
+            extractFormData.append('pdf', file)
+
+            const extractResponse = await fetch('/api/extract-pdf', {
+                method: 'POST',
+                body: extractFormData,
+            })
+
+            if (!extractResponse.ok) {
+                const errorData = await extractResponse.json()
+                console.warn('PDF extraction failed:', errorData.error)
+                // Don't fail the whole process if extraction fails
+                setSuccess('Resume uploaded successfully! Please fill in your profile information manually.')
+
+                // Update profile with resume URL
+                onProfileUpdate({
+                    ...profile!,
+                    resume_url: resumeUrl
+                })
+                return
+            }
+
+            const extractResult = await extractResponse.json()
+            const extractedProfile = extractResult.data
 
             if (extractedProfile) {
                 // Format arrays if they're returned as arrays
@@ -193,46 +182,41 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                     languages: formatArray(extractedProfile.languages) || prev.languages,
                 }))
 
-                // Update profile with resume URL immediately
-                if (profile) {
-                    await updateProfileWithResumeUrl(resumeUrl)
-                }
-
-                setSuccess('Resume processed successfully! Review and customize the extracted information.')
+                setSuccess('Resume uploaded and processed successfully! Review and customize the extracted information.')
             } else {
-                throw new Error(responseData.error || 'Failed to extract information from PDF')
+                setSuccess('Resume uploaded successfully! Please review and complete your profile information.')
             }
+
+            // Update profile with resume URL
+            console.log('Updating profile with resume URL:', resumeUrl)
+            console.log('Current profile:', profile)
+
+            if (profile) {
+                onProfileUpdate({
+                    ...profile,
+                    resume_url: resumeUrl
+                })
+            } else {
+                // For new users without a profile yet, create a minimal profile object
+                const newProfile: UserProfile = {
+                    id: '', // Will be set when profile is actually created
+                    full_name: formData.full_name || '',
+                    email: formData.email || '',
+                    phone: formData.phone || '',
+                    experiences: formData.experiences || '',
+                    projects: formData.projects || '',
+                    skills: formData.skills || '',
+                    credits: 3,
+                    resume_url: resumeUrl
+                }
+                onProfileUpdate(newProfile)
+            }
+
         } catch (error: any) {
-            console.error('Error uploading resume:', error)
+            console.error('Error processing resume:', error)
             setError(error.message || 'Failed to process resume. Please try again.')
         } finally {
             setIsUploadingResume(false)
-        }
-    }
-
-    const updateProfileWithResumeUrl = async (resumeUrl: string) => {
-        try {
-            const response = await fetch('/api/profile', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: profile?.id,
-                    resume_url: resumeUrl
-                }),
-            })
-
-            if (response.ok) {
-                const updatedProfile = await response.json()
-                // Update the profile state to include the resume URL
-                onProfileUpdate({
-                    ...profile!,
-                    resume_url: resumeUrl
-                })
-            }
-        } catch (error) {
-            console.error('Failed to update profile with resume URL:', error)
         }
     }
 
@@ -288,6 +272,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                 education: formData.education || null,
                 certifications: formData.certifications || null,
                 languages: formData.languages || null,
+                resume_url: profile?.resume_url || null, // Preserve existing resume_url
                 updated_at: new Date().toISOString()
             }
 
