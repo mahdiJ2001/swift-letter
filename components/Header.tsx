@@ -84,7 +84,7 @@ export default function Header() {
                                         onClick={() => setShowCreditsModal(true)}
                                         className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#171717] hover:bg-[#212121] rounded-lg border border-[#2e2e2e] text-[#a1a1a1] hover:text-[#ececec] transition-colors"
                                     >
-                                        <Coins className="h-4 w-4 text-emerald-500" />
+                                        <Coins className="h-4 w-4 text-white" />
                                         <span className="text-sm font-medium">{credits}</span>
                                     </button>
                                 )}
@@ -178,7 +178,7 @@ export default function Header() {
                                 <>
                                     {credits !== null && (
                                         <div className="flex items-center space-x-2 px-4 py-3 bg-[#171717] rounded-lg mx-2 mb-2">
-                                            <Coins className="h-5 w-5 text-emerald-500" />
+                                            <Coins className="h-5 w-5 text-white" />
                                             <span className="text-sm font-semibold text-[#ececec]">Credits: {credits}</span>
                                         </div>
                                     )}
@@ -237,11 +237,11 @@ export default function Header() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="text-center">
-                            <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Coins className="h-8 w-8 text-white" />
+                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Coins className="h-8 w-8 text-black" />
                             </div>
                             <h3 className="text-2xl font-bold text-[#ececec] mb-2">Your Credits</h3>
-                            <div className="text-5xl font-bold text-emerald-500 mb-4">{credits}</div>
+                            <div className="text-5xl font-bold text-white mb-4">{credits}</div>
                             <p className="text-[#a1a1a1] mb-6 text-sm">
                                 {credits === 0 ? 'You have no credits remaining.' :
                                     credits === 1 ? 'You have 1 credit remaining.' :

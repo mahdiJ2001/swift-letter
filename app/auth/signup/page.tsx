@@ -94,7 +94,7 @@ export default function SignupPage() {
                     {/* Back Button */}
                     <Link
                         href="/"
-                        className="inline-flex items-center space-x-2 text-[#a1a1a1] hover:text-emerald-500 mb-6 sm:mb-8 transition-colors"
+                        className="inline-flex items-center space-x-2 text-[#a1a1a1] hover:text-white mb-6 sm:mb-8 transition-colors"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         <span className="text-sm sm:text-base">Back to home</span>
@@ -128,10 +128,10 @@ export default function SignupPage() {
                                 }
                             }}
                             disabled={isOAuthLoading || isLoading}
-                            className="w-full flex items-center justify-center px-4 py-3.5 sm:py-3 border border-[#2e2e2e] rounded-lg bg-[#212121] text-[#ececec] hover:bg-[#2e2e2e] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-[#171717] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                            className="w-full flex items-center justify-center px-4 py-3.5 sm:py-3 border border-[#2e2e2e] rounded-lg bg-[#212121] text-[#ececec] hover:bg-[#2e2e2e] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#171717] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                         >
                             {isOAuthLoading ? (
-                                <div className="w-5 h-5 border-2 border-[#2e2e2e] border-t-emerald-500 rounded-full animate-spin mr-3"></div>
+                                <div className="w-5 h-5 border-2 border-[#2e2e2e] border-t-white rounded-full animate-spin mr-3"></div>
                             ) : (
                                 <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

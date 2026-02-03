@@ -61,7 +61,7 @@ export default function WaitlistPage() {
                     {/* Back Link */}
                     <Link
                         href="/"
-                        className="inline-flex items-center space-x-2 text-[#a1a1a1] hover:text-emerald-500 mb-8 transition-colors"
+                        className="inline-flex items-center space-x-2 text-[#a1a1a1] hover:text-white mb-8 transition-colors"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         <span>Back to home</span>
@@ -97,7 +97,7 @@ export default function WaitlistPage() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="Enter your email"
-                                        className="w-full pl-12 pr-4 py-4 bg-[#171717] border border-[#2e2e2e] rounded-xl text-[#ececec] placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                        className="w-full pl-12 pr-4 py-4 bg-[#171717] border border-[#2e2e2e] rounded-xl text-[#ececec] placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
                                         required
                                     />
                                 </div>

@@ -299,17 +299,17 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         {/* PDF Upload Section */}
                         <div>
                             <label htmlFor="resume-pdf-upload" className={`group relative flex justify-center px-4 sm:px-8 py-6 sm:py-10 border-2 border-dashed rounded-lg sm:rounded-xl transition-all duration-300 ${isUploadingResume
-                                ? 'border-emerald-500 bg-emerald-900/20 cursor-not-allowed'
-                                : 'border-[#2e2e2e] hover:border-emerald-500 cursor-pointer bg-[#212121] hover:bg-[#2e2e2e]'
+                                ? 'border-white bg-white/10 cursor-not-allowed'
+                                : 'border-[#2e2e2e] hover:border-white cursor-pointer bg-[#212121] hover:bg-[#2e2e2e]'
                                 }`}>
                                 <div className="space-y-2 text-center">
                                     {isUploadingResume ? (
-                                        <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-emerald-500 mx-auto"></div>
+                                        <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-white mx-auto"></div>
                                     ) : (
-                                        <Upload className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-emerald-500 group-hover:text-emerald-400 transition-colors" />
+                                        <Upload className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-white group-hover:text-gray-200 transition-colors" />
                                     )}
                                     <div className="flex text-base sm:text-lg font-medium text-[#ececec]">
-                                        <span className={`${isUploadingResume ? 'text-emerald-400' : 'text-emerald-500 group-hover:text-emerald-400'} transition-colors`}>
+                                        <span className={`${isUploadingResume ? 'text-gray-200' : 'text-white group-hover:text-gray-200'} transition-colors`}>
                                             {isUploadingResume ? 'Processing PDF...' : 'Upload your resume'}
                                         </span>
                                     </div>
@@ -382,7 +382,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                         value={formData.email}
                                         onChange={handleChange}
                                         placeholder="john@example.com"
-                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-white focus:border-white"
                                         required
                                     />
                                 </div>
@@ -398,7 +398,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                         value={formData.phone}
                                         onChange={handleChange}
                                         placeholder="+1 (555) 123-4567"
-                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-white focus:border-white"
                                         required
                                     />
                                 </div>
@@ -414,7 +414,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                         value={formData.location}
                                         onChange={handleChange}
                                         placeholder="New York, NY"
-                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-white focus:border-white"
                                     />
                                 </div>
                             </div>
@@ -439,7 +439,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                         value={formData.linkedin}
                                         onChange={handleChange}
                                         placeholder="https://linkedin.com/in/johndoe"
-                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-white focus:border-white"
                                     />
                                 </div>
 
@@ -451,7 +451,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                         value={formData.github}
                                         onChange={handleChange}
                                         placeholder="https://github.com/johndoe"
-                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-white focus:border-white"
                                     />
                                 </div>
 
@@ -463,7 +463,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                         value={formData.portfolio}
                                         onChange={handleChange}
                                         placeholder="https://johndoe.com"
-                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-white focus:border-white"
                                     />
                                 </div>
                             </div>
@@ -472,8 +472,8 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         {/* Skills Section */}
                         <div className="space-y-4 sm:space-y-6">
                             <div className="flex flex-wrap items-center gap-2 pb-2 sm:pb-3 border-b border-[#2e2e2e]">
-                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-emerald-600 rounded-md sm:rounded-lg flex items-center justify-center">
-                                    <Code className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-md sm:rounded-lg flex items-center justify-center">
+                                    <Code className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                                 </div>
                                 <h3 className="text-base sm:text-lg font-semibold text-[#ececec]">Skills</h3>
                                 <span className="text-xs sm:text-sm text-red-400 bg-red-900/30 px-2 py-1 rounded-full">Required</span>
@@ -488,7 +488,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                     onChange={handleChange}
                                     placeholder="JavaScript, React, Node.js, Python, SQL, Project Management, Team Leadership..."
                                     rows={3}
-                                    className="resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm sm:text-base"
+                                    className="resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-white focus:border-white text-sm sm:text-base"
                                     required
                                 />
                             </div>
@@ -628,10 +628,10 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         )}
 
                         {success && (
-                            <div className="bg-emerald-900/30 border-l-4 border-emerald-500 text-emerald-400 px-4 sm:px-6 py-3 sm:py-4 rounded-r-lg">
+                            <div className="bg-white/10 border-l-4 border-white text-white px-4 sm:px-6 py-3 sm:py-4 rounded-r-lg">
                                 <div className="flex items-center">
-                                    <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
-                                        <span className="text-white text-xs">✓</span>
+                                    <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
+                                        <span className="text-black text-xs">✓</span>
                                     </div>
                                     <span className="font-medium text-sm sm:text-base">{success}</span>
                                 </div>
@@ -644,7 +644,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                 type="submit"
                                 disabled={isLoading}
                                 size="lg"
-                                className="w-full sm:w-auto sm:min-w-[200px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 sm:px-8 rounded-lg sm:rounded-xl transition-all duration-300"
+                                className="w-full sm:w-auto sm:min-w-[200px] bg-white hover:bg-gray-100 text-black font-semibold py-3 px-6 sm:px-8 rounded-lg sm:rounded-xl transition-all duration-300"
                             >
                                 {isLoading ? (
                                     <>

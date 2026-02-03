@@ -57,8 +57,8 @@ export default function Dashboard() {
                         className="bg-[#171717] p-6 rounded-lg border border-[#2e2e2e] hover:border-[#3e3e3e] transition-colors"
                     >
                         <div className="flex items-center space-x-3">
-                            <div className="p-2 bg-emerald-900/30 rounded-lg">
-                                <User className="h-6 w-6 text-emerald-500" />
+                            <div className="p-2 bg-white/10 rounded-lg">
+                                <User className="h-6 w-6 text-white" />
                             </div>
                             <div>
                                 <h3 className="font-medium text-[#ececec]">Profile</h3>
@@ -72,8 +72,8 @@ export default function Dashboard() {
                         className="bg-[#171717] p-6 rounded-lg border border-[#2e2e2e] hover:border-[#3e3e3e] transition-colors"
                     >
                         <div className="flex items-center space-x-3">
-                            <div className="p-2 bg-green-900/30 rounded-lg">
-                                <FileText className="h-6 w-6 text-green-500" />
+                            <div className="p-2 bg-white/10 rounded-lg">
+                                <FileText className="h-6 w-6 text-white" />
                             </div>
                             <div>
                                 <h3 className="font-medium text-[#ececec]">Generate Letter</h3>
@@ -121,7 +121,7 @@ export default function Dashboard() {
                             </p>
                             <Link
                                 href="/"
-                                className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                                className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-black bg-white hover:bg-gray-100 transition-colors"
                             >
                                 Create Cover Letter
                             </Link>

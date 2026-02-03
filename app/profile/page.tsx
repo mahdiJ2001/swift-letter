@@ -94,7 +94,7 @@ export default function ProfilePage() {
                 <Header />
                 <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6 relative z-10">
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
                         <p className="text-[#a1a1a1]">Loading profile...</p>
                     </div>
                 </div>
@@ -115,7 +115,7 @@ export default function ProfilePage() {
                         <p className="text-red-400">{error}</p>
                         <button
                             onClick={fetchProfile}
-                            className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+                            className="mt-4 px-4 py-2 bg-white text-black rounded-md hover:bg-gray-100"
                         >
                             Try Again
                         </button>
@@ -150,8 +150,8 @@ export default function ProfilePage() {
                 )}
 
                 {success && (
-                    <div className="bg-emerald-900/30 border border-emerald-800 rounded-lg p-4 mb-6">
-                        <p className="text-emerald-400 text-sm">{success}</p>
+                    <div className="bg-white/10 border border-white/20 rounded-lg p-4 mb-6">
+                        <p className="text-white text-sm">{success}</p>
                     </div>
                 )}
 

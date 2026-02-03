@@ -309,415 +309,441 @@ export default function JobDescriptionForm() {
                 setEditableSubject(extractedSubject)
                 setEditableRecipientName(recipientMatch?.[1] || '')
 
-                await generatePdfAndPreview(data.latex)
-            } else {
-                throw new Error(data.error || 'Failed to generate cover letter')
-            }
-
-        } catch (error: any) {
-            console.error('Error generating cover letter:', error)
-            setError(error.message || 'Failed to generate cover letter. Please try again.')
-        }
-    }
-
-    const generatePdfFromText = async (textContent: string, recipientName: string = '', companyName: string = '', positionName: string = '', subjectText: string = '') => {
-        setIsPdfGenerating(true)
-
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-
-            if (!session) {
-                throw new Error('No valid session found')
-            }
-
-            const targetCompany = companyName || 'Company'
-            const targetPosition = positionName || 'Position'
-            const targetRecipient = recipientName || 'Hiring Manager'
-            const targetSubject = subjectText || `Application for ${targetPosition} at ${targetCompany}`
-
-            const formattedLatex = generatedLatex
-                .replace(/\\newcommand\{\\recipientName\}\{[^}]*\}/g, `\\newcommand{\\recipientName}{${targetRecipient}}`)
-                .replace(/\\newcommand\{\\targetCompany\}\{[^}]*\}/g, `\\newcommand{\\targetCompany}{${targetCompany}}`)
-                .replace(/\\newcommand\{\\targetPosition\}\{[^}]*\}/g, `\\newcommand{\\targetPosition}{${targetPosition}}`)
-                .replace(/\\newcommand\{\\targetSubject\}\{[^}]*\}/g, `\\newcommand{\\targetSubject}{${targetSubject}}`)
-
-            const response = await fetch('/api/generate-pdf', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({
-                    latex: formattedLatex
-                })
-            })
-
-            if (!response.ok) {
-                throw new Error('Failed to generate PDF')
-            }
-
-            const data = await response.json()
-
-            if (data.success && data.pdfData) {
-                const byteCharacters = atob(data.pdfData)
-                const byteNumbers = new Array(byteCharacters.length)
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i)
+                // Extract the actual letter content between \begin{document} and \end{document}
+                // and remove LaTeX commands for better editing
+                const bodyStartMatch = data.content.match(/\\vspace\{1\.5em\}([\s\S]*?)\\vspace\{2\.0em\}/)
+                let extractedBody = ''
+                if (bodyStartMatch) {
+                    extractedBody = bodyStartMatch[1]
+                        .replace(/\\\\[\s]*\n/g, '\n\n')  // Replace \\\\ with double newline
+                        .replace(/\\vspace\{[^}]*\}/g, '')  // Remove \vspace commands
+                        .replace(/\\textbf\{([^}]*)\}/g, '$1')  // Remove \textbf{} formatting
+                        .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')  // Remove \href{}{} links
+                        .replace(/\\[a-zA-Z]+/g, '')  // Remove other LaTeX commands
+                        .replace(/\{([^}]*)\}/g, '$1')  // Remove remaining braces
+                        .replace(/\n\s*\n\s*\n/g, '\n\n')  // Clean up excessive newlines
+                        .trim()
+                } else {
+                    // Fallback: try to extract content after recipient info
+                    const fallbackMatch = data.content.match(/Dear.*?,([\s\S]*?)Sincerely,/)
+                    if (fallbackMatch) {
+                        extractedBody = fallbackMatch[1].trim()
+                    }
                 }
-                const byteArray = new Uint8Array(byteNumbers)
-                const blob = new Blob([byteArray], { type: 'application/pdf' })
-                const url = URL.createObjectURL(blob)
-
-                setGeneratedLatex(formattedLatex)
-                setPdfUrl(url)
-                setShowPdfPreview(true)
-                setIsEditingLetter(false)
-            } else {
-                throw new Error(data.error || 'Failed to generate PDF')
+                setEditableLetter(extractedBody)
             }
-        } catch (error: any) {
-            console.error('Error generating PDF:', error)
-            setError(error.message || 'Failed to generate PDF.')
-        } finally {
-            setIsPdfGenerating(false)
         }
+                setEditableLetter(extractedBody)
+
+        await generatePdfAndPreview(data.latex)
+    } else {
+        throw new Error(data.error || 'Failed to generate cover letter')
+}
+
+        } catch (error: any) {
+    console.error('Error generating cover letter:', error)
+    setError(error.message || 'Failed to generate cover letter. Please try again.')
+}
     }
 
-    const generatePdfAndPreview = async (latexContent: string) => {
-        setIsPdfGenerating(true)
+const generatePdfFromText = async (textContent: string, recipientName: string = '', companyName: string = '', positionName: string = '', subjectText: string = '') => {
+    setIsPdfGenerating(true)
 
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
+    try {
+        const { data: { session } } = await supabase.auth.getSession()
 
-            if (!session) {
-                throw new Error('No valid session found')
-            }
+        if (!session) {
+            throw new Error('No valid session found')
+        }
 
-            const response = await fetch('/api/generate-pdf', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({
-                    latex: latexContent
-                })
+        const targetCompany = companyName || 'Company'
+        const targetPosition = positionName || 'Position'
+        const targetRecipient = recipientName || 'Hiring Manager'
+        const targetSubject = subjectText || `Application for ${targetPosition} at ${targetCompany}`
+
+        const formattedLatex = generatedLatex
+            .replace(/\\newcommand\{\\recipientName\}\{[^}]*\}/g, `\\newcommand{\\recipientName}{${targetRecipient}}`)
+            .replace(/\\newcommand\{\\targetCompany\}\{[^}]*\}/g, `\\newcommand{\\targetCompany}{${targetCompany}}`)
+            .replace(/\\newcommand\{\\targetPosition\}\{[^}]*\}/g, `\\newcommand{\\targetPosition}{${targetPosition}}`)
+            .replace(/\\newcommand\{\\targetSubject\}\{[^}]*\}/g, `\\newcommand{\\targetSubject}{${targetSubject}}`)
+
+        const response = await fetch('/api/generate-pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+                latex: formattedLatex
             })
+        })
 
-            if (!response.ok) {
-                throw new Error('Failed to generate PDF')
-            }
-
-            const data = await response.json()
-
-            if (data.success && data.pdfData) {
-                const byteCharacters = atob(data.pdfData)
-                const byteNumbers = new Array(byteCharacters.length)
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i)
-                }
-                const byteArray = new Uint8Array(byteNumbers)
-                const blob = new Blob([byteArray], { type: 'application/pdf' })
-                const url = URL.createObjectURL(blob)
-
-                setPdfUrl(url)
-                setShowPdfPreview(true)
-            } else {
-                throw new Error(data.error || 'Failed to generate PDF')
-            }
-        } catch (error: any) {
-            console.error('Error generating PDF:', error)
-            setError(error.message || 'Failed to generate PDF.')
-        } finally {
-            setIsPdfGenerating(false)
+        if (!response.ok) {
+            throw new Error('Failed to generate PDF')
         }
+
+        const data = await response.json()
+
+        if (data.success && data.pdfData) {
+            const byteCharacters = atob(data.pdfData)
+            const byteNumbers = new Array(byteCharacters.length)
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i)
+            }
+            const byteArray = new Uint8Array(byteNumbers)
+            const blob = new Blob([byteArray], { type: 'application/pdf' })
+            const url = URL.createObjectURL(blob)
+
+            setGeneratedLatex(formattedLatex)
+            setPdfUrl(url)
+            setShowPdfPreview(true)
+            setIsEditingLetter(false)
+        } else {
+            throw new Error(data.error || 'Failed to generate PDF')
+        }
+    } catch (error: any) {
+        console.error('Error generating PDF:', error)
+        setError(error.message || 'Failed to generate PDF.')
+    } finally {
+        setIsPdfGenerating(false)
     }
+}
 
-    return (
-        <>
-            {/* Main Input Container - ChatGPT Style */}
-            <div className="w-full max-w-3xl">
-                <form onSubmit={handleGenerateCoverLetter}>
-                    <div className="chat-input-container p-3 sm:p-4">
-                        {/* Textarea */}
-                        <Textarea
-                            value={jobDescription}
-                            onChange={(e) => setJobDescription(e.target.value)}
-                            placeholder="Paste the job description here..."
-                            className="w-full min-h-[120px] max-h-[300px] resize-none bg-transparent border-0 text-[#ececec] placeholder-[#666] focus:ring-0 focus:outline-none text-base"
-                            rows={4}
-                        />
+const generatePdfAndPreview = async (latexContent: string) => {
+    setIsPdfGenerating(true)
 
-                        {/* Bottom toolbar */}
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#2e2e2e]">
-                            <div className="flex items-center gap-2">
-                                {/* Attach Resume Button */}
-                                <label className="feature-pill cursor-pointer">
-                                    <Paperclip className="h-4 w-4" />
-                                    <span className="hidden sm:inline">
-                                        {isUploadingResume ? 'Processing...' : hasResumeAttached ? 'Resume ✓' : 'Attach Resume'}
-                                    </span>
-                                    <input
-                                        type="file"
-                                        accept=".pdf"
-                                        className="hidden"
-                                        onChange={handleResumeUpload}
-                                        disabled={isUploadingResume}
-                                    />
-                                </label>
+    try {
+        const { data: { session } } = await supabase.auth.getSession()
 
-                                {/* Language Button */}
-                                <button
-                                    type="button"
-                                    onClick={() => setShowLanguageModal(true)}
-                                    className="feature-pill"
-                                >
-                                    <Globe className="h-4 w-4" />
-                                    <span className="hidden sm:inline">
-                                        {selectedLanguage === 'english' ? 'English' : 'Français'}
-                                    </span>
-                                </button>
-                            </div>
+        if (!session) {
+            throw new Error('No valid session found')
+        }
 
-                            {/* Submit Button */}
-                            <Button
-                                type="submit"
-                                disabled={!jobDescription.trim() || isLoading || isPdfGenerating}
-                                className="bg-[#ececec] hover:bg-white text-[#0d0d0d] rounded-full p-2.5 h-auto disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                {isLoading || isPdfGenerating ? (
-                                    <Loader2 className="h-5 w-5 animate-spin" />
-                                ) : (
-                                    <Send className="h-5 w-5" />
-                                )}
-                            </Button>
-                        </div>
-                    </div>
-                </form>
+        const response = await fetch('/api/generate-pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+                latex: latexContent
+            })
+        })
 
-                {/* Status Messages */}
-                {error && (
-                    <div className="mt-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-300 text-sm">
-                        {error}
-                    </div>
-                )}
+        if (!response.ok) {
+            throw new Error('Failed to generate PDF')
+        }
 
-                {success && (
-                    <div className="mt-4 p-3 bg-emerald-900/30 border border-emerald-800 rounded-lg text-emerald-300 text-sm">
-                        {success}
-                    </div>
-                )}
+        const data = await response.json()
 
-                {/* Helper text */}
-                <p className="text-center text-[#666] text-xs mt-4">
-                    Paste a job description and generate a personalized cover letter in seconds.
-                </p>
-            </div>
+        if (data.success && data.pdfData) {
+            const byteCharacters = atob(data.pdfData)
+            const byteNumbers = new Array(byteCharacters.length)
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i)
+            }
+            const byteArray = new Uint8Array(byteNumbers)
+            const blob = new Blob([byteArray], { type: 'application/pdf' })
+            const url = URL.createObjectURL(blob)
 
-            {/* Language Selection Modal */}
-            {showLanguageModal && (
-                <div
-                    className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
-                    onClick={() => setShowLanguageModal(false)}
-                >
-                    <div
-                        className="bg-[#171717] rounded-xl max-w-md w-full p-6 border border-[#2e2e2e]"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <h3 className="text-lg font-semibold text-[#ececec] mb-4">Select Language</h3>
-                        <div className="space-y-3 mb-6">
+            setPdfUrl(url)
+            setShowPdfPreview(true)
+        } else {
+            throw new Error(data.error || 'Failed to generate PDF')
+        }
+    } catch (error: any) {
+        console.error('Error generating PDF:', error)
+        setError(error.message || 'Failed to generate PDF.')
+    } finally {
+        setIsPdfGenerating(false)
+    }
+}
+
+return (
+    <>
+        {/* Main Input Container - ChatGPT Style */}
+        <div className="w-full max-w-3xl">
+            <form onSubmit={handleGenerateCoverLetter}>
+                <div className="chat-input-container p-3 sm:p-4">
+                    {/* Textarea */}
+                    <Textarea
+                        value={jobDescription}
+                        onChange={(e) => setJobDescription(e.target.value)}
+                        placeholder="Paste the job description here..."
+                        className="w-full min-h-[120px] max-h-[300px] resize-none bg-transparent border-0 text-[#ececec] placeholder-[#666] focus:ring-0 focus:outline-none text-base"
+                        rows={4}
+                    />
+
+                    {/* Bottom toolbar */}
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#2e2e2e]">
+                        <div className="flex items-center gap-2">
+                            {/* Attach Resume Button */}
+                            <label className="feature-pill cursor-pointer">
+                                <Paperclip className="h-4 w-4" />
+                                <span className="hidden sm:inline">
+                                    {isUploadingResume ? 'Processing...' : hasResumeAttached ? 'Resume ✓' : 'Attach Resume'}
+                                </span>
+                                <input
+                                    type="file"
+                                    accept=".pdf"
+                                    className="hidden"
+                                    onChange={handleResumeUpload}
+                                    disabled={isUploadingResume}
+                                />
+                            </label>
+
+                            {/* Language Button */}
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setSelectedLanguage('english')
-                                    setShowLanguageModal(false)
-                                }}
-                                className={`w-full p-3 text-left rounded-lg border transition-colors ${selectedLanguage === 'english'
-                                        ? 'border-emerald-500 bg-emerald-900/30 text-emerald-300'
-                                        : 'border-[#2e2e2e] hover:border-[#3a3a3a] text-[#a1a1a1]'
-                                    }`}
+                                onClick={() => setShowLanguageModal(true)}
+                                className="feature-pill"
                             >
-                                <div className="flex items-center">
-                                    <span className="text-xl mr-3">🇺🇸</span>
-                                    <div>
-                                        <div className="font-medium text-[#ececec]">English</div>
-                                        <div className="text-sm text-[#666]">Generate in English</div>
-                                    </div>
-                                </div>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setSelectedLanguage('french')
-                                    setShowLanguageModal(false)
-                                }}
-                                className={`w-full p-3 text-left rounded-lg border transition-colors ${selectedLanguage === 'french'
-                                        ? 'border-emerald-500 bg-emerald-900/30 text-emerald-300'
-                                        : 'border-[#2e2e2e] hover:border-[#3a3a3a] text-[#a1a1a1]'
-                                    }`}
-                            >
-                                <div className="flex items-center">
-                                    <span className="text-xl mr-3">🇫🇷</span>
-                                    <div>
-                                        <div className="font-medium text-[#ececec]">Français</div>
-                                        <div className="text-sm text-[#666]">Générer en français</div>
-                                    </div>
-                                </div>
+                                <Globe className="h-4 w-4" />
+                                <span className="hidden sm:inline">
+                                    {selectedLanguage === 'english' ? 'English' : 'Français'}
+                                </span>
                             </button>
                         </div>
+
+                        {/* Submit Button */}
                         <Button
-                            variant="outline"
-                            onClick={() => setShowLanguageModal(false)}
-                            className="w-full border-[#2e2e2e] text-[#a1a1a1] hover:bg-[#212121]"
+                            type="submit"
+                            disabled={!jobDescription.trim() || isLoading || isPdfGenerating}
+                            className="bg-[#ececec] hover:bg-white text-[#0d0d0d] rounded-full p-2.5 h-auto disabled:opacity-30 disabled:cursor-not-allowed"
                         >
-                            Cancel
+                            {isLoading || isPdfGenerating ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                <Send className="h-5 w-5" />
+                            )}
                         </Button>
                     </div>
                 </div>
-            )}
+            </form>
 
-            {/* Edit Cover Letter Modal */}
-            {isEditingLetter && (
-                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-[10000]">
-                    <div className="bg-[#171717] rounded-xl w-full max-w-5xl max-h-[98vh] flex flex-col border border-[#2e2e2e]">
-                        <div className="flex items-center justify-between p-4 border-b border-[#2e2e2e]">
-                            <h3 className="text-lg font-semibold text-[#ececec]">Edit Cover Letter</h3>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    onClick={() => generatePdfFromText(editableLetter, editableRecipientName, editableCompany, editablePosition, editableSubject)}
-                                    disabled={isPdfGenerating}
-                                    className="bg-white hover:bg-gray-100 text-black border border-[#2e2e2e] text-sm"
-                                >
-                                    {isPdfGenerating ? 'Compiling...' : 'Recompile'}
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    onClick={() => setIsEditingLetter(false)}
-                                    className="text-[#a1a1a1] hover:text-[#ececec] hover:bg-[#212121]"
-                                >
-                                    <X className="h-5 w-5" />
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="flex-1 p-4 overflow-auto">
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Recipient</label>
-                                        <Input
-                                            placeholder="Hiring Manager"
-                                            value={editableRecipientName}
-                                            onChange={(e) => setEditableRecipientName(e.target.value)}
-                                            className="bg-[#212121] border-[#2e2e2e] text-[#ececec]"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Company</label>
-                                        <Input
-                                            placeholder="Company Name"
-                                            value={editableCompany}
-                                            onChange={(e) => setEditableCompany(e.target.value)}
-                                            className="bg-[#212121] border-[#2e2e2e] text-[#ececec]"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Position</label>
-                                        <Input
-                                            placeholder="Software Engineer"
-                                            value={editablePosition}
-                                            onChange={(e) => setEditablePosition(e.target.value)}
-                                            className="bg-[#212121] border-[#2e2e2e] text-[#ececec]"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Subject</label>
-                                        <Input
-                                            placeholder="Application for..."
-                                            value={editableSubject}
-                                            onChange={(e) => setEditableSubject(e.target.value)}
-                                            className="bg-[#212121] border-[#2e2e2e] text-[#ececec]"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Content</label>
-                                    <Textarea
-                                        value={editableLetter}
-                                        onChange={(e) => setEditableLetter(e.target.value)}
-                                        className="w-full min-h-[400px] resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec]"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            {/* Status Messages */}
+            {error && (
+                <div className="mt-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-300 text-sm">
+                    {error}
                 </div>
             )}
 
-            {/* PDF Preview Modal */}
-            {showPdfPreview && pdfUrl && (
-                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-[9999]">
-                    <div className="bg-[#171717] rounded-xl w-full max-w-6xl max-h-[98vh] flex flex-col border border-[#2e2e2e] overflow-hidden">
-                        {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-[#2e2e2e]">
-                            <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-[#2e2e2e]">
-                                    <Download className="h-5 w-5 text-black" />
+            {success && (
+                <div className="mt-4 p-3 bg-emerald-900/30 border border-emerald-800 rounded-lg text-emerald-300 text-sm">
+                    {success}
+                </div>
+            )}
+
+            {/* Helper text */}
+            <p className="text-center text-[#666] text-xs mt-4">
+                Paste a job description and generate a personalized cover letter in seconds.
+            </p>
+        </div>
+
+        {/* Language Selection Modal */}
+        {showLanguageModal && (
+            <div
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
+                onClick={() => setShowLanguageModal(false)}
+            >
+                <div
+                    className="bg-[#171717] rounded-xl max-w-md w-full p-6 border border-[#2e2e2e]"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <h3 className="text-lg font-semibold text-[#ececec] mb-4">Select Language</h3>
+                    <div className="space-y-3 mb-6">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSelectedLanguage('english')
+                                setShowLanguageModal(false)
+                            }}
+                            className={`w-full p-3 text-left rounded-lg border transition-colors ${selectedLanguage === 'english'
+                                ? 'border-emerald-500 bg-emerald-900/30 text-emerald-300'
+                                : 'border-[#2e2e2e] hover:border-[#3a3a3a] text-[#a1a1a1]'
+                                }`}
+                        >
+                            <div className="flex items-center">
+                                <span className="text-xl mr-3">🇺🇸</span>
+                                <div>
+                                    <div className="font-medium text-[#ececec]">English</div>
+                                    <div className="text-sm text-[#666]">Generate in English</div>
+                                </div>
+                            </div>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSelectedLanguage('french')
+                                setShowLanguageModal(false)
+                            }}
+                            className={`w-full p-3 text-left rounded-lg border transition-colors ${selectedLanguage === 'french'
+                                ? 'border-emerald-500 bg-emerald-900/30 text-emerald-300'
+                                : 'border-[#2e2e2e] hover:border-[#3a3a3a] text-[#a1a1a1]'
+                                }`}
+                        >
+                            <div className="flex items-center">
+                                <span className="text-xl mr-3">🇫🇷</span>
+                                <div>
+                                    <div className="font-medium text-[#ececec]">Français</div>
+                                    <div className="text-sm text-[#666]">Générer en français</div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                    <Button
+                        variant="outline"
+                        onClick={() => setShowLanguageModal(false)}
+                        className="w-full border-[#2e2e2e] text-[#a1a1a1] hover:bg-[#212121]"
+                    >
+                        Cancel
+                    </Button>
+                </div>
+            </div>
+        )}
+
+        {/* Edit Cover Letter Modal */}
+        {isEditingLetter && (
+            <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-[10000]">
+                <div className="bg-[#171717] rounded-xl w-full max-w-5xl max-h-[98vh] flex flex-col border border-[#2e2e2e]">
+                    <div className="flex items-center justify-between p-4 border-b border-[#2e2e2e]">
+                        <h3 className="text-lg font-semibold text-[#ececec]">Edit Cover Letter</h3>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                onClick={() => generatePdfFromText(editableLetter, editableRecipientName, editableCompany, editablePosition, editableSubject)}
+                                disabled={isPdfGenerating}
+                                className="bg-white hover:bg-gray-100 text-black border border-[#2e2e2e] text-sm"
+                            >
+                                {isPdfGenerating ? 'Compiling...' : 'Recompile'}
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                onClick={() => setIsEditingLetter(false)}
+                                className="text-[#a1a1a1] hover:text-[#ececec] hover:bg-[#212121]"
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="flex-1 p-4 overflow-auto">
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Recipient</label>
+                                    <Input
+                                        placeholder="Hiring Manager"
+                                        value={editableRecipientName}
+                                        onChange={(e) => setEditableRecipientName(e.target.value)}
+                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec]"
+                                    />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold text-[#ececec]">Your Cover Letter</h3>
-                                    <p className="text-sm text-[#666]">Generated successfully</p>
+                                    <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Company</label>
+                                    <Input
+                                        placeholder="Company Name"
+                                        value={editableCompany}
+                                        onChange={(e) => setEditableCompany(e.target.value)}
+                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec]"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Position</label>
+                                    <Input
+                                        placeholder="Software Engineer"
+                                        value={editablePosition}
+                                        onChange={(e) => setEditablePosition(e.target.value)}
+                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec]"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Subject</label>
+                                    <Input
+                                        placeholder="Application for..."
+                                        value={editableSubject}
+                                        onChange={(e) => setEditableSubject(e.target.value)}
+                                        className="bg-[#212121] border-[#2e2e2e] text-[#ececec]"
+                                    />
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    onClick={() => setIsEditingLetter(true)}
-                                    className="bg-[#212121] hover:bg-[#2e2e2e] text-[#ececec] border border-[#2e2e2e]"
-                                >
-                                    <Pencil className="h-4 w-4 mr-2" />
-                                    Edit
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        const a = document.createElement('a')
-                                        a.href = pdfUrl
-                                        a.download = 'cover-letter.pdf'
-                                        document.body.appendChild(a)
-                                        a.click()
-                                        document.body.removeChild(a)
-                                    }}
-                                    className="bg-white hover:bg-gray-100 text-black border border-[#2e2e2e]"
-                                >
-                                    <Download className="h-4 w-4 mr-2" />
-                                    Download
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    onClick={() => {
-                                        setShowPdfPreview(false)
-                                        URL.revokeObjectURL(pdfUrl)
-                                        setPdfUrl('')
-                                    }}
-                                    className="text-[#666] hover:text-[#ececec] hover:bg-[#212121]"
-                                >
-                                    <X className="h-5 w-5" />
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* PDF Viewer */}
-                        <div className="flex-1 bg-[#0d0d0d] p-4">
-                            <div className="w-full h-full bg-white rounded-lg overflow-hidden">
-                                <iframe
-                                    src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
-                                    className="w-full h-full border-0"
-                                    title="Cover Letter Preview"
-                                    style={{ minHeight: '500px' }}
+                            <div>
+                                <label className="block text-xs font-medium text-[#a1a1a1] mb-1">Content</label>
+                                <Textarea
+                                    value={editableLetter}
+                                    onChange={(e) => setEditableLetter(e.target.value)}
+                                    className="w-full min-h-[400px] resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec]"
                                 />
                             </div>
                         </div>
                     </div>
                 </div>
-            )}
-        </>
-    )
+            </div>
+        )}
+
+        {/* PDF Preview Modal */}
+        {showPdfPreview && pdfUrl && (
+            <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-[9999]">
+                <div className="bg-[#171717] rounded-xl w-full max-w-6xl max-h-[98vh] flex flex-col border border-[#2e2e2e] overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-4 border-b border-[#2e2e2e]">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-[#2e2e2e]">
+                                <Download className="h-5 w-5 text-black" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-[#ececec]">Your Cover Letter</h3>
+                                <p className="text-sm text-[#666]">Generated successfully</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                onClick={() => setIsEditingLetter(true)}
+                                className="bg-[#212121] hover:bg-[#2e2e2e] text-[#ececec] border border-[#2e2e2e]"
+                            >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    const a = document.createElement('a')
+                                    a.href = pdfUrl
+                                    a.download = 'cover-letter.pdf'
+                                    document.body.appendChild(a)
+                                    a.click()
+                                    document.body.removeChild(a)
+                                }}
+                                className="bg-white hover:bg-gray-100 text-black border border-[#2e2e2e]"
+                            >
+                                <Download className="h-4 w-4 mr-2" />
+                                Download
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                onClick={() => {
+                                    setShowPdfPreview(false)
+                                    URL.revokeObjectURL(pdfUrl)
+                                    setPdfUrl('')
+                                }}
+                                className="text-[#666] hover:text-[#ececec] hover:bg-[#212121]"
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* PDF Viewer */}
+                    <div className="flex-1 bg-[#0d0d0d] p-4">
+                        <div className="w-full h-full bg-white rounded-lg overflow-hidden">
+                            <iframe
+                                src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                                className="w-full h-full border-0"
+                                title="Cover Letter Preview"
+                                style={{ minHeight: '80vh', height: '80vh' }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+    </>
+)
 }

@@ -58,8 +58,8 @@ export default function FeedbackForm() {
             </div>
 
             {success && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                    <p className="text-green-600 text-sm">{success}</p>
+                <div className="bg-white/10 border border-white/20 rounded-lg p-4 mb-6">
+                    <p className="text-white text-sm">{success}</p>
                 </div>
             )}
 

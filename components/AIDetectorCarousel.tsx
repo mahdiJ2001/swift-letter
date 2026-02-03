@@ -38,7 +38,7 @@ export default function AIDetectorCarousel() {
                 {/* Header */}
                 <div className="text-center mb-8 sm:mb-12 px-2">
                     <div className="inline-flex items-center gap-2 premium-badge px-4 py-2 rounded-full mb-3 sm:mb-4">
-                        <Shield className="h-4 w-4 text-emerald-600" />
+                        <Shield className="h-4 w-4 text-white" />
                         <span className="text-sm font-medium text-slate-700">Undetectable AI Writing</span>
                     </div>
                     <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-3 sm:mb-4">
@@ -84,20 +84,20 @@ export default function AIDetectorCarousel() {
                 {/* Trust Badges */}
                 <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 md:gap-6 mt-8 sm:mt-12 px-2">
                     <div className="flex items-center justify-center gap-2 text-slate-600">
-                        <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
-                            <span className="text-emerald-600 text-xs">✓</span>
+                        <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs">✓</span>
                         </div>
                         <span className="text-xs sm:text-sm font-medium">100% Human-Like Writing</span>
                     </div>
                     <div className="flex items-center justify-center gap-2 text-slate-600">
-                        <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
-                            <span className="text-emerald-600 text-xs">✓</span>
+                        <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs">✓</span>
                         </div>
                         <span className="text-xs sm:text-sm font-medium">Natural Conversational Tone</span>
                     </div>
                     <div className="flex items-center justify-center gap-2 text-slate-600">
-                        <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
-                            <span className="text-emerald-600 text-xs">✓</span>
+                        <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs">✓</span>
                         </div>
                         <span className="text-xs sm:text-sm font-medium">No Robotic Patterns</span>
                     </div>
