@@ -317,16 +317,16 @@ export default function JobDescriptionForm() {
 
                 // Try multiple patterns to extract the letter body
                 const patterns = [
-                    // Pattern 1: Content between recipient and signature
-                    /Dear [^\\]*\\\\([\s\S]*?)\\vspace\{2\.0em\}/,
-                    // Pattern 2: Content after \vspace{1.5em} until signature
-                    /\\vspace\{1\.5em\}([\s\S]*?)\\vspace\{2\.0em\}/,
-                    // Pattern 3: Content between Dear and Sincerely
-                    /Dear [^\\]*\\\\([\s\S]*?)Sincerely,/,
-                    // Pattern 4: Content after recipient until signature block
-                    /\\targetCompany\}[\s\S]*?\\\\([\s\S]*?)\\vspace\{2\.0em\}/,
-                    // Pattern 5: Fallback - everything between certain markers
-                    /% ={25}[\s\S]*?\\\\([\s\S]*?)\\vspace\{2\.0em\}/
+                    // Pattern 1: Content after "Letter Body" section until signature
+                    /%\s*Letter Body\s*%\s*=+\s*([\s\S]*?)\\vspace\{2\.0em\}/,
+                    // Pattern 2: Content after template headers until signature
+                    /%\s*=+[\s\S]*?Letter Body[\s\S]*?=+\s*([\s\S]*?)\\vspace\{2\.0em\}/,
+                    // Pattern 3: Content after "To:" that starts actual letter
+                    /To:\s*[^\n]*\n\s*(To\s+[^,\n]*[,\s]+[\s\S]*?)\\vspace\{2\.0em\}/,
+                    // Pattern 4: Content between Dear and Sincerely (fallback)
+                    /Dear[^\\]*\\\\([\s\S]*?)Sincerely,/,
+                    // Pattern 5: Content after recipient until signature block (fallback)
+                    /\\targetCompany\}[\s\S]*?\\\\([\s\S]*?)\\vspace\{2\.0em\}/
                 ]
 
                 for (let i = 0; i < patterns.length; i++) {
@@ -336,13 +336,8 @@ export default function JobDescriptionForm() {
                         console.log(`Pattern ${i + 1} matched:`, match[1].substring(0, 200) + '...')
 
                         extractedBody = match[1]
-                            // Remove LaTeX template sections and comments
-                            .replace(/%\s*Date\s*\{\}.*?%\s*=+.*?%\s*Letter Body\s*%\s*=+/gs, '')  // Remove template header section
-                            .replace(/%.*?%/g, '')  // Remove any remaining % comment blocks
-                            .replace(/^%.*$/gm, '')  // Remove LaTeX comment lines starting with %
-                            .replace(/To:\s*Position:\s*Company:\s*/g, '')  // Remove template placeholders
-                            .replace(/Subject:\s*/g, '')  // Remove subject placeholder
-                            .replace(/=+/g, '')  // Remove separator lines
+                            // Clean up LaTeX formatting and template remnants
+                            .replace(/^[\s\S]*?(?=To\s+(?:the\s+)?[A-Z])/i, '')  // Remove everything before "To the [Company]"
                             .replace(/\\\\[\s]*\n/g, '\n\n')  // Replace \\\\ with double newline
                             .replace(/\\vspace\{[^}]*\}/g, '')  // Remove \vspace commands
                             .replace(/\\textbf\{([^}]*)\}/g, '$1')  // Remove \textbf{} formatting
