@@ -313,49 +313,47 @@ export default function JobDescriptionForm() {
                 // and remove LaTeX commands for better editing
                 let extractedBody = ''
 
-                console.log('Raw LaTeX content for extraction:', data.content.substring(0, 500) + '...')
-
                 // Try multiple patterns to extract the letter body
                 const patterns = [
-                    // Pattern 1: Content after "Letter Body" section until signature
-                    /%\s*Letter Body\s*%\s*=+\s*([\s\S]*?)\\vspace\{2\.0em\}/,
-                    // Pattern 2: Content after template headers until signature
-                    /%\s*=+[\s\S]*?Letter Body[\s\S]*?=+\s*([\s\S]*?)\\vspace\{2\.0em\}/,
-                    // Pattern 3: Content after "To:" that starts actual letter
-                    /To:\s*[^\n]*\n\s*(To\s+[^,\n]*[,\s]+[\s\S]*?)\\vspace\{2\.0em\}/,
-                    // Pattern 4: Content between Dear and Sincerely (fallback)
-                    /Dear[^\\]*\\\\([\s\S]*?)Sincerely,/,
-                    // Pattern 5: Content after recipient until signature block (fallback)
-                    /\\targetCompany\}[\s\S]*?\\\\([\s\S]*?)\\vspace\{2\.0em\}/
+                    // Pattern 1: Content between Dear and \vspace{2.0em} - the actual letter body
+                    /Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n?([\s\S]*?)\\vspace\{2\.0em\}/,
+                    // Pattern 2: Content after "Letter Body" section until signature
+                    /%\s*Letter Body\s*%\s*=+\s*Dear[^,]*,\s*(?:\\\\)?\s*\n?([\s\S]*?)\\vspace\{2\.0em\}/,
+                    // Pattern 3: Content between Dear and Sincerely (fallback)
+                    /Dear[^,]*,\s*(?:\\\\)?\s*\n?([\s\S]*?)(?:Sincerely,|\\vspace)/
                 ]
 
                 for (let i = 0; i < patterns.length; i++) {
                     const pattern = patterns[i]
                     const match = data.content.match(pattern)
                     if (match && match[1] && match[1].trim()) {
-                        console.log(`Pattern ${i + 1} matched:`, match[1].substring(0, 200) + '...')
-
                         extractedBody = match[1]
-                            // Clean up LaTeX formatting and template remnants
-                            .replace(/^[\s\S]*?(?=To\s+(?:the\s+)?[A-Z])/i, '')  // Remove everything before "To the [Company]"
+                            // Clean up LaTeX escape characters first
                             .replace(/\\&/g, '&')  // Convert LaTeX \& to &
                             .replace(/\\%/g, '%')  // Convert LaTeX \% to %
+                            .replace(/\\ /g, ' ')  // Convert LaTeX \ (escaped space) to space
                             .replace(/\\\$/g, '$')  // Convert LaTeX \$ to $
                             .replace(/\\#/g, '#')  // Convert LaTeX \# to #
-                            .replace(/\\[\\][\s]*\n/g, '\n\n')  // Replace \\\\ with double newline (preserve paragraphs)
-                            .replace(/\\vspace\{[^}]*\}/g, '')  // Remove \vspace commands
+                            .replace(/\\~/g, '~')  // Convert LaTeX \~ to ~
+                            // Handle LaTeX formatting commands
                             .replace(/\\textbf\{([^}]*)\}/g, '$1')  // Remove \textbf{} formatting
+                            .replace(/\\textit\{([^}]*)\}/g, '$1')  // Remove \textit{} formatting
                             .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')  // Remove \href{}{} links
+                            .replace(/\\targetPosition/g, extractedPosition || 'Position')  // Replace variable
+                            .replace(/\\targetCompany/g, extractedCompany || 'Company')  // Replace variable
+                            // Remove other LaTeX commands
+                            .replace(/\\vspace\{[^}]*\}/g, '')  // Remove \vspace commands
                             .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')  // Remove LaTeX commands with arguments
-                            .replace(/\\[a-zA-Z]+\*?/g, '')  // Remove LaTeX commands without arguments
+                            .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')  // Remove LaTeX commands without arguments
+                            // Handle line breaks - preserve paragraph structure
+                            .replace(/\\\\\s*/g, '\n\n')  // Replace \\ with paragraph break
+                            // Clean up braces and formatting
                             .replace(/\{([^}]*)\}/g, '$1')  // Remove remaining braces
                             .replace(/\n\s*\n\s*\n+/g, '\n\n')  // Clean up excessive newlines
-                            .replace(/^\s+|\s+$/gm, '')  // Trim each line
-                            .replace(/([.!?])\s+/g, '$1\n\n')  // Add paragraph breaks after sentences
+                            .replace(/^\s+/gm, '')  // Trim leading whitespace from each line
+                            .replace(/\s+$/gm, '')  // Trim trailing whitespace from each line
                             .replace(/^[\s\n]*/, '')  // Remove leading whitespace and newlines
                             .trim()
-
-                        console.log(`Cleaned content (${extractedBody.length} chars):`, extractedBody.substring(0, 100) + '...')
 
                         if (extractedBody.length > 50) { // Only use if we got substantial content
                             break
@@ -364,7 +362,6 @@ export default function JobDescriptionForm() {
                 }
 
                 if (!extractedBody) {
-                    console.warn('No body content extracted, using fallback')
                     extractedBody = 'Please edit this content with your personalized cover letter.'
                 }
                 setEditableLetter(extractedBody)
@@ -402,10 +399,12 @@ export default function JobDescriptionForm() {
                 .replace(/\\newcommand\{\\targetSubject\}\{[^}]*\}/g, `\\newcommand{\\targetSubject}{${targetSubject}}`)
 
             // Replace the letter body content with the edited text
-            const letterBodyPattern = /(% ={25}[\s\S]*?% Letter Body[\s\S]*?% ={25}[\s\S]*?)([\s\S]*?)(\\vspace\{2\.0em\})/
-            const bodyMatch = formattedLatex.match(letterBodyPattern)
+            // Match content between "Dear ..." and "\vspace{2.0em}" which is the actual letter body
+            const letterBodyPattern = /(Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n?)((?:.|\n)*?)(\n\n?\\vspace\{2\.0em\})/
 
             let finalLatex = formattedLatex
+            const bodyMatch = formattedLatex.match(letterBodyPattern)
+
             if (bodyMatch) {
                 // Convert plain text back to LaTeX format for PDF generation
                 const latexFormattedContent = textContent
@@ -413,9 +412,11 @@ export default function JobDescriptionForm() {
                     .replace(/%/g, '\\%')  // Escape % for LaTeX
                     .replace(/\$/g, '\\$')  // Escape $ for LaTeX
                     .replace(/#/g, '\\#')  // Escape # for LaTeX
-                    .replace(/\n\n/g, '\\\\\\\\\n\n')  // Convert paragraph breaks to LaTeX line breaks
+                    .split('\n\n')  // Split into paragraphs
+                    .filter(p => p.trim())  // Remove empty paragraphs
+                    .join('\n\n')  // Rejoin paragraphs
 
-                finalLatex = formattedLatex.replace(letterBodyPattern, `$1${latexFormattedContent}\n\n$3`)
+                finalLatex = formattedLatex.replace(letterBodyPattern, `$1\n${latexFormattedContent}\n$3`)
             }
 
             const response = await fetch('/api/generate-pdf', {
@@ -445,7 +446,7 @@ export default function JobDescriptionForm() {
                 const blob = new Blob([byteArray], { type: 'application/pdf' })
                 const url = URL.createObjectURL(blob)
 
-                setGeneratedLatex(formattedLatex)
+                setGeneratedLatex(finalLatex)
                 setPdfUrl(url)
                 setShowPdfPreview(true)
                 setIsEditingLetter(false)

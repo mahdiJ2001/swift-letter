@@ -173,12 +173,12 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="p-6 h-full">
                                     {profile?.resume_url ? (
-                                        <div className="w-full h-full">
+                                        <div className="w-full h-full overflow-hidden" style={{ marginBottom: '-40px', paddingBottom: '0' }}>
                                             <iframe
-                                                src={`${profile.resume_url}#toolbar=0&navpanes=0&scrollbar=0`}
-                                                className="w-full h-full rounded-lg border border-[#2e2e2e]"
+                                                src={`${profile.resume_url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                                                className="w-full rounded-lg border border-[#2e2e2e]"
                                                 title="Resume Preview"
-                                                style={{ border: 'none' }}
+                                                style={{ border: 'none', height: 'calc(100% + 40px)' }}
                                             />
                                         </div>
                                     ) : (
