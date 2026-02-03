@@ -313,23 +313,29 @@ export default function JobDescriptionForm() {
                 // and remove LaTeX commands for better editing
                 let extractedBody = ''
 
+                // Debug: Log the raw content to see what we're working with
+                console.log('Raw LaTeX content (first 1000 chars):', data.content.substring(0, 1000))
+
                 // Try multiple patterns to extract the letter body
+                // The format is: "To the \targetCompany\ hiring team," followed by the body, then "\vspace{2.0em}"
                 const patterns = [
-                    // Pattern 1: Content between "To the \targetCompany\" salutation and \vspace{2.0em}
-                    /To the\\?\s*\\?targetCompany\\?\s*(?:hiring team|Hiring Team)[^,\n]*,\s*\n*([\s\S]*?)\\?vspace\{2\.0em\}/i,
-                    // Pattern 2: Content between "To the" and Sincerely/Cordialement (handles any company name)
-                    /To the[^,\n]*,\s*\n*([\s\S]*?)(?:\n\s*(?:Sincerely|Cordialement),|\n\s*\\vspace)/i,
-                    // Pattern 3: Content between % Letter Body % and \vspace{2.0em}
+                    // Pattern 1: Content between "To the \targetCompany\ hiring team," and \vspace{2.0em}
+                    /To the\s+\\targetCompany\\\s*hiring team,\s*\n*([\s\S]*?)\\vspace\{2\.0em\}/i,
+                    // Pattern 2: Content between "To the [Company] hiring team," (resolved variable) and \vspace{2.0em}
+                    /To the\s+[^,\n]+\s*hiring team,\s*\n*([\s\S]*?)\\vspace\{2\.0em\}/i,
+                    // Pattern 3: Content between "To the" greeting and Sincerely/Cordialement
+                    /To the\s+[^,\n]+,\s*\n*([\s\S]*?)(?:\n\s*(?:Sincerely|Cordialement),)/i,
+                    // Pattern 4: Content between % Letter Body % and \vspace{2.0em}
                     /%\s*=+\s*\n%\s*Letter Body\s*\n%\s*=+\s*\n([\s\S]*?)\\vspace\{2\.0em\}/i,
-                    // Pattern 4: Content between Dear and \vspace{2.0em} or \\vspace{2.0em}
-                    /Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n*([\s\S]*?)\\\\?vspace\{2\.0em\}/,
-                    // Pattern 5: Content between Dear and Sincerely
-                    /Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*Sincerely,|\n\s*\\vspace)/,
-                    // Pattern 6: Content after "Letter Body" comment (if exists)
-                    /%\s*Letter Body\s*%.*?(?:Dear|To the)[^,]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:Sincerely,|Cordialement,|\\vspace)/i,
-                    // Pattern 7: More flexible pattern - everything between greeting and signature area
+                    // Pattern 5: Content between "To the" and \vspace{2.0em}
+                    /To the\s+[^,\n]+,\s*\n*([\s\S]*?)\\vspace\{2\.0em\}/i,
+                    // Pattern 6: Content between Dear and \vspace{2.0em}
+                    /Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n*([\s\S]*?)\\vspace\{2\.0em\}/i,
+                    // Pattern 7: Content between Dear and Sincerely
+                    /Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*Sincerely,|\n\s*\\vspace)/i,
+                    // Pattern 8: More flexible pattern - everything between greeting and signature area
                     /(?:Dear|To the)\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*(?:Sincerely|Best regards|Yours sincerely|Cordialement)|\\vspace\{[^}]*em\})/i,
-                    // Pattern 8: Fallback - capture everything after greeting until document structure changes
+                    // Pattern 9: Fallback - capture everything after greeting until document structure changes
                     /(?:Dear|To the)\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*\\[a-zA-Z]+|\\end\{document\})/i
                 ]
 
@@ -481,23 +487,47 @@ export default function JobDescriptionForm() {
 
             // Replace the letter body content with the edited text
             // Match content between greeting and "\vspace{2.0em}" which is the actual letter body
-            const letterBodyPattern = /((?:Dear\s+(?:\\recipientName|[^,\n]+)|To the[^,\n]*(?:hiring team|Hiring Team)[^,\n]*),\s*(?:\\\\)?\s*\n?)((?:.|\n)*?)(\n\n?\\vspace\{2\.0em\})/i
+            // The greeting format is "To the \targetCompany\ hiring team," 
+
+            // Convert plain text back to LaTeX format for PDF generation
+            const latexFormattedContent = textContent
+                .replace(/&/g, '\\&')  // Escape & for LaTeX
+                .replace(/%/g, '\\%')  // Escape % for LaTeX
+                .replace(/\$/g, '\\$')  // Escape $ for LaTeX
+                .replace(/#/g, '\\#')  // Escape # for LaTeX
+                .split('\n\n')  // Split into paragraphs
+                .filter(p => p.trim())  // Remove empty paragraphs
+                .join('\n\n')  // Rejoin paragraphs
 
             let finalLatex = formattedLatex
-            const bodyMatch = formattedLatex.match(letterBodyPattern)
 
-            if (bodyMatch) {
-                // Convert plain text back to LaTeX format for PDF generation
-                const latexFormattedContent = textContent
-                    .replace(/&/g, '\\&')  // Escape & for LaTeX
-                    .replace(/%/g, '\\%')  // Escape % for LaTeX
-                    .replace(/\$/g, '\\$')  // Escape $ for LaTeX
-                    .replace(/#/g, '\\#')  // Escape # for LaTeX
-                    .split('\n\n')  // Split into paragraphs
-                    .filter(p => p.trim())  // Remove empty paragraphs
-                    .join('\n\n')  // Rejoin paragraphs
+            // Try the "To the ... hiring team" pattern first
+            const toThePattern = /(To the\s+\\targetCompany\\\s*hiring team,\s*\n?)([\s\S]*?)(\n\n?\\vspace\{2\.0em\})/i
+            const toTheMatch = formattedLatex.match(toThePattern)
 
-                finalLatex = formattedLatex.replace(letterBodyPattern, `$1\n${latexFormattedContent}\n$3`)
+            if (toTheMatch) {
+                console.log('Matched "To the hiring team" pattern for replacement')
+                finalLatex = formattedLatex.replace(toThePattern, `$1\n${latexFormattedContent}\n$3`)
+            } else {
+                // Try a more flexible "To the" pattern
+                const flexToThePattern = /(To the\s+[^,\n]+,\s*\n?)([\s\S]*?)(\n\n?\\vspace\{2\.0em\})/i
+                const flexToTheMatch = formattedLatex.match(flexToThePattern)
+
+                if (flexToTheMatch) {
+                    console.log('Matched flexible "To the" pattern for replacement')
+                    finalLatex = formattedLatex.replace(flexToThePattern, `$1\n${latexFormattedContent}\n$3`)
+                } else {
+                    // Fallback: try Dear pattern
+                    const dearPattern = /(Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n?)([\s\S]*?)(\n\n?\\vspace\{2\.0em\})/i
+                    const dearMatch = formattedLatex.match(dearPattern)
+
+                    if (dearMatch) {
+                        console.log('Matched "Dear" pattern for replacement')
+                        finalLatex = formattedLatex.replace(dearPattern, `$1\n${latexFormattedContent}\n$3`)
+                    } else {
+                        console.warn('No greeting pattern matched - using original LaTeX')
+                    }
+                }
             }
 
             const response = await fetch('/api/generate-pdf', {
