@@ -248,7 +248,7 @@ export default function ContactPage() {
             <footer className="border-t border-[#2e2e2e] py-6">
                 <div className="max-w-6xl mx-auto px-4 text-center">
                     <p className="text-[#666] text-sm">
-                        © 2024 Swift Letter. All rights reserved.
+                        © 2026 Swift Letter. All rights reserved.
                     </p>
                 </div>
             </footer>

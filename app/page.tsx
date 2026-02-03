@@ -25,7 +25,7 @@ export default function HomePage() {
 
             {/* Simple Footer */}
             <footer className="py-4 text-center text-sm text-[#666]">
-                <p>© 2024 Swift Letter. Fast, human-like cover letters.</p>
+                <p>© 2026 Swift Letter. Fast, human-like cover letters.</p>
             </footer>
         </div>
     )

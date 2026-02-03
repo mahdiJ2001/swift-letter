@@ -311,23 +311,38 @@ export default function JobDescriptionForm() {
 
                 // Extract the actual letter content between \begin{document} and \end{document}
                 // and remove LaTeX commands for better editing
-                const bodyStartMatch = data.content.match(/\\vspace\{1\.5em\}([\s\S]*?)\\vspace\{2\.0em\}/)
                 let extractedBody = ''
-                if (bodyStartMatch) {
-                    extractedBody = bodyStartMatch[1]
-                        .replace(/\\\\[\s]*\n/g, '\n\n')  // Replace \\\\ with double newline
-                        .replace(/\\vspace\{[^}]*\}/g, '')  // Remove \vspace commands
-                        .replace(/\\textbf\{([^}]*)\}/g, '$1')  // Remove \textbf{} formatting
-                        .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')  // Remove \href{}{} links
-                        .replace(/\\[a-zA-Z]+/g, '')  // Remove other LaTeX commands
-                        .replace(/\{([^}]*)\}/g, '$1')  // Remove remaining braces
-                        .replace(/\n\s*\n\s*\n/g, '\n\n')  // Clean up excessive newlines
-                        .trim()
-                } else {
-                    // Fallback: try to extract content after recipient info
-                    const fallbackMatch = data.content.match(/Dear.*?,([\s\S]*?)Sincerely,/)
-                    if (fallbackMatch) {
-                        extractedBody = fallbackMatch[1].trim()
+
+                // Try multiple patterns to extract the letter body
+                const patterns = [
+                    // Pattern 1: Content between vspace commands
+                    /\\vspace\{1\.5em\}([\s\S]*?)\\vspace\{2\.0em\}/,
+                    // Pattern 2: Content after recipient info until signature
+                    /Dear.*?\\\\([\s\S]*?)\\vspace\{2\.0em\}/,
+                    // Pattern 3: Content between Dear and Sincerely
+                    /Dear.*?\\\\([\s\S]*?)Sincerely,/,
+                    // Pattern 4: Main body content
+                    /\\begin\{document\}[\s\S]*?\\\\([\s\S]*?)\\vspace\{2\.0em\}/
+                ]
+
+                for (const pattern of patterns) {
+                    const match = data.content.match(pattern)
+                    if (match && match[1] && match[1].trim()) {
+                        extractedBody = match[1]
+                            .replace(/\\\\[\s]*\n/g, '\n\n')  // Replace \\\\ with double newline
+                            .replace(/\\vspace\{[^}]*\}/g, '')  // Remove \vspace commands
+                            .replace(/\\textbf\{([^}]*)\}/g, '$1')  // Remove \textbf{} formatting
+                            .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')  // Remove \href{}{} links
+                            .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')  // Remove LaTeX commands with arguments
+                            .replace(/\\[a-zA-Z]+\*?/g, '')  // Remove LaTeX commands without arguments
+                            .replace(/\{([^}]*)\}/g, '$1')  // Remove remaining braces
+                            .replace(/\n\s*\n\s*\n/g, '\n\n')  // Clean up excessive newlines
+                            .replace(/^\s+|\s+$/gm, '')  // Trim each line
+                            .trim()
+
+                        if (extractedBody.length > 50) { // Only use if we got substantial content
+                            break
+                        }
                     }
                 }
                 setEditableLetter(extractedBody)
@@ -734,7 +749,7 @@ export default function JobDescriptionForm() {
                                     src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
                                     className="w-full h-full border-0"
                                     title="Cover Letter Preview"
-                                    style={{ minHeight: '80vh', height: '80vh' }}
+                                    style={{ minHeight: '90vh', height: '90vh' }}
                                 />
                             </div>
                         </div>

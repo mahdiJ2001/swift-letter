@@ -123,7 +123,7 @@ export default function WaitlistPage() {
                             </form>
 
                             <p className="mt-6 text-sm text-[#666]">
-                                We respect your privacy. No spam, ever.
+                                We respect your privacy. No spam.
                             </p>
                         </>
                     ) : (
@@ -152,7 +152,7 @@ export default function WaitlistPage() {
             <footer className="border-t border-[#2e2e2e] py-6">
                 <div className="max-w-6xl mx-auto px-4 text-center">
                     <p className="text-[#666] text-sm">
-                        © 2024 Swift Letter. All rights reserved.
+                        © 2026 Swift Letter. All rights reserved.
                     </p>
                 </div>
             </footer>
