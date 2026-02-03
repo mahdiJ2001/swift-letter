@@ -187,11 +187,16 @@ You must create a complete LaTeX document that follows this EXACT structure. Rep
 \\documentclass[11pt,a4paper]{article}
 
 % Core packages
-\\usepackage[utf8]{inputenc}
-\\usepackage[T1]{fontenc}
 \\usepackage[margin=0.75in]{geometry}
 \\usepackage{hyperref}
 \\usepackage{xcolor}
+\\usepackage{fontspec}
+\\setmainfont[
+    BoldFont = {SF Pro Display Bold},
+    ItalicFont = {SF Pro Display Italic},
+    BoldItalicFont = {SF Pro Display Bold Italic},
+    Ligatures = TeX
+]{SF Pro Display}
 
 % --- USER DATA (Change these) ---
 \\newcommand{\\myname}{${profile.full_name}}

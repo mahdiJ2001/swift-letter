@@ -1,17 +1,39 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase-client'
 import { useAuth } from '@/lib/auth-context'
-import { MessageCircle, Send, Star } from 'lucide-react'
+import { MessageCircle, Send, Star, Camera, X } from 'lucide-react'
 
 export default function FeedbackForm() {
     const [feedback, setFeedback] = useState('')
     const [rating, setRating] = useState(0)
+    const [screenshot, setScreenshot] = useState<File | null>(null)
+    const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [success, setSuccess] = useState('')
     const [error, setError] = useState('')
     const { user } = useAuth()
+
+    const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                setError('Screenshot must be less than 5MB')
+                return
+            }
+            setScreenshot(file)
+            const reader = new FileReader()
+            reader.onload = (e) => {
+                setScreenshotPreview(e.target?.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const removeScreenshot = () => {
+        setScreenshot(null)
+        setScreenshotPreview(null)
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -22,20 +44,32 @@ export default function FeedbackForm() {
         setSuccess('')
 
         try {
-            const feedbackData = {
-                user_id: user?.id || null,
-                feedback: `${rating > 0 ? `Rating: ${rating}/5 stars\n` : ''}${feedback.trim()}`,
+            const formData = new FormData()
+            formData.append('feedback', feedback.trim())
+            formData.append('rating', rating.toString())
+            if (user?.id) {
+                formData.append('userId', user.id)
+            }
+            if (screenshot) {
+                formData.append('screenshot', screenshot)
             }
 
-            const { error } = await supabase
-                .from('user_feedback')
-                .insert(feedbackData as any)
+            const response = await fetch('/api/feedback', {
+                method: 'POST',
+                body: formData
+            })
 
-            if (error) throw error
+            const data = await response.json()
 
-            setSuccess('Thank you for your feedback! We appreciate your input.')
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to submit feedback')
+            }
+
+            setSuccess(data.message || 'Thank you for your feedback! We appreciate your input.')
             setFeedback('')
             setRating(0)
+            setScreenshot(null)
+            setScreenshotPreview(null)
         } catch (error: any) {
             setError(error.message || 'Failed to submit feedback')
         } finally {
@@ -44,35 +78,35 @@ export default function FeedbackForm() {
     }
 
     return (
-        <div className="card max-w-2xl mx-auto">
+        <div className="bg-[#171717] border border-[#2e2e2e] rounded-lg p-6 max-w-2xl mx-auto">
             <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageCircle className="h-8 w-8 text-primary-600" />
+                <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MessageCircle className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-secondary-900 mb-2">
+                <h3 className="text-2xl font-bold text-[#ececec] mb-2">
                     Share Your Feedback
                 </h3>
-                <p className="text-secondary-600">
+                <p className="text-[#a1a1a1]">
                     Help us improve Swift Letter by sharing your thoughts, suggestions, or reporting issues.
                 </p>
             </div>
 
             {success && (
-                <div className="bg-white/10 border border-white/20 rounded-lg p-4 mb-6">
-                    <p className="text-white text-sm">{success}</p>
+                <div className="bg-emerald-900/30 border border-emerald-800 rounded-lg p-4 mb-6">
+                    <p className="text-emerald-300 text-sm">{success}</p>
                 </div>
             )}
 
             {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <p className="text-red-600 text-sm">{error}</p>
+                <div className="bg-red-900/30 border border-red-800 rounded-lg p-4 mb-6">
+                    <p className="text-red-300 text-sm">{error}</p>
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Rating */}
                 <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-3">
+                    <label className="block text-sm font-medium text-[#ececec] mb-3">
                         How would you rate your experience? (Optional)
                     </label>
                     <div className="flex space-x-2">
@@ -83,7 +117,7 @@ export default function FeedbackForm() {
                                 onClick={() => setRating(star)}
                                 className={`p-1 rounded-md transition-colors ${star <= rating
                                     ? 'text-yellow-400 hover:text-yellow-500'
-                                    : 'text-secondary-300 hover:text-yellow-400'
+                                    : 'text-[#666] hover:text-yellow-400'
                                     }`}
                             >
                                 <Star className="h-8 w-8 fill-current" />
@@ -91,7 +125,7 @@ export default function FeedbackForm() {
                         ))}
                     </div>
                     {rating > 0 && (
-                        <p className="text-sm text-secondary-500 mt-2">
+                        <p className="text-sm text-[#a1a1a1] mt-2">
                             {rating === 1 && 'Poor - We\'ll work to improve'}
                             {rating === 2 && 'Fair - There\'s room for improvement'}
                             {rating === 3 && 'Good - Pretty satisfied'}
@@ -103,7 +137,7 @@ export default function FeedbackForm() {
 
                 {/* Feedback Text */}
                 <div>
-                    <label htmlFor="feedback" className="block text-sm font-medium text-secondary-700 mb-2">
+                    <label htmlFor="feedback" className="block text-sm font-medium text-[#ececec] mb-2">
                         Your Feedback *
                     </label>
                     <textarea
@@ -111,19 +145,62 @@ export default function FeedbackForm() {
                         name="feedback"
                         rows={6}
                         required
-                        className="input-field resize-none"
+                        className="w-full resize-none bg-[#212121] border border-[#2e2e2e] rounded-lg px-3 py-2 text-[#ececec] placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-white/20"
                         placeholder="Tell us about your experience, suggestions for improvement, or report any issues you've encountered..."
                         value={feedback}
                         onChange={(e) => setFeedback(e.target.value)}
                     />
                     <div className="flex justify-between mt-2">
-                        <p className="text-sm text-secondary-500">
+                        <p className="text-sm text-[#a1a1a1]">
                             Your feedback helps us make Swift Letter better for everyone
                         </p>
-                        <span className="text-sm text-secondary-400">
+                        <span className="text-sm text-[#666]">
                             {feedback.length} characters
                         </span>
                     </div>
+                </div>
+
+                {/* Screenshot Upload */}
+                <div>
+                    <label className="block text-sm font-medium text-[#ececec] mb-2">
+                        Add a Screenshot (Optional)
+                    </label>
+                    {!screenshotPreview ? (
+                        <div className="border-2 border-dashed border-[#2e2e2e] rounded-lg p-6 text-center hover:border-[#3e3e3e] transition-colors">
+                            <Camera className="h-8 w-8 text-[#666] mx-auto mb-2" />
+                            <p className="text-sm text-[#a1a1a1] mb-2">
+                                Upload a screenshot to help us better understand your feedback
+                            </p>
+                            <label className="inline-flex items-center px-4 py-2 bg-[#212121] border border-[#2e2e2e] rounded-lg text-sm text-[#ececec] hover:bg-[#2e2e2e] transition-colors cursor-pointer">
+                                <Camera className="h-4 w-4 mr-2" />
+                                Choose Image
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleScreenshotChange}
+                                    className="hidden"
+                                />
+                            </label>
+                            <p className="text-xs text-[#666] mt-2">
+                                PNG, JPG, GIF up to 5MB
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="relative">
+                            <img
+                                src={screenshotPreview}
+                                alt="Screenshot preview"
+                                className="max-w-full h-48 object-contain rounded-lg border border-[#2e2e2e]"
+                            />
+                            <button
+                                type="button"
+                                onClick={removeScreenshot}
+                                className="absolute top-2 right-2 p-1 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Submit Button */}
@@ -131,11 +208,11 @@ export default function FeedbackForm() {
                     <button
                         type="submit"
                         disabled={!feedback.trim() || isSubmitting}
-                        className="btn-primary inline-flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center space-x-2 px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? (
                             <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
                                 <span>Submitting...</span>
                             </>
                         ) : (
@@ -149,7 +226,7 @@ export default function FeedbackForm() {
 
                 {/* Privacy Note */}
                 <div className="text-center">
-                    <p className="text-xs text-secondary-500">
+                    <p className="text-xs text-[#666]">
                         {user ? (
                             'Your feedback will be associated with your account for follow-up purposes.'
                         ) : (
@@ -160,20 +237,20 @@ export default function FeedbackForm() {
             </form>
 
             {/* Feedback Categories */}
-            <div className="mt-8 pt-6 border-t border-secondary-200">
-                <h4 className="font-semibold text-secondary-900 mb-4">What kind of feedback are you sharing?</h4>
+            <div className="mt-8 pt-6 border-t border-[#2e2e2e]">
+                <h4 className="font-semibold text-[#ececec] mb-4">What kind of feedback are you sharing?</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div className="text-center p-3 bg-primary-50 rounded-lg">
-                        <span className="text-primary-700 font-medium">🐛 Bug Report</span>
+                    <div className="text-center p-3 bg-[#212121] rounded-lg border border-[#2e2e2e]">
+                        <span className="text-[#ececec] font-medium">🐛 Bug Report</span>
                     </div>
-                    <div className="text-center p-3 bg-primary-50 rounded-lg">
-                        <span className="text-primary-700 font-medium">💡 Feature Request</span>
+                    <div className="text-center p-3 bg-[#212121] rounded-lg border border-[#2e2e2e]">
+                        <span className="text-[#ececec] font-medium">💡 Feature Request</span>
                     </div>
-                    <div className="text-center p-3 bg-primary-50 rounded-lg">
-                        <span className="text-primary-700 font-medium">👍 General Feedback</span>
+                    <div className="text-center p-3 bg-[#212121] rounded-lg border border-[#2e2e2e]">
+                        <span className="text-[#ececec] font-medium">👍 General Feedback</span>
                     </div>
-                    <div className="text-center p-3 bg-primary-50 rounded-lg">
-                        <span className="text-primary-700 font-medium">❓ Questions</span>
+                    <div className="text-center p-3 bg-[#212121] rounded-lg border border-[#2e2e2e]">
+                        <span className="text-[#ececec] font-medium">❓ Questions</span>
                     </div>
                 </div>
             </div>

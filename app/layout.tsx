@@ -1,4 +1,5 @@
 import { AuthProvider } from '@/lib/auth-context'
+import FloatingFeedbackButton from '@/components/FloatingFeedbackButton'
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
@@ -95,6 +96,7 @@ export default function RootLayout({
             <body className={`${inter.className} min-h-screen bg-[#0d0d0d]`}>
                 <AuthProvider>
                     {children}
+                    <FloatingFeedbackButton />
                 </AuthProvider>
             </body>
         </html>

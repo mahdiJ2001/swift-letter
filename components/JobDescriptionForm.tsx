@@ -315,16 +315,22 @@ export default function JobDescriptionForm() {
 
                 // Try multiple patterns to extract the letter body
                 const patterns = [
-                    // Pattern 1: Content between Dear and \vspace{2.0em} or \\vspace{2.0em}
+                    // Pattern 1: Content between "To the \targetCompany\" salutation and \vspace{2.0em}
+                    /To the\\?\s*\\?targetCompany\\?\s*(?:hiring team|Hiring Team)[^,\n]*,\s*\n*([\s\S]*?)\\?vspace\{2\.0em\}/i,
+                    // Pattern 2: Content between "To the" and Sincerely/Cordialement (handles any company name)
+                    /To the[^,\n]*,\s*\n*([\s\S]*?)(?:\n\s*(?:Sincerely|Cordialement),|\n\s*\\vspace)/i,
+                    // Pattern 3: Content between % Letter Body % and \vspace{2.0em}
+                    /%\s*=+\s*\n%\s*Letter Body\s*\n%\s*=+\s*\n([\s\S]*?)\\vspace\{2\.0em\}/i,
+                    // Pattern 4: Content between Dear and \vspace{2.0em} or \\vspace{2.0em}
                     /Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n*([\s\S]*?)\\\\?vspace\{2\.0em\}/,
-                    // Pattern 2: Content between Dear and Sincerely
+                    // Pattern 5: Content between Dear and Sincerely
                     /Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*Sincerely,|\n\s*\\vspace)/,
-                    // Pattern 3: Content after "Letter Body" comment (if exists)
-                    /%\s*Letter Body\s*%.*?Dear[^,]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:Sincerely,|\\vspace)/,
-                    // Pattern 4: More flexible pattern - everything between Dear and signature area
-                    /Dear\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*(?:Sincerely|Best regards|Yours sincerely)|\\vspace\{[^}]*em\})/,
-                    // Pattern 5: Fallback - capture everything after Dear line until document structure changes
-                    /Dear\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*\\[a-zA-Z]+|\\end\{document\})/
+                    // Pattern 6: Content after "Letter Body" comment (if exists)
+                    /%\s*Letter Body\s*%.*?(?:Dear|To the)[^,]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:Sincerely,|Cordialement,|\\vspace)/i,
+                    // Pattern 7: More flexible pattern - everything between greeting and signature area
+                    /(?:Dear|To the)\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*(?:Sincerely|Best regards|Yours sincerely|Cordialement)|\\vspace\{[^}]*em\})/i,
+                    // Pattern 8: Fallback - capture everything after greeting until document structure changes
+                    /(?:Dear|To the)\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*\\[a-zA-Z]+|\\end\{document\})/i
                 ]
 
                 for (let i = 0; i < patterns.length; i++) {
@@ -343,10 +349,13 @@ export default function JobDescriptionForm() {
                             .replace(/\\textbf\{([^}]*)\}/g, '$1')  // Remove \textbf{} formatting
                             .replace(/\\textit\{([^}]*)\}/g, '$1')  // Remove \textit{} formatting
                             .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')  // Remove \href{}{} links
-                            // Replace LaTeX variables with actual values
-                            .replace(/\\targetPosition(?![a-zA-Z])/g, extractedPosition || 'the position')
-                            .replace(/\\targetCompany(?![a-zA-Z])/g, extractedCompany || 'your company')
-                            .replace(/\\recipientName(?![a-zA-Z])/g, recipientMatch?.[1] || 'Hiring Manager')
+                            // Replace LaTeX variables with actual values (handle trailing backslash for spacing)
+                            .replace(/\\targetPosition\\/g, extractedPosition || 'the position')  // With trailing \
+                            .replace(/\\targetPosition(?![a-zA-Z])/g, extractedPosition || 'the position')  // Without trailing \
+                            .replace(/\\targetCompany\\/g, extractedCompany || 'your company')  // With trailing \
+                            .replace(/\\targetCompany(?![a-zA-Z])/g, extractedCompany || 'your company')  // Without trailing \
+                            .replace(/\\recipientName\\/g, recipientMatch?.[1] || 'Hiring Manager')  // With trailing \
+                            .replace(/\\recipientName(?![a-zA-Z])/g, recipientMatch?.[1] || 'Hiring Manager')  // Without trailing \
                             // Remove other LaTeX commands
                             .replace(/\\vspace\{[^}]*\}/g, '')  // Remove \vspace commands
                             .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')  // Remove LaTeX commands with arguments
@@ -373,8 +382,8 @@ export default function JobDescriptionForm() {
                 if (!extractedBody) {
                     console.warn('Failed to extract letter body from LaTeX content. First 500 characters of content:')
                     console.warn(data.content.substring(0, 500))
-                    // Try a simple fallback - look for any text after "Dear" and before signature words
-                    const simpleMatch = data.content.match(/Dear[^,\n]*,\s*\n*([\s\S]{50,}?)(?=\n\s*(?:Sincerely|Best regards|Yours sincerely|\s*\\end))/i)
+                    // Try a simple fallback - look for any text after greeting and before signature words
+                    const simpleMatch = data.content.match(/(?:Dear|To the)[^,\n]*,\s*\n*([\s\S]{50,}?)(?=\n\s*(?:Sincerely|Best regards|Yours sincerely|Cordialement|\s*\\end))/i)
                     if (simpleMatch && simpleMatch[1]) {
                         extractedBody = simpleMatch[1]
                             .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')  // Remove LaTeX commands
@@ -385,9 +394,55 @@ export default function JobDescriptionForm() {
                         console.log('Simple fallback extracted:', extractedBody.length, 'characters')
                     }
 
+                    // Final fallback: try to get content between Letter Body comment and vspace
                     if (!extractedBody) {
-                        extractedBody = 'Please edit this content with your personalized cover letter. fix it please '
-                        console.error('All extraction methods failed, using placeholder text')
+                        const lastResortMatch = data.content.match(/%\s*=+\s*%\s*\n%\s*Letter Body\s*\n%\s*=+\s*%\s*\n([\s\S]*?)\\vspace\{2\.0em\}/i)
+                        if (lastResortMatch && lastResortMatch[1]) {
+                            extractedBody = lastResortMatch[1]
+                                .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')  // Remove LaTeX commands
+                                .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')  // Remove LaTeX commands
+                                .replace(/\{([^}]*)\}/g, '$1')  // Remove braces
+                                .replace(/\\\\/g, '\n')  // Replace \\ with newlines
+                                .trim()
+                            console.log('Last resort fallback extracted:', extractedBody.length, 'characters')
+                        }
+                    }
+
+                    if (!extractedBody) {
+                        // Extract everything between begin{document} and end{document} as last resort
+                        const docMatch = data.content.match(/\\begin\{document\}([\s\S]*)\\end\{document\}/)
+                        if (docMatch && docMatch[1]) {
+                            // Find the letter body section
+                            const bodySection = docMatch[1].match(/(?:To the|Dear)[^,\n]*,([\s\S]*?)(?:Sincerely|Cordialement)/i)
+                            if (bodySection && bodySection[1]) {
+                                extractedBody = bodySection[1]
+                                    .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
+                                    .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
+                                    .replace(/\{([^}]*)\}/g, '$1')
+                                    .replace(/\\\\/g, '\n')
+                                    .trim()
+                            }
+                        }
+                    }
+
+                    if (!extractedBody) {
+                        console.error('All extraction methods failed')
+                        // Use the raw LaTeX content with basic cleanup as fallback
+                        const rawContent = data.content
+                            .replace(/\\documentclass[\s\S]*?\\begin\{document\}/g, '')
+                            .replace(/\\end\{document\}/g, '')
+                            .replace(/\\newcommand[^}]*\{[^}]*\}/g, '')
+                            .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
+                            .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
+                            .replace(/\{([^}]*)\}/g, '$1')
+                            .replace(/\\\\/g, '\n')
+                            .replace(/%[^\n]*/g, '')
+                            .trim()
+                        if (rawContent.length > 100) {
+                            extractedBody = rawContent
+                        } else {
+                            extractedBody = 'Unable to extract letter content. Please try regenerating.'
+                        }
                     }
                 }
                 setEditableLetter(extractedBody)
@@ -425,8 +480,8 @@ export default function JobDescriptionForm() {
                 .replace(/\\newcommand\{\\targetSubject\}\{[^}]*\}/g, `\\newcommand{\\targetSubject}{${targetSubject}}`)
 
             // Replace the letter body content with the edited text
-            // Match content between "Dear ..." and "\vspace{2.0em}" which is the actual letter body
-            const letterBodyPattern = /(Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n?)((?:.|\n)*?)(\n\n?\\vspace\{2\.0em\})/
+            // Match content between greeting and "\vspace{2.0em}" which is the actual letter body
+            const letterBodyPattern = /((?:Dear\s+(?:\\recipientName|[^,\n]+)|To the[^,\n]*(?:hiring team|Hiring Team)[^,\n]*),\s*(?:\\\\)?\s*\n?)((?:.|\n)*?)(\n\n?\\vspace\{2\.0em\})/i
 
             let finalLatex = formattedLatex
             const bodyMatch = formattedLatex.match(letterBodyPattern)
