@@ -94,8 +94,14 @@ export async function POST(request: NextRequest) {
 
             if (updateError) {
                 console.error('Error updating profile with resume URL:', updateError)
-                // Don't fail the whole operation, just log the error
+                return NextResponse.json({ 
+                    error: `Failed to save resume URL to profile: ${updateError.message}` 
+                }, { status: 500 })
+            } else {
+                console.log('Successfully updated profile with resume URL:', resumeUrl)
             }
+        } else {
+            console.log('No existing profile found for user:', user.id)
         }
 
         return NextResponse.json({
