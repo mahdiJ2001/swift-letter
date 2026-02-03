@@ -217,9 +217,9 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    id: profile?.id, 
-                    resume_url: resumeUrl 
+                body: JSON.stringify({
+                    id: profile?.id,
+                    resume_url: resumeUrl
                 }),
             })
 
@@ -581,7 +581,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                     onChange={handleChange}
                                     placeholder="Senior Software Engineer at Tech Corp (2020-2024)&#10;- Led development of web applications serving 100k+ users&#10;- Implemented CI/CD pipelines reducing deployment time by 50%&#10;&#10;Software Engineer at StartupXYZ (2018-2020)&#10;- Developed RESTful APIs and microservices&#10;- Collaborated with cross-functional teams"
                                     rows={5}
-                                    className="resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm sm:text-base"
+                                    className="resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-white focus:border-white text-sm sm:text-base"
                                     required
                                 />
                             </div>
@@ -606,7 +606,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                     onChange={handleChange}
                                     placeholder="E-commerce Platform (2023)&#10;- Built full-stack application using React and Node.js&#10;- Integrated payment processing and inventory management&#10;&#10;Task Management App (2022)&#10;- Developed mobile app using React Native&#10;- Implemented real-time collaboration features"
                                     rows={5}
-                                    className="resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm sm:text-base"
+                                    className="resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-white focus:border-white text-sm sm:text-base"
                                 />
                             </div>
                         </div>
@@ -630,7 +630,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                     onChange={handleChange}
                                     placeholder="Bachelor of Science in Computer Science&#10;University of Technology, 2018&#10;GPA: 3.8/4.0&#10;Relevant Coursework: Data Structures, Algorithms, Database Systems"
                                     rows={3}
-                                    className="resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm sm:text-base"
+                                    className="resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-white focus:border-white text-sm sm:text-base"
                                 />
                             </div>
                         </div>
@@ -654,7 +654,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                     onChange={handleChange}
                                     placeholder="AWS Certified Solutions Architect (2023)&#10;Google Cloud Professional Developer (2022)&#10;Scrum Master Certification (2021)"
                                     rows={3}
-                                    className="resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm sm:text-base"
+                                    className="resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-white focus:border-white text-sm sm:text-base"
                                 />
                             </div>
                         </div>
@@ -678,7 +678,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                                     onChange={handleChange}
                                     placeholder="English (Native)&#10;Spanish (Conversational)&#10;French (Basic)"
                                     rows={3}
-                                    className="resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm sm:text-base"
+                                    className="resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] placeholder-[#666] focus:ring-2 focus:ring-white focus:border-white text-sm sm:text-base"
                                 />
                             </div>
                         </div>
