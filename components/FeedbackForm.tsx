@@ -241,16 +241,16 @@ export default function FeedbackForm() {
                 <h4 className="font-semibold text-[#ececec] mb-4">What kind of feedback are you sharing?</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div className="text-center p-3 bg-[#212121] rounded-lg border border-[#2e2e2e]">
-                        <span className="text-[#ececec] font-medium">🐛 Bug Report</span>
+                        <span className="text-[#ececec] font-medium">Bug Report</span>
                     </div>
                     <div className="text-center p-3 bg-[#212121] rounded-lg border border-[#2e2e2e]">
-                        <span className="text-[#ececec] font-medium">💡 Feature Request</span>
+                        <span className="text-[#ececec] font-medium">Feature Request</span>
                     </div>
                     <div className="text-center p-3 bg-[#212121] rounded-lg border border-[#2e2e2e]">
-                        <span className="text-[#ececec] font-medium">👍 General Feedback</span>
+                        <span className="text-[#ececec] font-medium">General Feedback</span>
                     </div>
                     <div className="text-center p-3 bg-[#212121] rounded-lg border border-[#2e2e2e]">
-                        <span className="text-[#ececec] font-medium">❓ Questions</span>
+                        <span className="text-[#ececec] font-medium">Questions</span>
                     </div>
                 </div>
             </div>

@@ -3,15 +3,13 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
-import { Menu, X, User, LogOut, Coins, MessageCircle } from 'lucide-react'
+import { Menu, X, User, LogOut, Coins } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
-import FeedbackForm from '@/components/FeedbackForm'
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [showCreditsModal, setShowCreditsModal] = useState(false)
-    const [showFeedbackModal, setShowFeedbackModal] = useState(false)
     const [credits, setCredits] = useState<number | null>(null)
     const { user, signOut } = useAuth()
 
@@ -79,17 +77,6 @@ export default function Header() {
 
                     {/* Auth Section */}
                     <div className="hidden md:flex items-center space-x-3">
-                        {/* Feedback Button - Always visible */}
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowFeedbackModal(true)}
-                            className="text-[#a1a1a1] hover:text-[#ececec] hover:bg-[#171717]"
-                        >
-                            <MessageCircle className="h-4 w-4 mr-1.5" />
-                            <span>Feedback</span>
-                        </Button>
-
                         {user ? (
                             <>
                                 {credits !== null && (
@@ -186,16 +173,6 @@ export default function Header() {
                         >
                             Profile
                         </Link>
-                        <button
-                            onClick={() => {
-                                setShowFeedbackModal(true)
-                                setIsMenuOpen(false)
-                            }}
-                            className="w-full text-left text-[#a1a1a1] hover:text-[#ececec] hover:bg-[#171717] font-medium px-4 py-3 rounded-lg transition-colors"
-                        >
-                            <MessageCircle className="inline h-4 w-4 mr-2" />
-                            Feedback
-                        </button>
                         <div className="border-t border-[#2e2e2e] my-2 pt-2">
                             {user ? (
                                 <>
@@ -282,33 +259,6 @@ export default function Header() {
                 </div>
             )}
 
-            {/* Feedback Modal */}
-            {showFeedbackModal && (
-                <div
-                    className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[99999] p-4"
-                    onClick={() => setShowFeedbackModal(false)}
-                >
-                    <div
-                        className="bg-[#0d0d0d] rounded-xl max-w-3xl w-full max-h-[95vh] overflow-y-auto"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="sticky top-0 bg-[#0d0d0d] p-4 border-b border-[#2e2e2e] flex justify-between items-center">
-                            <h2 className="text-xl font-semibold text-[#ececec]">Share Your Feedback</h2>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setShowFeedbackModal(false)}
-                                className="text-[#666] hover:text-[#ececec] hover:bg-[#171717]"
-                            >
-                                <X className="h-5 w-5" />
-                            </Button>
-                        </div>
-                        <div className="p-6">
-                            <FeedbackForm />
-                        </div>
-                    </div>
-                </div>
-            )}
         </header>
     )
 }

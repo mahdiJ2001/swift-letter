@@ -12,13 +12,10 @@ export default function FloatingFeedbackButton() {
             {/* Floating Feedback Button */}
             <button
                 onClick={() => setShowFeedbackModal(true)}
-                className="fixed bottom-6 right-6 z-40 bg-white hover:bg-gray-100 text-black p-3 rounded-full shadow-lg border-2 border-black/10 hover:scale-110 transition-all duration-200 group"
-                aria-label="Open feedback form"
+                className="fixed bottom-6 right-6 z-40 bg-white hover:bg-gray-100 text-black p-3 rounded-full shadow-lg border-2 border-black/10 hover:scale-105 transition-all duration-200"
+                aria-label="Send feedback"
             >
                 <MessageCircle className="h-6 w-6" />
-                <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-black text-white text-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                    Send Feedback
-                </span>
             </button>
 
             {/* Feedback Modal */}
