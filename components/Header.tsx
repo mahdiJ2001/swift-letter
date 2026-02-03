@@ -41,12 +41,12 @@ export default function Header() {
                 <div className="flex items-center justify-between h-14">
                     <div className="flex items-center space-x-8">
                         {/* Logo */}
-                        <Link href="/" className="flex items-center space-x-2 group">
+                        <Link href="/" className="flex items-center space-x-2">
                             <Image
                                 src="/logos/SL.png"
                                 alt="Swift Letter"
-                                width={65}
-                                height={65}
+                                width={48}
+                                height={48}
                                 className="rounded-lg"
                             />
                             <span className="text-lg font-semibold text-[#ececec]">Swift Letter</span>

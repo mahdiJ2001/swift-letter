@@ -68,7 +68,7 @@ export default function Footer() {
 
                 <div className="border-t border-slate-800 mt-8 sm:mt-12 pt-6 sm:pt-8 text-center">
                     <p className="text-slate-500 text-xs sm:text-sm">
-                        © 2024 Swift Letter. All rights reserved.
+                        © 2026 Swift Letter. All rights reserved.
                     </p>
                 </div>
             </div>
