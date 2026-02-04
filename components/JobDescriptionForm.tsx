@@ -371,18 +371,23 @@ export default function JobDescriptionForm() {
                             .replace(/\\textit\{([^}]*)\}/g, '$1')
                             .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')
 
-                            // Step 4: Remove other LaTeX commands  
+                            // Step 4: Remove other LaTeX commands but preserve all spacing
                             .replace(/\\vspace\{[^}]*\}/g, '')
                             .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
                             .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
                             .replace(/\{([^}]*)\}/g, '$1')
 
-                            // Step 5: PRESERVE original spacing structure - only clean edges
-                            .replace(/^\s*\n/g, '')                         // Remove leading blank lines
-                            .replace(/\n\s*$/g, '')                         // Remove trailing blank lines
-                        // DO NOT modify internal spacing - keep all paragraph breaks as-is
+                        // Step 5: CRITICAL - Preserve exact paragraph spacing from LaTeX
+                        // In LaTeX, paragraphs are separated by blank lines
+                        // We must preserve these blank lines exactly as they appear
+                        // NO trimming or spacing modifications - keep original structure
 
-                        console.log('Final extracted content for edit field:')
+                        console.log('Final extracted content for edit field (showing paragraph structure):')
+                        console.log('---EDIT-FIELD-CONTENT---')
+                        console.log(JSON.stringify(extractedBody))  // Use JSON.stringify to see exact whitespace
+                        console.log('---END-CONTENT---')
+
+                        break
                         console.log('---EDIT-FIELD-PREVIEW---')
                         console.log(extractedBody)
                         console.log('---END-PREVIEW---')
@@ -823,7 +828,8 @@ export default function JobDescriptionForm() {
                                     <Textarea
                                         value={editableLetter}
                                         onChange={(e) => setEditableLetter(e.target.value)}
-                                        className="w-full min-h-[400px] resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec]"
+                                        className="w-full min-h-[400px] resize-none bg-[#212121] border-[#2e2e2e] text-[#ececec] whitespace-pre-wrap"
+                                        placeholder="Your cover letter content will appear here..."
                                     />
                                 </div>
                             </div>
