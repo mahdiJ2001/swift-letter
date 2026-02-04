@@ -379,7 +379,7 @@ export default function JobDescriptionForm() {
 
                             // Step 5: CRITICAL - Process paragraph spacing to match PDF
                             // The LaTeX template has blank lines between paragraphs, preserve this exactly
-                            .replace(/\n\s*\n\s*\n+/g, '\n\n')   // Normalize multiple blank lines to single blank line
+                            //.replace(/\n\s*\n\s*\n+/g, '\n\n')   // Normalize multiple blank lines to single blank line
                             .replace(/^\s+|\s+$/g, '')           // Trim only leading/trailing whitespace
 
                         // Split by existing blank lines, clean each paragraph, and rejoin with blank lines
