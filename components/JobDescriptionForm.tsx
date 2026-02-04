@@ -319,13 +319,13 @@ export default function JobDescriptionForm() {
 
                 // Extract the letter body with improved pattern matching for editing
                 let rawLatexBody = ''
-                
+
                 // First extract raw LaTeX body for reconstruction
                 const rawBodyMatch = data.content.match(/(?:To the\s+(?:[^,\n]+|\\targetCompany\\\s*)hiring team,|Dear\s+(?:[^,\n]+|\\recipientName)\s*,)\s*(?:\\\\\s*)?\n([\s\S]*?)(?=\n\s*\\vspace\{2\.0em\})/i)
                 if (rawBodyMatch && rawBodyMatch[1]) {
                     rawLatexBody = rawBodyMatch[1].trim()
                 }
-                
+
                 // Simplified patterns for clean text extraction
                 const patterns = [
                     // Pattern 1: Most reliable - between greeting and \vspace{2.0em}
@@ -359,18 +359,19 @@ export default function JobDescriptionForm() {
                             .replace(/\\targetCompany(?![a-zA-Z])/g, extractedCompany || 'your company')
                             .replace(/\\recipientName\\/g, recipientMatch?.[1] || 'Hiring Manager')
                             .replace(/\\recipientName(?![a-zA-Z])/g, recipientMatch?.[1] || 'Hiring Manager')
-                            // Remove LaTeX commands while preserving structure
+                            // Remove LaTeX commands while preserving paragraph structure  
                             .replace(/\\vspace\{[^}]*\}/g, '')
                             .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
                             .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
-                            // Convert LaTeX line breaks to proper paragraphs
-                            .replace(/\\\\\s*/g, '\n\n')
-                            .replace(/\\newline\s*/g, '\n')
-                            // Clean up formatting
+                            // Handle LaTeX paragraph breaks: blank lines = paragraphs, \\ = line breaks within paragraphs
+                            .replace(/\n\s*\n/g, '\n\n')          // Normalize paragraph breaks
+                            .replace(/\\\\\s*/g, '\n')            // Convert \\ to single line breaks (not paragraphs)
+                            .replace(/\\newline\s*/g, '\n')       // Convert \newline to line breaks
+                            // Clean up formatting while preserving paragraph structure
                             .replace(/\{([^}]*)\}/g, '$1')
-                            .replace(/\n\s*\n\s*\n+/g, '\n\n')
-                            .replace(/^\s+/gm, '')
-                            .replace(/\s+$/gm, '')
+                            .replace(/\n\s*\n\s*\n+/g, '\n\n')    // Clean up excessive newlines but preserve paragraphs
+                            .replace(/^\s+/gm, '')                // Trim leading whitespace from each line
+                            .replace(/\s+$/gm, '')                // Trim trailing whitespace from each line
                             .trim()
 
                         console.log(`Pattern ${i + 1} extracted content (${extractedBody.length} chars)`)
@@ -441,9 +442,14 @@ export default function JobDescriptionForm() {
             // Match content between greeting and "\vspace{2.0em}" which is the actual letter body
             // The greeting format is "To the \targetCompany\ hiring team," 
 
-            // Convert plain text back to LaTeX format for PDF generation
+            // Convert the edited plain text back to LaTeX format with proper paragraph spacing
+            console.log('Original text content preview:')
+            console.log('---START---')
+            console.log(textContent.substring(0, 300))
+            console.log('---END---')
+
             const latexFormattedContent = textContent
-                // Escape LaTeX special characters properly
+                // Escape LaTeX special characters first
                 .replace(/\\\\/g, '\\textbackslash{}')  // Handle backslashes first
                 .replace(/&/g, '\\&')                   // Escape & for LaTeX  
                 .replace(/%/g, '\\%')                   // Escape % for LaTeX
@@ -454,42 +460,53 @@ export default function JobDescriptionForm() {
                 .replace(/~/g, '\\textasciitilde{}')    // Escape ~ for LaTeX
                 .replace(/\{/g, '\\{')                  // Escape { for LaTeX
                 .replace(/\}/g, '\\}')                  // Escape } for LaTeX
-                // Convert paragraphs properly - double newlines become paragraph breaks
-                .split('\n\n')
-                .filter(p => p.trim())
-                .map(p => p.replace(/\n/g, ' ').trim())  // Convert single newlines to spaces within paragraphs
-                .join('\n\n')  // Rejoin with proper paragraph spacing
+                // Handle paragraph spacing more carefully to preserve paragraph structure
+                .replace(/\n{3,}/g, '\n\n')            // Normalize multiple newlines to double newlines
+                .split('\n\n')                         // Split into paragraphs
+                .filter(p => p.trim())                 // Remove empty paragraphs
+                .map(p => {
+                    // Within each paragraph, convert single newlines to spaces, preserve the paragraph content
+                    return p.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
+                })
+                .filter(p => p)                        // Remove any empty paragraphs after processing
+                .join('\n\n')                          // Join paragraphs with double newlines (LaTeX paragraph breaks)
+
+            console.log('LaTeX formatted content preview:')
+            console.log('---START---')
+            console.log(latexFormattedContent.substring(0, 300))
+            console.log('---END---')
+            console.log('Number of paragraphs:', latexFormattedContent.split('\n\n').length)
 
             let finalLatex = formattedLatex
 
             console.log('Replacing letter body content with edited text...')
-            
-            // Find and replace the letter body content more reliably
+
+            // Find and replace the letter body content with proper spacing preservation
             // Pattern 1: Look for the specific greeting format with \vspace{2.0em} ending
             const bodyPattern = /((?:To the\s+\\targetCompany\\\s*hiring team,|Dear\s+\\recipientName,)\s*(?:\\\\\s*)?\n)[\s\S]*?(\n\s*\\vspace\{2\.0em\})/i
-            
+
             if (formattedLatex.match(bodyPattern)) {
                 console.log('Found specific greeting pattern for replacement')
-                finalLatex = formattedLatex.replace(bodyPattern, `$1${latexFormattedContent}$2`)
+                // Insert with proper spacing - add a blank line after greeting and before closing
+                finalLatex = formattedLatex.replace(bodyPattern, `$1\n${latexFormattedContent}\n$2`)
             } else {
                 console.warn('Specific pattern not found, trying alternatives...')
-                // Try more flexible patterns
+                // Try more flexible patterns with proper spacing
                 const alternativePatterns = [
                     /((?:To the|Dear)\s+[^,\n]*,\s*(?:\\\\\s*)?\n)[\s\S]*?(\n\s*\\vspace\{2\.0em\})/i,
                     /((?:To the|Dear)\s+[^,\n]*,\s*(?:\\\\\s*)?\n)[\s\S]*?(\n\s*(?:Sincerely|Cordialement))/i
                 ]
-                
+
                 let replaced = false
                 for (let i = 0; i < alternativePatterns.length; i++) {
                     const pattern = alternativePatterns[i]
                     if (formattedLatex.match(pattern)) {
                         console.log(`Using alternative pattern ${i + 1} for content replacement`)
-                        finalLatex = formattedLatex.replace(pattern, `$1${latexFormattedContent}$2`)
-                        replaced = true
-                        break
+                        // Insert with proper spacing for alternative patterns too
+                        finalLatex = formattedLatex.replace(pattern, `$1\n${latexFormattedContent}\n$2`)
                     }
                 }
-                
+
                 if (!replaced) {
                     console.error('No suitable pattern found for content replacement')
                     throw new Error('Unable to locate content area for replacement in LaTeX document')
@@ -527,7 +544,7 @@ export default function JobDescriptionForm() {
                 setPdfUrl(url)
                 setShowPdfPreview(true)
                 setIsEditingLetter(false)
-                
+
                 console.log('✅ PDF regenerated successfully with edited content')
             } else {
                 throw new Error(data.error || 'Failed to generate PDF')
