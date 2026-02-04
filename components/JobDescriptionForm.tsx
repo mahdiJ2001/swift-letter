@@ -359,22 +359,25 @@ export default function JobDescriptionForm() {
                             .replace(/\\targetCompany(?![a-zA-Z])/g, extractedCompany || 'your company')
                             .replace(/\\recipientName\\/g, recipientMatch?.[1] || 'Hiring Manager')
                             .replace(/\\recipientName(?![a-zA-Z])/g, recipientMatch?.[1] || 'Hiring Manager')
-                            // Remove LaTeX commands while preserving paragraph structure  
-                            .replace(/\\vspace\{[^}]*\}/g, '')
-                            .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
-                            .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
-                            // Handle LaTeX paragraph breaks: blank lines = paragraphs, \\ = line breaks within paragraphs
-                            .replace(/\n\s*\n/g, '\n\n')          // Normalize paragraph breaks
-                            .replace(/\\\\\s*/g, '\n')            // Convert \\ to single line breaks (not paragraphs)
-                            .replace(/\\newline\s*/g, '\n')       // Convert \newline to line breaks
-                            // Clean up formatting while preserving paragraph structure
-                            .replace(/\{([^}]*)\}/g, '$1')
-                            .replace(/\n\s*\n\s*\n+/g, '\n\n')    // Clean up excessive newlines but preserve paragraphs
-                            .replace(/^\s+/gm, '')                // Trim leading whitespace from each line
-                            .replace(/\s+$/gm, '')                // Trim trailing whitespace from each line
-                            .trim()
+                            // Minimal cleanup to preserve exact paragraph spacing as it appears in PDF
+                            .replace(/\\vspace\{[^}]*\}/g, '')              // Remove vspace commands
+                            .replace(/\\textbf\{([^}]*)\}/g, '$1')          // Remove bold formatting but keep text
+                            .replace(/\\textit\{([^}]*)\}/g, '$1')          // Remove italic formatting but keep text  
+                            .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')   // Remove links but keep text
+                            // Remove other LaTeX commands but keep structure EXACTLY as is
+                            .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')        // Remove LaTeX commands with args
+                            .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')     // Remove LaTeX commands without args
+                            .replace(/\{([^}]*)\}/g, '$1')                  // Remove remaining braces
+                            // DO NOT CHANGE paragraph structure - keep spacing exactly as LaTeX has it
+                            .replace(/^\s+/gm, '')                          // Only trim line leading whitespace
+                            .replace(/\s+$/gm, '')                          // Only trim line trailing whitespace
+                            .trim()                                         // Trim document edges only
 
                         console.log(`Pattern ${i + 1} extracted content (${extractedBody.length} chars)`)
+                        console.log('Preserved spacing structure - paragraph preview:')
+                        console.log('---EDIT-FIELD-CONTENT---')
+                        console.log(extractedBody.substring(0, 200))
+                        console.log('---END---')
                         break
                     }
                 }
@@ -442,14 +445,16 @@ export default function JobDescriptionForm() {
             // Match content between greeting and "\vspace{2.0em}" which is the actual letter body
             // The greeting format is "To the \targetCompany\ hiring team," 
 
-            // Convert the edited plain text back to LaTeX format with proper paragraph spacing
-            console.log('Original text content preview:')
-            console.log('---START---')
-            console.log(textContent.substring(0, 300))
+            // WYSIWYG approach: convert edited text back to LaTeX with MINIMAL changes
+            // The goal is to preserve the exact spacing the user sees in the edit field
+            console.log('WYSIWYG conversion - preserving exact spacing from edit field')
+            console.log('Original text content:')
+            console.log('---EDIT-FIELD-INPUT---')
+            console.log(textContent)
             console.log('---END---')
 
             const latexFormattedContent = textContent
-                // Escape LaTeX special characters first
+                // Only escape LaTeX special characters - do NOT modify spacing structure
                 .replace(/\\\\/g, '\\textbackslash{}')  // Handle backslashes first
                 .replace(/&/g, '\\&')                   // Escape & for LaTeX  
                 .replace(/%/g, '\\%')                   // Escape % for LaTeX
@@ -460,22 +465,12 @@ export default function JobDescriptionForm() {
                 .replace(/~/g, '\\textasciitilde{}')    // Escape ~ for LaTeX
                 .replace(/\{/g, '\\{')                  // Escape { for LaTeX
                 .replace(/\}/g, '\\}')                  // Escape } for LaTeX
-                // Handle paragraph spacing more carefully to preserve paragraph structure
-                .replace(/\n{3,}/g, '\n\n')            // Normalize multiple newlines to double newlines
-                .split('\n\n')                         // Split into paragraphs
-                .filter(p => p.trim())                 // Remove empty paragraphs
-                .map(p => {
-                    // Within each paragraph, convert single newlines to spaces, preserve the paragraph content
-                    return p.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
-                })
-                .filter(p => p)                        // Remove any empty paragraphs after processing
-                .join('\n\n')                          // Join paragraphs with double newlines (LaTeX paragraph breaks)
+            // PRESERVE SPACING EXACTLY AS USER TYPED IT - no paragraph manipulation
 
-            console.log('LaTeX formatted content preview:')
-            console.log('---START---')
-            console.log(latexFormattedContent.substring(0, 300))
+            console.log('Final LaTeX content (should match edit field spacing):')
+            console.log('---LATEX-OUTPUT---')
+            console.log(latexFormattedContent)
             console.log('---END---')
-            console.log('Number of paragraphs:', latexFormattedContent.split('\n\n').length)
 
             let finalLatex = formattedLatex
 
