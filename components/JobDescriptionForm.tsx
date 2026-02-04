@@ -339,16 +339,15 @@ export default function JobDescriptionForm() {
                 for (let i = 0; i < patterns.length; i++) {
                     const match = data.content.match(patterns[i])
                     if (match && match[1] && match[1].trim()) {
-                        console.log(`Pattern ${i + 1} matched, extracting content with spacing preservation...`)
+                        console.log(`Pattern ${i + 1} matched, extracting content...`)
 
-                        // CRITICAL: Preserve the original LaTeX spacing structure exactly
+                        // Get raw LaTeX content - this contains blank lines between paragraphs
                         let rawContent = match[1]
 
-                        console.log('Raw extracted LaTeX content:')
-                        console.log('---RAW-LATEX---')
-                        console.log(rawContent.substring(0, 300))
-                        console.log('---END-RAW---')
+                        console.log('Raw LaTeX content (first 500 chars):')
+                        console.log(rawContent.substring(0, 500))
 
+                        // Process content while PRESERVING blank lines between paragraphs
                         extractedBody = rawContent
                             // Step 1: Handle LaTeX special characters
                             .replace(/\\&/g, '&')
@@ -357,8 +356,9 @@ export default function JobDescriptionForm() {
                             .replace(/\\\$/g, '$')
                             .replace(/\\#/g, '#')
                             .replace(/\\~/g, '~')
+                            .replace(/\\_/g, '_')
 
-                            // Step 2: Replace LaTeX variables with actual values BEFORE removing commands
+                            // Step 2: Replace LaTeX variables with actual values
                             .replace(/\\targetPosition\\/g, extractedPosition || 'the position')
                             .replace(/\\targetPosition(?![a-zA-Z])/g, extractedPosition || 'the position')
                             .replace(/\\targetCompany\\/g, extractedCompany || 'your company')
@@ -371,26 +371,19 @@ export default function JobDescriptionForm() {
                             .replace(/\\textit\{([^}]*)\}/g, '$1')
                             .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')
 
-                            // Step 4: Remove other LaTeX commands but preserve all spacing
+                            // Step 4: Remove other LaTeX commands
                             .replace(/\\vspace\{[^}]*\}/g, '')
                             .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
                             .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
                             .replace(/\{([^}]*)\}/g, '$1')
 
-                        // Step 5: CRITICAL - Preserve exact paragraph spacing from LaTeX
-                        // In LaTeX, paragraphs are separated by blank lines
-                        // We must preserve these blank lines exactly as they appear
-                        // NO trimming or spacing modifications - keep original structure
+                            // Step 5: PRESERVE paragraph spacing - normalize to exactly one blank line between paragraphs
+                            // This ensures the edit field shows the same spacing as the PDF
+                            .replace(/\n{3,}/g, '\n\n')     // Multiple blank lines -> single blank line
+                            .trim()                          // Only trim start/end of entire content
 
-                        console.log('Final extracted content for edit field (showing paragraph structure):')
-                        console.log('---EDIT-FIELD-CONTENT---')
-                        console.log(JSON.stringify(extractedBody))  // Use JSON.stringify to see exact whitespace
-                        console.log('---END-CONTENT---')
-
-                        break
-                        console.log('---EDIT-FIELD-PREVIEW---')
-                        console.log(extractedBody)
-                        console.log('---END-PREVIEW---')
+                        console.log('Extracted content with paragraph spacing preserved:')
+                        console.log('Number of paragraphs:', extractedBody.split('\n\n').length)
 
                         break
                     }
@@ -409,7 +402,8 @@ export default function JobDescriptionForm() {
                             .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
                             .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
                             .replace(/\{([^}]*)\}/g, '$1')
-                            .replace(/\\\\\s*/g, '\n\n')
+                            // Preserve paragraph spacing - normalize to single blank lines
+                            .replace(/\n{3,}/g, '\n\n')
                             .trim()
                     }
                 }
