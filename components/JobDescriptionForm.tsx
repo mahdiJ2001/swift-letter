@@ -48,6 +48,7 @@ export default function JobDescriptionForm() {
     const [editableCompany, setEditableCompany] = useState('')
     const [editablePosition, setEditablePosition] = useState('')
     const [editableSubject, setEditableSubject] = useState('')
+    const [originalLatexBody, setOriginalLatexBody] = useState('')
     const [isUploadingResume, setIsUploadingResume] = useState(false)
     const [hasResumeAttached, setHasResumeAttached] = useState(false)
     const router = useRouter()
@@ -316,153 +317,93 @@ export default function JobDescriptionForm() {
                 // Debug: Log the raw content to see what we're working with
                 console.log('Raw LaTeX content (first 1000 chars):', data.content.substring(0, 1000))
 
-                // Try multiple patterns to extract the letter body
-                // The format is: "To the \targetCompany\ hiring team," followed by the body, then "\vspace{2.0em}"
+                // Extract the letter body with improved pattern matching for editing
+                let rawLatexBody = ''
+                
+                // First extract raw LaTeX body for reconstruction
+                const rawBodyMatch = data.content.match(/(?:To the\s+(?:[^,\n]+|\\targetCompany\\\s*)hiring team,|Dear\s+(?:[^,\n]+|\\recipientName)\s*,)\s*(?:\\\\\s*)?\n([\s\S]*?)(?=\n\s*\\vspace\{2\.0em\})/i)
+                if (rawBodyMatch && rawBodyMatch[1]) {
+                    rawLatexBody = rawBodyMatch[1].trim()
+                }
+                
+                // Simplified patterns for clean text extraction
                 const patterns = [
-                    // Pattern 1: Content between "To the \targetCompany\ hiring team," and \vspace{2.0em}
-                    /To the\s+\\targetCompany\\\s*hiring team,\s*\n*([\s\S]*?)\\vspace\{2\.0em\}/i,
-                    // Pattern 2: Content between "To the [Company] hiring team," (resolved variable) and \vspace{2.0em}
-                    /To the\s+[^,\n]+\s*hiring team,\s*\n*([\s\S]*?)\\vspace\{2\.0em\}/i,
-                    // Pattern 3: Content between "To the" greeting and Sincerely/Cordialement
-                    /To the\s+[^,\n]+,\s*\n*([\s\S]*?)(?:\n\s*(?:Sincerely|Cordialement),)/i,
-                    // Pattern 4: Content between % Letter Body % and \vspace{2.0em}
-                    /%\s*=+\s*\n%\s*Letter Body\s*\n%\s*=+\s*\n([\s\S]*?)\\vspace\{2\.0em\}/i,
-                    // Pattern 5: Content between "To the" and \vspace{2.0em}
-                    /To the\s+[^,\n]+,\s*\n*([\s\S]*?)\\vspace\{2\.0em\}/i,
-                    // Pattern 6: Content between Dear and \vspace{2.0em}
-                    /Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n*([\s\S]*?)\\vspace\{2\.0em\}/i,
-                    // Pattern 7: Content between Dear and Sincerely
-                    /Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*Sincerely,|\n\s*\\vspace)/i,
-                    // Pattern 8: More flexible pattern - everything between greeting and signature area
-                    /(?:Dear|To the)\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*(?:Sincerely|Best regards|Yours sincerely|Cordialement)|\\vspace\{[^}]*em\})/i,
-                    // Pattern 9: Fallback - capture everything after greeting until document structure changes
-                    /(?:Dear|To the)\s+[^,\n]*,\s*(?:\\\\)?\s*\n*([\s\S]*?)(?:\n\s*\\[a-zA-Z]+|\\end\{document\})/i,
-                    // Pattern 10: Ultimate fallback - capture any text content in the document
-                    /\\begin\{document\}[\s\S]*?(?:Dear|To the)[\s\S]*?,([\s\S]*?)(?:Sincerely|Cordialement|\\end\{document\})/i
+                    // Pattern 1: Most reliable - between greeting and \vspace{2.0em}
+                    /(?:To the\s+(?:[^,\n]+|\\targetCompany\\\s*)hiring team,|Dear\s+(?:[^,\n]+|\\recipientName)\s*,)\s*(?:\\\\\s*)?\n([\s\S]*?)(?=\n\s*\\vspace\{2\.0em\})/i,
+                    // Pattern 2: Between greeting and signature
+                    /(?:To the|Dear)\s+[^,\n]*,\s*(?:\\\\\s*)?\n([\s\S]*?)(?=\n\s*(?:Sincerely|Cordialement))/i,
+                    // Pattern 3: Fallback for any greeting pattern
+                    /(?:Dear|To the)\s+[^,\n]*,\s*(?:\\\\\s*)?\n([\s\S]*?)(?=\n\s*\\[a-zA-Z]|\\end\{document\})/i
                 ]
 
                 for (let i = 0; i < patterns.length; i++) {
-                    const pattern = patterns[i]
-                    const match = data.content.match(pattern)
-                    if (match && match[1]) {  // Remove trim() check to capture any content
+                    const match = data.content.match(patterns[i])
+                    if (match && match[1] && match[1].trim()) {
+                        console.log(`Pattern ${i + 1} matched, extracting content...`)
                         extractedBody = match[1]
-                            // Clean up LaTeX escape characters first
-                            .replace(/\\&/g, '&')  // Convert LaTeX \& to &
-                            .replace(/\\%/g, '%')  // Convert LaTeX \% to %
-                            .replace(/\\ /g, ' ')  // Convert LaTeX \ (escaped space) to space
-                            .replace(/\\\$/g, '$')  // Convert LaTeX \$ to $
-                            .replace(/\\#/g, '#')  // Convert LaTeX \# to #
-                            .replace(/\\~/g, '~')  // Convert LaTeX \~ to ~
-                            // Handle LaTeX formatting commands
-                            .replace(/\\textbf\{([^}]*)\}/g, '$1')  // Remove \textbf{} formatting
-                            .replace(/\\textit\{([^}]*)\}/g, '$1')  // Remove \textit{} formatting
-                            .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')  // Remove \href{}{} links
-                            // Replace LaTeX variables with actual values (handle trailing backslash for spacing)
-                            .replace(/\\targetPosition\\/g, extractedPosition || 'the position')  // With trailing \
-                            .replace(/\\targetPosition(?![a-zA-Z])/g, extractedPosition || 'the position')  // Without trailing \
-                            .replace(/\\targetCompany\\/g, extractedCompany || 'your company')  // With trailing \
-                            .replace(/\\targetCompany(?![a-zA-Z])/g, extractedCompany || 'your company')  // Without trailing \
-                            .replace(/\\recipientName\\/g, recipientMatch?.[1] || 'Hiring Manager')  // With trailing \
-                            .replace(/\\recipientName(?![a-zA-Z])/g, recipientMatch?.[1] || 'Hiring Manager')  // Without trailing \
-                            // Remove other LaTeX commands
-                            .replace(/\\vspace\{[^}]*\}/g, '')  // Remove \vspace commands
-                            .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')  // Remove LaTeX commands with arguments
-                            .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')  // Remove LaTeX commands without arguments
-                            // Handle line breaks - preserve paragraph structure
-                            .replace(/\\\\\s*/g, '\n\n')  // Replace \\ with paragraph break
-                            .replace(/\\newline\s*/g, '\n')  // Replace \newline with line break
-                            // Clean up braces and formatting
-                            .replace(/\{([^}]*)\}/g, '$1')  // Remove remaining braces
-                            .replace(/\n\s*\n\s*\n+/g, '\n\n')  // Clean up excessive newlines
-                            .replace(/^\s+/gm, '')  // Trim leading whitespace from each line
-                            .replace(/\s+$/gm, '')  // Trim trailing whitespace from each line
-                            .replace(/^[\s\n]*/, '')  // Remove leading whitespace and newlines
+                            // Handle LaTeX escapes properly
+                            .replace(/\\&/g, '&')
+                            .replace(/\\%/g, '%')
+                            .replace(/\\ /g, ' ')
+                            .replace(/\\\$/g, '$')
+                            .replace(/\\#/g, '#')
+                            .replace(/\\~/g, '~')
+                            // Remove LaTeX formatting commands
+                            .replace(/\\textbf\{([^}]*)\}/g, '$1')
+                            .replace(/\\textit\{([^}]*)\}/g, '$1')
+                            .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')
+                            // Replace LaTeX variables with actual values
+                            .replace(/\\targetPosition\\/g, extractedPosition || 'the position')
+                            .replace(/\\targetPosition(?![a-zA-Z])/g, extractedPosition || 'the position')
+                            .replace(/\\targetCompany\\/g, extractedCompany || 'your company')
+                            .replace(/\\targetCompany(?![a-zA-Z])/g, extractedCompany || 'your company')
+                            .replace(/\\recipientName\\/g, recipientMatch?.[1] || 'Hiring Manager')
+                            .replace(/\\recipientName(?![a-zA-Z])/g, recipientMatch?.[1] || 'Hiring Manager')
+                            // Remove LaTeX commands while preserving structure
+                            .replace(/\\vspace\{[^}]*\}/g, '')
+                            .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
+                            .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
+                            // Convert LaTeX line breaks to proper paragraphs
+                            .replace(/\\\\\s*/g, '\n\n')
+                            .replace(/\\newline\s*/g, '\n')
+                            // Clean up formatting
+                            .replace(/\{([^}]*)\}/g, '$1')
+                            .replace(/\n\s*\n\s*\n+/g, '\n\n')
+                            .replace(/^\s+/gm, '')
+                            .replace(/\s+$/gm, '')
                             .trim()
 
-                        console.log(`Pattern ${i + 1} extracted content (${extractedBody.length} chars):`, extractedBody.substring(0, 100) + '...')
-                        // Always use extracted content regardless of length
+                        console.log(`Pattern ${i + 1} extracted content (${extractedBody.length} chars)`)
                         break
                     }
                 }
 
+                // Store raw LaTeX body for PDF reconstruction 
+                setOriginalLatexBody(rawLatexBody)
+
+                // Fallback extraction if patterns failed
                 if (!extractedBody) {
-                    console.warn('Failed to extract letter body from LaTeX content. First 500 characters of content:')
-                    console.warn(data.content.substring(0, 500))
-                    // Try a simple fallback - look for any text after greeting and before signature words
-                    const simpleMatch = data.content.match(/(?:Dear|To the)[^,\n]*,\s*\n*([\s\S]{50,}?)(?=\n\s*(?:Sincerely|Best regards|Yours sincerely|Cordialement|\s*\\end))/i)
-                    if (simpleMatch && simpleMatch[1]) {
-                        extractedBody = simpleMatch[1]
-                            .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')  // Remove LaTeX commands
-                            .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')  // Remove LaTeX commands
-                            .replace(/\{([^}]*)\}/g, '$1')  // Remove braces
-                            .replace(/\\\\/g, '\n')  // Replace \\ with newlines
-                            .trim()
-                        console.log('Simple fallback extracted:', extractedBody.length, 'characters')
-                    }
-
-                    // Final fallback: try to get content between Letter Body comment and vspace
-                    if (!extractedBody) {
-                        const lastResortMatch = data.content.match(/%\s*=+\s*%\s*\n%\s*Letter Body\s*\n%\s*=+\s*%\s*\n([\s\S]*?)\\vspace\{2\.0em\}/i)
-                        if (lastResortMatch && lastResortMatch[1]) {
-                            extractedBody = lastResortMatch[1]
-                                .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')  // Remove LaTeX commands
-                                .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')  // Remove LaTeX commands
-                                .replace(/\{([^}]*)\}/g, '$1')  // Remove braces
-                                .replace(/\\\\/g, '\n')  // Replace \\ with newlines
-                                .trim()
-                            console.log('Last resort fallback extracted:', extractedBody.length, 'characters')
-                        }
-                    }
-
-                    if (!extractedBody) {
-                        // Extract everything between begin{document} and end{document} as last resort
-                        const docMatch = data.content.match(/\\begin\{document\}([\s\S]*)\\end\{document\}/)
-                        if (docMatch && docMatch[1]) {
-                            // Find the letter body section
-                            const bodySection = docMatch[1].match(/(?:To the|Dear)[^,\n]*,([\s\S]*?)(?:Sincerely|Cordialement)/i)
-                            if (bodySection && bodySection[1]) {
-                                extractedBody = bodySection[1]
-                                    .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
-                                    .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
-                                    .replace(/\{([^}]*)\}/g, '$1')
-                                    .replace(/\\\\/g, '\n')
-                                    .trim()
-                            }
-                        }
-                    }
-
-                    if (!extractedBody) {
-                        console.error('All extraction methods failed')
-                        // Use the raw LaTeX content with basic cleanup as fallback
-                        const rawContent = data.content
-                            .replace(/\\documentclass[\s\S]*?\\begin\{document\}/g, '')
-                            .replace(/\\end\{document\}/g, '')
-                            .replace(/\\newcommand[^}]*\{[^}]*\}/g, '')
+                    console.warn('Primary patterns failed, trying fallback extraction')
+                    // Simple fallback - extract content between greeting and signature
+                    const fallbackMatch = data.content.match(/(?:Dear|To the)[^,\n]*,\s*(?:\\\\\s*)?\n([\s\S]{50,}?)(?=\n\s*(?:Sincerely|Cordialement|\\\vspace))/i)
+                    if (fallbackMatch && fallbackMatch[1]) {
+                        extractedBody = fallbackMatch[1]
                             .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
                             .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
                             .replace(/\{([^}]*)\}/g, '$1')
-                            .replace(/\\\\/g, '\n')
-                            .replace(/%[^\n]*/g, '')
+                            .replace(/\\\\\s*/g, '\n\n')
                             .trim()
-                        // Always use raw content if available, no matter the length
-                        extractedBody = rawContent || 'Generated content will appear here'
                     }
                 }
 
-                // Ensure we always have some content to edit, never empty
-                const finalContent = extractedBody.trim() || data.content
-                    .replace(/\\documentclass[\s\S]*?\\begin\{document\}/g, '')
-                    .replace(/\\end\{document\}/g, '')
-                    .replace(/\\newcommand[^}]*\{[^}]*\}/g, '')
-                    .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
-                    .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
-                    .replace(/\{([^}]*)\}/g, '$1')
-                    .replace(/\\\\/g, '\n')
-                    .replace(/%[^\n]*/g, '')
-                    .trim()
+                // Final fallback
+                if (!extractedBody) {
+                    console.error('All extraction methods failed')
+                    extractedBody = 'Generated content will appear here'
+                }
 
-                console.log('Final content to edit:', finalContent.length, 'characters')
-                setEditableLetter(finalContent)
+                console.log('Final content to edit:', extractedBody.length, 'characters')
+                setEditableLetter(extractedBody)
 
                 await generatePdfAndPreview(data.latex)
             } else {
@@ -502,42 +443,56 @@ export default function JobDescriptionForm() {
 
             // Convert plain text back to LaTeX format for PDF generation
             const latexFormattedContent = textContent
-                .replace(/&/g, '\\&')  // Escape & for LaTeX
-                .replace(/%/g, '\\%')  // Escape % for LaTeX
-                .replace(/\$/g, '\\$')  // Escape $ for LaTeX
-                .replace(/#/g, '\\#')  // Escape # for LaTeX
-                .split('\n\n')  // Split into paragraphs
-                .filter(p => p.trim())  // Remove empty paragraphs
-                .join('\n\n')  // Rejoin paragraphs
+                // Escape LaTeX special characters properly
+                .replace(/\\\\/g, '\\textbackslash{}')  // Handle backslashes first
+                .replace(/&/g, '\\&')                   // Escape & for LaTeX  
+                .replace(/%/g, '\\%')                   // Escape % for LaTeX
+                .replace(/\$/g, '\\$')                  // Escape $ for LaTeX
+                .replace(/#/g, '\\#')                   // Escape # for LaTeX
+                .replace(/_/g, '\\_')                   // Escape _ for LaTeX
+                .replace(/\^/g, '\\textasciicircum{}')  // Escape ^ for LaTeX
+                .replace(/~/g, '\\textasciitilde{}')    // Escape ~ for LaTeX
+                .replace(/\{/g, '\\{')                  // Escape { for LaTeX
+                .replace(/\}/g, '\\}')                  // Escape } for LaTeX
+                // Convert paragraphs properly - double newlines become paragraph breaks
+                .split('\n\n')
+                .filter(p => p.trim())
+                .map(p => p.replace(/\n/g, ' ').trim())  // Convert single newlines to spaces within paragraphs
+                .join('\n\n')  // Rejoin with proper paragraph spacing
 
             let finalLatex = formattedLatex
 
-            // Try the "To the ... hiring team" pattern first
-            const toThePattern = /(To the\s+\\targetCompany\\\s*hiring team,\s*\n?)([\s\S]*?)(\n\n?\\vspace\{2\.0em\})/i
-            const toTheMatch = formattedLatex.match(toThePattern)
-
-            if (toTheMatch) {
-                console.log('Matched "To the hiring team" pattern for replacement')
-                finalLatex = formattedLatex.replace(toThePattern, `$1\n${latexFormattedContent}\n$3`)
+            console.log('Replacing letter body content with edited text...')
+            
+            // Find and replace the letter body content more reliably
+            // Pattern 1: Look for the specific greeting format with \vspace{2.0em} ending
+            const bodyPattern = /((?:To the\s+\\targetCompany\\\s*hiring team,|Dear\s+\\recipientName,)\s*(?:\\\\\s*)?\n)[\s\S]*?(\n\s*\\vspace\{2\.0em\})/i
+            
+            if (formattedLatex.match(bodyPattern)) {
+                console.log('Found specific greeting pattern for replacement')
+                finalLatex = formattedLatex.replace(bodyPattern, `$1${latexFormattedContent}$2`)
             } else {
-                // Try a more flexible "To the" pattern
-                const flexToThePattern = /(To the\s+[^,\n]+,\s*\n?)([\s\S]*?)(\n\n?\\vspace\{2\.0em\})/i
-                const flexToTheMatch = formattedLatex.match(flexToThePattern)
-
-                if (flexToTheMatch) {
-                    console.log('Matched flexible "To the" pattern for replacement')
-                    finalLatex = formattedLatex.replace(flexToThePattern, `$1\n${latexFormattedContent}\n$3`)
-                } else {
-                    // Fallback: try Dear pattern
-                    const dearPattern = /(Dear\s+(?:\\recipientName|[^,\n]+),\s*(?:\\\\)?\s*\n?)([\s\S]*?)(\n\n?\\vspace\{2\.0em\})/i
-                    const dearMatch = formattedLatex.match(dearPattern)
-
-                    if (dearMatch) {
-                        console.log('Matched "Dear" pattern for replacement')
-                        finalLatex = formattedLatex.replace(dearPattern, `$1\n${latexFormattedContent}\n$3`)
-                    } else {
-                        console.warn('No greeting pattern matched - using original LaTeX')
+                console.warn('Specific pattern not found, trying alternatives...')
+                // Try more flexible patterns
+                const alternativePatterns = [
+                    /((?:To the|Dear)\s+[^,\n]*,\s*(?:\\\\\s*)?\n)[\s\S]*?(\n\s*\\vspace\{2\.0em\})/i,
+                    /((?:To the|Dear)\s+[^,\n]*,\s*(?:\\\\\s*)?\n)[\s\S]*?(\n\s*(?:Sincerely|Cordialement))/i
+                ]
+                
+                let replaced = false
+                for (let i = 0; i < alternativePatterns.length; i++) {
+                    const pattern = alternativePatterns[i]
+                    if (formattedLatex.match(pattern)) {
+                        console.log(`Using alternative pattern ${i + 1} for content replacement`)
+                        finalLatex = formattedLatex.replace(pattern, `$1${latexFormattedContent}$2`)
+                        replaced = true
+                        break
                     }
+                }
+                
+                if (!replaced) {
+                    console.error('No suitable pattern found for content replacement')
+                    throw new Error('Unable to locate content area for replacement in LaTeX document')
                 }
             }
 
@@ -572,12 +527,15 @@ export default function JobDescriptionForm() {
                 setPdfUrl(url)
                 setShowPdfPreview(true)
                 setIsEditingLetter(false)
+                
+                console.log('✅ PDF regenerated successfully with edited content')
             } else {
                 throw new Error(data.error || 'Failed to generate PDF')
             }
         } catch (error: any) {
-            console.error('Error generating PDF:', error)
-            setError(error.message || 'Failed to generate PDF.')
+            console.error('Error generating PDF from edited text:', error)
+            setError(error.message || 'Failed to generate PDF with edited content. Please try again.')
+            setTimeout(() => setError(''), 5000)
         } finally {
             setIsPdfGenerating(false)
         }
