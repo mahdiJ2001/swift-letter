@@ -339,45 +339,54 @@ export default function JobDescriptionForm() {
                 for (let i = 0; i < patterns.length; i++) {
                     const match = data.content.match(patterns[i])
                     if (match && match[1] && match[1].trim()) {
-                        console.log(`Pattern ${i + 1} matched, extracting content...`)
-                        extractedBody = match[1]
-                            // Handle LaTeX escapes properly
+                        console.log(`Pattern ${i + 1} matched, extracting content with spacing preservation...`)
+
+                        // CRITICAL: Preserve the original LaTeX spacing structure exactly
+                        let rawContent = match[1]
+
+                        console.log('Raw extracted LaTeX content:')
+                        console.log('---RAW-LATEX---')
+                        console.log(rawContent.substring(0, 300))
+                        console.log('---END-RAW---')
+
+                        extractedBody = rawContent
+                            // Step 1: Handle LaTeX special characters
                             .replace(/\\&/g, '&')
                             .replace(/\\%/g, '%')
                             .replace(/\\ /g, ' ')
                             .replace(/\\\$/g, '$')
                             .replace(/\\#/g, '#')
                             .replace(/\\~/g, '~')
-                            // Remove LaTeX formatting commands
-                            .replace(/\\textbf\{([^}]*)\}/g, '$1')
-                            .replace(/\\textit\{([^}]*)\}/g, '$1')
-                            .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')
-                            // Replace LaTeX variables with actual values
+
+                            // Step 2: Replace LaTeX variables with actual values BEFORE removing commands
                             .replace(/\\targetPosition\\/g, extractedPosition || 'the position')
                             .replace(/\\targetPosition(?![a-zA-Z])/g, extractedPosition || 'the position')
                             .replace(/\\targetCompany\\/g, extractedCompany || 'your company')
                             .replace(/\\targetCompany(?![a-zA-Z])/g, extractedCompany || 'your company')
                             .replace(/\\recipientName\\/g, recipientMatch?.[1] || 'Hiring Manager')
                             .replace(/\\recipientName(?![a-zA-Z])/g, recipientMatch?.[1] || 'Hiring Manager')
-                            // Minimal cleanup to preserve exact paragraph spacing as it appears in PDF
-                            .replace(/\\vspace\{[^}]*\}/g, '')              // Remove vspace commands
-                            .replace(/\\textbf\{([^}]*)\}/g, '$1')          // Remove bold formatting but keep text
-                            .replace(/\\textit\{([^}]*)\}/g, '$1')          // Remove italic formatting but keep text  
-                            .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')   // Remove links but keep text
-                            // Remove other LaTeX commands but keep structure EXACTLY as is
-                            .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')        // Remove LaTeX commands with args
-                            .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')     // Remove LaTeX commands without args
-                            .replace(/\{([^}]*)\}/g, '$1')                  // Remove remaining braces
-                            // DO NOT CHANGE paragraph structure - keep spacing exactly as LaTeX has it
-                            .replace(/^\s+/gm, '')                          // Only trim line leading whitespace
-                            .replace(/\s+$/gm, '')                          // Only trim line trailing whitespace
-                            .trim()                                         // Trim document edges only
 
-                        console.log(`Pattern ${i + 1} extracted content (${extractedBody.length} chars)`)
-                        console.log('Preserved spacing structure - paragraph preview:')
-                        console.log('---EDIT-FIELD-CONTENT---')
-                        console.log(extractedBody.substring(0, 200))
-                        console.log('---END---')
+                            // Step 3: Remove LaTeX formatting commands but keep text content
+                            .replace(/\\textbf\{([^}]*)\}/g, '$1')
+                            .replace(/\\textit\{([^}]*)\}/g, '$1')
+                            .replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1')
+
+                            // Step 4: Remove other LaTeX commands  
+                            .replace(/\\vspace\{[^}]*\}/g, '')
+                            .replace(/\\[a-zA-Z]+\*?\{[^}]*\}/g, '')
+                            .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
+                            .replace(/\{([^}]*)\}/g, '$1')
+
+                            // Step 5: PRESERVE original spacing structure - only clean edges
+                            .replace(/^\s*\n/g, '')                         // Remove leading blank lines
+                            .replace(/\n\s*$/g, '')                         // Remove trailing blank lines
+                        // DO NOT modify internal spacing - keep all paragraph breaks as-is
+
+                        console.log('Final extracted content for edit field:')
+                        console.log('---EDIT-FIELD-PREVIEW---')
+                        console.log(extractedBody)
+                        console.log('---END-PREVIEW---')
+
                         break
                     }
                 }
