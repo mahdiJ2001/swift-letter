@@ -347,7 +347,7 @@ export default function JobDescriptionForm() {
                         console.log('Raw LaTeX content (first 500 chars):')
                         console.log(rawContent.substring(0, 500))
 
-                        // Process content while PRESERVING blank lines between paragraphs
+                        // Process content to ensure proper paragraph spacing for edit field
                         extractedBody = rawContent
                             // Step 1: Handle LaTeX special characters
                             .replace(/\\&/g, '&')
@@ -377,12 +377,22 @@ export default function JobDescriptionForm() {
                             .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
                             .replace(/\{([^}]*)\}/g, '$1')
 
-                            // Step 5: PRESERVE paragraph spacing - normalize to exactly one blank line between paragraphs
-                            // This ensures the edit field shows the same spacing as the PDF
-                            .replace(/\n{3,}/g, '\n\n')     // Multiple blank lines -> single blank line
-                            .trim()                          // Only trim start/end of entire content
+                            // Step 5: CRITICAL - Process paragraph spacing to match PDF
+                            // The LaTeX template has blank lines between paragraphs, preserve this exactly
+                            .replace(/\n\s*\n\s*\n+/g, '\n\n')   // Normalize multiple blank lines to single blank line
+                            .replace(/^\s+|\s+$/g, '')           // Trim only leading/trailing whitespace
 
-                        console.log('Extracted content with paragraph spacing preserved:')
+                        // Split by existing blank lines, clean each paragraph, and rejoin with blank lines
+                        const paragraphs = extractedBody.split(/\n\s*\n/)
+                        extractedBody = paragraphs
+                            .map(p => p.replace(/\s+/g, ' ').trim())  // Clean each paragraph
+                            .filter(p => p)                          // Remove empty paragraphs
+                            .join('\n\n')                            // Join with blank lines
+
+                        console.log('Final extracted content for edit field:')
+                        console.log('---EDIT-FIELD-CONTENT---')
+                        console.log(extractedBody)
+                        console.log('---END-CONTENT---')
                         console.log('Number of paragraphs:', extractedBody.split('\n\n').length)
 
                         break
