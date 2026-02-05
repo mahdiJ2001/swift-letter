@@ -390,7 +390,7 @@ export default function ProfileForm({ profile, onProfileUpdate }: ProfileFormPro
                         <span className="text-[#ececec]">Profile Information</span>
                     </CardTitle>
                     <CardDescription className="text-[#a1a1a1] text-sm sm:text-base mt-2">
-                        Fill in your details to generate personalized cover letters that match your background
+                        Fill in your details to generate personalized cover letters for software engineering roles that match your background
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-8">

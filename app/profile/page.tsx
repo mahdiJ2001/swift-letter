@@ -133,7 +133,7 @@ export default function ProfilePage() {
                 <div className="mb-8 text-center">
                     <h1 className="text-3xl font-bold text-[#ececec]">Your Profile</h1>
                     <p className="text-[#a1a1a1] mt-2">
-                        Complete your profile to generate personalized cover letters
+                        Complete your profile to generate personalized cover letters for software engineering roles
                     </p>
                 </div>
 
