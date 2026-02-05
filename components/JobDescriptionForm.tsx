@@ -524,6 +524,8 @@ export default function JobDescriptionForm() {
                         console.log(`Using alternative pattern ${i + 1} for content replacement`)
                         // Insert with proper spacing for alternative patterns too
                         finalLatex = formattedLatex.replace(pattern, `$1\n${latexFormattedContent}\n$2`)
+                        replaced = true
+                        break
                     }
                 }
 
