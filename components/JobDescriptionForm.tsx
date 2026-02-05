@@ -377,31 +377,27 @@ export default function JobDescriptionForm() {
                             .replace(/\\[a-zA-Z]+\*?(?![a-zA-Z])/g, '')
                             .replace(/\{([^}]*)\}/g, '$1')
 
-                            // Step 5: CRITICAL - Ensure proper paragraph spacing for edit field
-                            // Strategy: Identify paragraph boundaries and ensure blank lines between them
-                            .replace(/\n\s*\n\s*\n+/g, '\n\n')   // Normalize multiple blank lines to single blank line
+                            // Step 5: CRITICAL - Preserve natural paragraph spacing for edit field
+                            // Strategy: Clean up but maintain existing paragraph structure from LaTeX
+                            .replace(/\n\s*\n\s*\n+/g, '\n\n')   // Normalize multiple blank lines to double line break
                             .replace(/^\s+|\s+$/g, '')           // Trim only leading/trailing whitespace
 
-                        console.log('After LaTeX cleanup, before paragraph formatting:')
+                        console.log('After LaTeX cleanup, preserving paragraph structure:')
                         console.log('---RAW-CLEANED---')
                         console.log(JSON.stringify(extractedBody.substring(0, 200)))
                         console.log('---END-RAW---')
 
-                        // FORCE proper paragraph formatting for edit field
-                        // Split content into sentences/logical breaks and create proper paragraphs
+                        // Preserve the paragraph structure that was already in the LaTeX content
+                        // Don't force artificial paragraph breaks - keep natural flow
                         extractedBody = extractedBody
-                            // First, normalize all line breaks to spaces to get clean text
-                            .replace(/\n+/g, ' ')
-                            .replace(/\s+/g, ' ')
+                            // Clean up excessive spacing but maintain paragraph breaks
+                            .replace(/[ \t]+/g, ' ')              // Normalize internal spaces
+                            .replace(/\n[ \t]+/g, '\n')          // Clean up indented lines
+                            .replace(/[ \t]+\n/g, '\n')          // Clean up trailing spaces
+                            .replace(/\n{3,}/g, '\n\n')          // Normalize excessive line breaks to double
                             .trim()
-                            // Then split on sentence patterns that indicate new paragraphs
-                            .split(/\.\s+(?=[A-Z])/g)  // Split on periods followed by capital letters
-                            .map(sentence => sentence.trim())
-                            .filter(sentence => sentence)
-                            .map(sentence => sentence.endsWith('.') ? sentence : sentence + '.')
-                            .join('\n\n')  // Join with blank lines between sentences/paragraphs
 
-                        console.log('Final formatted content for edit field:')
+                        console.log('Final content preserved for edit field:')
                         console.log('---FINAL-EDIT-CONTENT---')
                         console.log(JSON.stringify(extractedBody))
                         console.log('---END-FINAL---')
