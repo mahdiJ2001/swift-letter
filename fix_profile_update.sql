@@ -1,4 +1,4 @@
--- Fix the profile update issue by cleaning up conflicting triggers and ensuring proper WHERE clauses
+- Fix the profile update issue by cleaning up conflicting triggers and ensuring proper WHERE clauses
 
 -- Drop potentially problematic triggers temporarily
 DROP TRIGGER IF EXISTS set_updated_at ON public.user_profiles;

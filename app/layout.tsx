@@ -7,21 +7,21 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-    title: 'Swift Letter - AI Cover Letter Generator | Human-Like Writing | Undetectable by AI Detectors',
-    description: 'Generate personalized, ATS-optimized cover letters in 30 seconds. Human-like writing style that bypasses GPTZero, QuillBot, Scribbr & Proofademic AI detectors. Perfect for mass job applications.',
-    keywords: 'AI cover letter generator, undetectable AI writing, human-like cover letters, ATS-optimized cover letters, personalized cover letters, mass job applications, cover letter builder, bypass AI detection, GPTZero undetectable, professional cover letters, job application automation, instant cover letters',
+    title: 'Swift Letter - AI Cover Letter Generator for Software Engineers | Human-Like Writing | Undetectable by AI Detectors',
+    description: 'Generate personalized, ATS-optimized cover letters for software engineering roles in 30 seconds. Human-like writing style that bypasses GPTZero, QuillBot, Scribbr & Proofademic AI detectors. Perfect for software developer job applications.',
+    keywords: 'AI cover letter generator, software engineer cover letters, undetectable AI writing, human-like cover letters, ATS-optimized cover letters, software developer cover letters, programming job applications, cover letter builder, bypass AI detection, GPTZero undetectable, professional cover letters, software engineering jobs, developer job application automation',
     authors: [{ name: 'Swift Letter Team' }],
     openGraph: {
-        title: 'Swift Letter - AI Cover Letter Generator | Undetectable Human-Like Writing',
-        description: 'Generate personalized, ATS-optimized cover letters in 30 seconds. Human-like writing that bypasses all major AI detectors. Perfect for mass job applications.',
+        title: 'Swift Letter - AI Cover Letter Generator for Software Engineers | Undetectable Human-Like Writing',
+        description: 'Generate personalized, ATS-optimized cover letters for software engineering roles in 30 seconds. Human-like writing that bypasses all major AI detectors. Perfect for software developer job applications.',
         type: 'website',
         locale: 'en_US',
         siteName: 'Swift Letter',
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'Swift Letter - AI Cover Letter Generator',
-        description: 'Generate personalized cover letters in 30 seconds. Human-like writing undetectable by AI detectors.',
+        title: 'Swift Letter - AI Cover Letter Generator for Software Engineers',
+        description: 'Generate personalized cover letters for software engineering roles in 30 seconds. Human-like writing undetectable by AI detectors.',
     },
     robots: {
         index: true,
@@ -53,8 +53,8 @@ export default function RootLayout({
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "Swift Letter",
-        "alternateName": "Swift Letter AI Cover Letter Generator",
-        "description": "Generate personalized, ATS-optimized cover letters in 30 seconds. Human-like writing that bypasses AI detectors like GPTZero, QuillBot, Scribbr, and Proofademic.",
+        "alternateName": "Swift Letter AI Cover Letter Generator for Software Engineers",
+        "description": "Generate personalized, ATS-optimized cover letters for software engineering roles in 30 seconds. Human-like writing that bypasses AI detectors like GPTZero, QuillBot, Scribbr, and Proofademic.",
         "url": "https://swiftletter.com",
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Web",

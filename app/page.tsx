@@ -10,12 +10,12 @@ export default function HomePage() {
                 <div className="w-full max-w-3xl mx-auto flex flex-col items-center">
                     {/* Title */}
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-[#ececec] text-center mb-4">
-                        Generate Cover Letters Instantly
+                        Generate Software Engineer Cover Letters Instantly
                     </h1>
 
                     {/* Subtitle */}
                     <p className="text-base sm:text-lg text-[#a1a1a1] text-center mb-8 max-w-xl">
-                        Human-written cover letters customized for any job description, based on your profile. Ready in seconds.
+                        Human-written cover letters customized for software engineering roles, based on your profile. Ready in seconds.
                     </p>
 
                     {/* Job Description Form */}

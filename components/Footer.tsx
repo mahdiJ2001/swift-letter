@@ -18,8 +18,8 @@ export default function Footer() {
                             <span className="text-lg sm:text-xl font-bold text-white">Swift Letter</span>
                         </div>
                         <p className="text-slate-400 max-w-md leading-relaxed text-sm sm:text-base">
-                            Generate professional cover letters tailored to your profile and job descriptions.
-                            Land your dream job with personalized, AI-powered cover letters.
+                            Generate professional cover letters tailored to your profile and software engineering job descriptions.
+                            Land your dream software engineering role with personalized, AI-powered cover letters.
                         </p>
                         <div className="flex space-x-3 sm:space-x-4 mt-4 sm:mt-6">
                             <a href="https://www.linkedin.com/in/mahdi-jellali-849858285/" target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-800 hover:bg-white/20 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-300 group">
