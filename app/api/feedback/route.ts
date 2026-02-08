@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
     
     // Validate rating if provided
     let validatedRating = null;
-    if (rating && rating.trim()) {
-      const ratingNumber = parseInt(rating);
+    if (rating && rating.trim() && rating.trim() !== '' && rating.trim() !== 'null' && rating.trim() !== 'undefined') {
+      const ratingNumber = parseInt(rating.trim());
       if (isNaN(ratingNumber) || ratingNumber < 1 || ratingNumber > 5) {
         return NextResponse.json(
           { error: 'Rating must be between 1 and 5' },
