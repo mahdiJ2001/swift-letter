@@ -144,7 +144,7 @@ serve(async (req: Request) => {
     const endpoint = `https://bedrock-runtime.${region}.amazonaws.com/model/${modelId}/invoke`;
 
     // Create the pppppprompt for Claude - generate complete LaTeX document using specific template
-    const prompt = `You are an expert cover letter writer. You must fill in the following template with relevant information from the candidate profile and job description. Follow this EXACT template structure:
+    const prompt = `You are an expert cover letter writer. You must fill in the following template with relevant information from the candidate profile and job description. Use BOTH the professional work experience AND personal/side projects to create the most compelling cover letter. Follow this EXACT template structure:
 
 CANDIDATE PROFILE:
 - Name: ${profile.full_name}
@@ -155,7 +155,7 @@ CANDIDATE PROFILE:
 - GitHub: ${profile.github || 'Not provided'}
 - Portfolio: ${profile.portfolio || 'Not provided'}
 
-EXPERIENCE:
+PROFESSIONAL WORK EXPERIENCE:
 ${profile.experiences}
 
 SKILLS:
@@ -164,7 +164,7 @@ ${profile.skills}
 EDUCATION:
 ${profile.education || 'Not specified'}
 
-PROJECTS:
+PERSONAL/SIDE PROJECTS:
 ${profile.projects || 'Not specified'}
 
 CERTIFICATIONS:
@@ -173,7 +173,7 @@ ${profile.certifications || 'Not specified'}
 LANGUAGES:
 ${profile.languages || 'Not specified'}
 
-
+IMPORTANT: When writing the cover letter, draw from BOTH the professional work experience AND personal/side projects. Select the most relevant combination of experiences and projects that best match the job requirements.
 
 JOB DESCRIPTION:
 ${jobDescription}
@@ -291,8 +291,8 @@ ${language === 'french' ? 'Cordialement' : 'Sincerely'},\\\\
 
 CRITICAL INSTRUCTIONS:
 0. CONVERSATIONAL TONE: When filling out this template, maintain the casual, conversational tone. Use simple tech terms, avoid corporate buzzwords, and describe projects like you're explaining them to a colleague, not writing documentation. Keep hyphens, not em dashes. BANNED WORDS: leverage, utilize, implement, architect, robust, seamless, cutting-edge, production-grade.
-1. MANDATORY PROJECT OPTIMIZATION: Before selecting projects, calculate which 2-3 project combination covers the MAXIMUM number of job requirements. DO NOT proceed without this calculation.
-0.5. MANDATORY CHRONOLOGICAL SORTING: After selecting optimal projects, sort them by date (newest to oldest). The project described as "just wrapped up" MUST be the most recent project. Projects described as "before that" MUST be older. VERIFY dates before writing.
+1. MANDATORY EXPERIENCE & PROJECT OPTIMIZATION: Before selecting content, calculate which combination of 2-3 experiences and/or projects covers the MAXIMUM number of job requirements. Consider both professional work experience AND personal/side projects. DO NOT proceed without this calculation.
+0.5. MANDATORY CHRONOLOGICAL SORTING: After selecting optimal experiences/projects, sort them by date (newest to oldest). The item described as "just wrapped up" MUST be the most recent. Items described as "before that" MUST be older. VERIFY dates before writing.
 1. Extract the job title and company name from the job description
 2. NATURAL JOB TITLE EXTRACTION: Clean up job titles to sound natural. Remove technical specifications in parentheses or brackets. For example:
    - "Software Engineer (Java / Spring Boot / Cloud)" becomes "Software Engineer"
@@ -305,7 +305,7 @@ CRITICAL INSTRUCTIONS:
 4. STRICT TEMPLATE ADHERENCE: Replace the letter body content (between "To the Hiring Team at \\targetCompany," and "Thanks for taking the time to look this over.") with personalized content following the EXACT template structure shown. DO NOT change the paragraph structure, sentence flow, or overall template format.
 5. PLACEHOLDER FILLING RULE: Fill in the bracketed placeholders [Tech A], [Tech B], [Tech C], [specific goal], [Project Name], [describe problem], [fix], [specific part], [result], [specific skill], [relevant technical task], [specific product/service], [career goal], [Tech A/B] naturally and conversationally - DO NOT just copy-paste from the user profile.
 6. NATURAL LANGUAGE IN TEMPLATE: When filling the template, use natural conversational language:
-7. PROJECT SELECTION: Calculate which 2-3 project combination covers the MAXIMUM number of job requirements. Sort selected projects chronologically (newest first).
+7. EXPERIENCE & PROJECT SELECTION: Calculate which combination of 2-3 experiences AND projects covers the MAXIMUM number of job requirements. Prioritize recent experiences and projects. Sort selected items chronologically (newest first).
 8. Write ${language === 'french' ? 'in French' : 'in English'} using information from the user profile and job description
 9. Keep ALL other LaTeX formatting, commands, and structure EXACTLY as shown
 10. Do NOT add any extra LaTeX commands like \\noindent or \\vspace in the letter body
@@ -314,15 +314,21 @@ CRITICAL INSTRUCTIONS:
 15. CRITICAL: Always properly escape percentage symbols - write 96\\% not just 96 to ensure percentages display correctly in the final PDF
 
 
-PROJECT SELECTION:
-- Select 2-3 projects that cover MAXIMUM job requirements with LEAST technology overlap
-- NEVER mix technologies/details from different projects
-- Verify project dates for correct chronological order (newest as "just wrapped up", older as "before that")
-- Each project description must only use its own actual technologies
+EXPERIENCE & PROJECT SELECTION:
+- Select a combination of 2-3 experiences and/or projects that cover MAXIMUM job requirements
+- Prioritize recent work experiences and projects
+- Include both professional experience AND personal/side projects when relevant
+- NEVER mix technologies/details from different experiences or projects
+- Verify dates for correct chronological order (newest as "just wrapped up", older as "before that")
+- Each experience/project description must only use its own actual technologies and achievements
 
 CONTENT REQUIREMENTS:
-- Use only information from user's profile - DO NOT invent details
-- Casual, conversational tone - avoid corporate buzzwords, describe projects like explaining to a colleague
+- Use both WORK EXPERIENCE and PROJECTS from user's profile - DO NOT invent details
+- When filling the template, blend professional work experience with personal/side projects
+- For the "project I recently completed" section, this can be either a professional work experience OR a personal project
+- For the "before that" section, reference another significant experience or project
+- Prioritize the most relevant and recent work experiences and projects that match the job requirements
+- Casual, conversational tone - avoid corporate buzzwords, describe work and projects like explaining to a colleague
 - Fill bracketed placeholders naturally
 - Keep under 400 words
 - Use hyphens (-) not em dashes, simple tech terms only

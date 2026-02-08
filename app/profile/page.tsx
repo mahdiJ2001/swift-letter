@@ -135,6 +135,9 @@ export default function ProfilePage() {
                     <p className="text-[#a1a1a1] mt-2">
                         Complete your profile to generate personalized cover letters for software engineering roles
                     </p>
+                    <p className="text-[#a1a1a1] mt-4">
+                        <span className="font-semibold text-white">Don't forget to save!</span> Upload your resume PDF to auto-fill your profile fields, then customize as needed.
+                    </p>
                 </div>
 
                 <div className="grid lg:grid-cols-2 gap-8">

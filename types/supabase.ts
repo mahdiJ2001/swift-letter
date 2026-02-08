@@ -81,6 +81,9 @@ export interface Database {
                     id: string
                     user_id: string | null
                     feedback: string
+                    rating: number | null
+                    screenshot_url: string | null
+                    metadata: Json
                     created_at: string | null
                     updated_at: string | null
                 }
@@ -88,6 +91,9 @@ export interface Database {
                     id?: string
                     user_id?: string | null
                     feedback: string
+                    rating?: number | null
+                    screenshot_url?: string | null
+                    metadata?: Json
                     created_at?: string | null
                     updated_at?: string | null
                 }
@@ -95,6 +101,9 @@ export interface Database {
                     id?: string
                     user_id?: string | null
                     feedback?: string
+                    rating?: number | null
+                    screenshot_url?: string | null
+                    metadata?: Json
                     created_at?: string | null
                     updated_at?: string | null
                 }
@@ -106,6 +115,39 @@ export interface Database {
                         referencedColumns: ["id"]
                     }
                 ]
+            }
+            waitlist: {
+                Row: {
+                    id: string
+                    email: string
+                    joined_at: string
+                    source: string
+                    status: string
+                    metadata: Json
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    email: string
+                    joined_at?: string
+                    source?: string
+                    status?: string
+                    metadata?: Json
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    email?: string
+                    joined_at?: string
+                    source?: string
+                    status?: string
+                    metadata?: Json
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: []
             }
             generated_letters: {
                 Row: {
