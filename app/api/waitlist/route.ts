@@ -1,5 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { validateWaitlistSubmission, RateLimiter } from '@/lib/validation'
 
@@ -24,6 +23,18 @@ export async function POST(request: NextRequest) {
             )
         }
 
+        // Validate environment variables
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        if (!supabaseUrl || !supabaseServiceKey) {
+            console.error('Missing Supabase environment variables');
+            return NextResponse.json(
+                { error: 'Service configuration error' },
+                { status: 500 }
+            );
+        }
+
         const { email, source = 'website' } = await request.json()
 
         // Enhanced validation
@@ -41,10 +52,11 @@ export async function POST(request: NextRequest) {
 
         const { email: validatedEmail, source: validatedSource } = validation.sanitized
 
-        const supabase = createRouteHandlerClient({ cookies })
+        // Create Supabase admin client for public waitlist access
+        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
         // Insert email into waitlist with enhanced data
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('waitlist')
             .insert([
                 {
@@ -78,7 +90,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Get current waitlist count for position
-        const { count } = await supabase
+        const { count } = await supabaseAdmin
             .from('waitlist')
             .select('*', { count: 'exact', head: true })
             .eq('status', 'active')
@@ -101,4 +113,15 @@ export async function POST(request: NextRequest) {
             { status: 500 }
         )
     }
+}
+
+export async function OPTIONS() {
+    return new NextResponse(null, {
+        status: 200,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+        },
+    });
 }
