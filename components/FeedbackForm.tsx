@@ -80,7 +80,6 @@ export default function FeedbackForm() {
         try {
             const formData = new FormData()
             formData.append('feedback', feedback.trim())
-            formData.append('rating', '0') // No rating system
             if (user?.id) {
                 formData.append('userId', user.id)
             }
@@ -146,8 +145,8 @@ export default function FeedbackForm() {
                     />
                     <div className="flex justify-between items-center mt-1 px-1">
                         <span className={`text-xs ${feedback.length < 10 ? 'text-orange-400' :
-                                feedback.length > 1800 ? 'text-yellow-400' :
-                                    'text-[#666]'
+                            feedback.length > 1800 ? 'text-yellow-400' :
+                                'text-[#666]'
                             }`}>
                             {feedback.length < 10 && feedback.length > 0 ?
                                 `${10 - feedback.length} more characters needed` :
